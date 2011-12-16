@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Copyright (C) 2011 VoX Communications 
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	android:orientation="vertical" android:background="@android:color/black"
+	android:id="@+id/voxmobile_main_menu">
+
+	<!-- Add Setup Phone row -->
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:id="@+id/do_voxmobile_setup_phone"
+		android:clickable="true" android:focusable="true" android:orientation="horizontal"
+		android:background="@android:drawable/list_selector_background">
+		<ImageView  android:duplicateParentState="true" android:gravity="center"
+			android:scaleType="center" android:src="@drawable/voxmobile_setup" style="@style/list_left_column" />
+
+		<TextView android:layout_height="wrap_content"
+			android:layout_width="wrap_content" android:layout_gravity="center_vertical"
+			android:textAppearance="?android:attr/textAppearanceLarge" 
+			android:textColor="@android:color/white" android:text="@string/voxmobile_setup_phone" />
+	</LinearLayout>
+
+	<ImageView android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:scaleType="fitXY"
+		android:gravity="fill_horizontal" android:src="@drawable/divider_horizontal_dark" />	
+
+	<!-- Add G.729 enabler row -->
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:id="@+id/do_voxmobile_g729"
+		android:clickable="true" android:focusable="true" android:orientation="horizontal"
+		android:background="@android:drawable/list_selector_background">
+		<com.csipsimple.widgets.DontPressWithParentLayout
+			style="@style/list_left_column" android:id="@+id/indicator"
+			android:gravity="center" android:orientation="vertical"
+			android:background="@drawable/account_selector">
+			<CheckBox android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:id="@+id/AccCheckBoxActive"
+				android:focusable="false" android:clickable="false"
+				android:background="@drawable/voxmobile_g729"
+				android:duplicateParentState="true" android:layout_gravity="center"
+				android:button="@null"></CheckBox>
+			<ImageView android:id="@+id/bar_onoff" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:layout_gravity="center"
+				android:paddingTop="4dip" android:src="@drawable/ic_indicator_off" />
+		</com.csipsimple.widgets.DontPressWithParentLayout>
+
+		<LinearLayout android:layout_weight="1"
+			android:layout_width="fill_parent" android:orientation="vertical"
+			android:paddingLeft="0dip" android:paddingRight="16dip"
+			android:layout_gravity="center_vertical" android:layout_height="fill_parent" 
+			android:gravity="center_vertical">
+			<TextView android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:text="@string/voxmobile_g729_audio"
+				android:textAppearance="?android:attr/textAppearanceLarge"></TextView>
+			
+			<TextView android:id="@+id/voxmobile_g729"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content"></TextView>
+		</LinearLayout>
+	</LinearLayout>
+
+	<ImageView android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:scaleType="fitXY"
+		android:gravity="fill_horizontal" android:src="@drawable/divider_horizontal_dark" />	
+
+	<!-- Add Log Out row -->
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:id="@+id/do_voxmobile_logout"
+		android:clickable="true" android:focusable="true" android:orientation="horizontal"
+		android:background="@android:drawable/list_selector_background">
+		<ImageView  android:duplicateParentState="true" android:gravity="center"
+			android:scaleType="center" android:src="@drawable/voxmobile_logout" style="@style/list_left_column" />
+
+		<TextView android:layout_height="wrap_content"
+			android:layout_width="wrap_content" android:layout_gravity="center_vertical"
+			android:textAppearance="?android:attr/textAppearanceLarge" 
+			android:textColor="@android:color/white" android:text="@string/voxmobile_logout" />
+	</LinearLayout>
+
+	<ImageView android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:scaleType="fitXY"
+		android:gravity="fill_horizontal" android:src="@drawable/divider_horizontal_dark" />	
+	
+</LinearLayout>
