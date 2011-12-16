@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="add_voxmobile_account">Añadir una cuenta de VoX Móvil</string>
+	<string name="voxmobile">VoX Móvil</string>
+	<string name="voxmobile_login">Entrar</string>
+	<string name="voxmobile_logout">Salir </string>
+	<string name="voxmobile_signup">Inscribirse</string>
+	<string name="voxmobile_help">Ayuda</string>
+	<string name="voxmobile_attention">Atención</string>
+	<string name="voxmobile_continue">Continuar</string>	
+	<string name="voxmobile_close">Cerrar</string>
+	<string name="voxmobile_yes">Sí</string>
+	<string name="voxmobile_no">No</string>
+	
+	<!-- Dialog Resources -->
+	<string name="voxmobile_submitting_order">Presentando el order, por favor espere</string>
+	<string name="voxmobile_please_wait">Por favor espere</string>
+	<string name="voxmobile_authenticating">Autenticación, por favor espere</string>
+	<string name="voxmobile_unauthorized">Error de entrar</string>
+	<string name="voxmobile_unauthorized_msg">Nombre de usuario o contraseña inválida.</string>
+	<string name="voxmobile_server_error">Error de servidor de computador</string>
+	<string name="voxmobile_network_error">Error en la red</string>
+	<string name="voxmobile_network_error_msg">Incapaces de llegar a la red.</string>
+	<string name="voxmobile_did_chooser_title">Seleccione un número de teléfono</string>
+	
+	<!-- Login Resources -->
+	<string name="voxmobile_login_username">Nombre de usuario</string>
+	<string name="voxmobile_login_password">Contraseña</string>
+	<string name="voxmobile_login_missing_uid">Falta el nombre de usuario</string>
+	<string name="voxmobile_login_missing_pwd">Falta de contraseña</string>
+	<string name="voxmobile_confirm_logout">Salir</string>
+
+	<!-- Main Menu Resources -->
+	<string name="voxmobile_setup_phone">Configurar teléfono</string>
+	<string name="voxmobile_g729_audio">G.729 Audio</string>
+	<string name="voxmobile_enable_g729">Haga clic para activar</string>
+	<string name="voxmobile_disable_g729">Haga clic para desactivar</string>
+	<string name="voxmobile_confirm_disable_g729">Desactivar G.729 Audio</string>
+	<string name="voxmobile_confirm_disable_g729_msg">Desactivar esta función puede resultar en pobre calidad de audio.\n\n¿Seguro de que desea desactivar G.729 audio?</string>
+	<string name="voxmobile_duplicate_account">Cuenta duplicada</string>
+	<string name="voxmobile_duplicate_account_message">El número que ha seleccionado ya está en uso en la siguiente cuenta:</string>
+	
+	<!-- Sign Up Start Resources -->
+	<string name="voxmobile_signup_header">Obtiene su cuenta de VoX Móvil</string>
+	<string name="voxmobile_signup_text_1">En pocas palabras, VoX Móvil se trata de ahorrar dinero al usar su teléfono móvil. Esto significa que usted puede llamar a cualquier persona en los EE.UU., Canadá y Puerto Rico desde cualquier parte del mundo y te alo obtener un número de teléfono real de que la gente pueda llamar.\n\nClientes internacionales también pueden utilizar de VoX Móvil para llamar a los EE.UU., Canadá y Puerto Rico de forma gratuita con determinados planes.</string>
+	<string name="voxmobile_signup_text_2">Nuestros planes de servicio</string>
+	<string name="voxmobile_signup_text_3">Ofrecemos planes de servicio para todos los bolsillos. Todos nuestros planes de servicio estan sin contrato por lo que no tiene que preocuparse de estar encerrado en compromiso. También obtendrá funciones de llamadas premium, tales como identificador de llamadas, llamada en espera, y el correo de voz - gratis!\n\nPuede navegar por nuestros planes de servicio en la siguiente pantalla para encontrar el uno que se adapte a sus necesidades. Detalles del plan y los precios están disponibles al seleccionar cualquier plan de servicio.\n\nHaga clic en \'Continuar\' para empezar.</string>
+	<string name="voxmobile_upgrade">Una nueva versión de esta aplicación está disponible en el Android Market. Por favor, actualiza su aplicación.</string>
+	
+	<!-- Service Plan Detail Resources -->
+	<string name="voxmobile_service_plan_details">Detalles del plan de servico</string>
+	
+	<!-- Country Chooser Resources -->
+	<string name="voxmobile_country_msg">¿En qué país vive?</string>
+	
+	<!-- Billing Info Resources -->
+	<string name="voxmobile_billing_title">Información de facturación</string>
+	<string name="voxmobile_first_name">Nombre</string>
+	<string name="voxmobile_last_name">Apellido</string>
+	<string name="voxmobile_email_address">Correo electrónico</string>
+	<string name="voxmobile_email_address_confirm">Confirma correo electrónico</string>
+	<string name="voxmobile_card_number">Número de tarjeta de crédito</string>
+	<string name="voxmobile_card_cvv">Tarjeta de crédito código de seguridad</string>
+	<string name="voxmobile_card_month">Mes de expiración </string>
+	<string name="voxmobile_card_year">Año de expiración </string>
+	<string name="voxmobile_billing_street">Dirección de facturación</string>
+	<string name="voxmobile_billing_city">Ciudad de facturación</string>
+	<string name="voxmobile_billing_zip">Código postal de facturación</string>
+	
+	<string name="voxmobile_validate_error">Ha introducido un artículo incorrecto</string>
+	<string name="voxmobile_email_mismatch">Correos electrónicos no coinciden.\n\nVerifica su correo electrónico y inténtalo de nuevo.</string>
+	<string name="voxmobile_invalid_card_number">Inválida tarjeta de credito.\n\nVerifica el número de tarjeta de crédito y inténtalo de nuevo.</string>
+	<string name="voxmobile_invalid_card_cvv">Inválida tarjeta de credito código de seguridad.\n\nVerifica su código de seguridad y inténtalo de nuevo.</string>
+	<string name="voxmobile_invalid_card_month">Falta mes de expiración.\n\nVerifica el mes de expiración y inténtalo de nuevo.</string>
+	<string name="voxmobile_invalid_steet">Dirección de facturación inválida.\n\nPor favor, introduzca la dirección donde usted recibe su factura de tarjeta de crédito y inténtalo de nuevo.</string>
+	<string name="voxmobile_invalid_city">Ciudad de facturación inválida.\n\nPor favor, introduzca la ciudad que aparece en la factura de tarjeta de crédito.</string>
+	<string name="voxmobile_invalid_zip">Código postal de facturación inválido.\n\nPor favor, introduzca el código postal que aparece en la factura de tarjeta de crédito.</string>
+	
+	<!-- DID Overview Resources -->
+	<string name="voxmobile_did_header">Selección de número del teléfono</string>
+	<string name="voxmobile_did_text_1">En la siguiente pantalla tendrá que seleccionar una ubicación desde el que su nuevo número de teléfono será elegido.\n\nPor ejemplo, si usted quiere un número de teléfono desde Los Angeles, a continuación, seleccione esa ubicación.</string>
+	
+	<!-- Rate Center Chooser Resources -->
+	<string name="voxmobile_state">Estado / Provincia</string>
+	<string name="voxmobile_did_state">Seleccione un Estado</string>
+	<string name="voxmobile_city">Ciudad / Ubicación</string>
+	<string name="voxmobile_did_city">Seleccione una ciudad/ubicación</string>
+	<string name="voxmobile_please_select">Por favor, seleccione</string>
+	
+	<!-- Order Summary Resources -->
+	<string name="voxmobile_summary_header">Resumen del orden</string>
+	<string name="voxmobile_summary_text_1">Por favor, revise la siguiente información. Haga clic en \'Cancelar\' para hacer cambios o \'Continuar\' para finalizar su orden.</string>
+	<string name="voxmobile_summary_text_2">Plan de servicio:</string>
+	<string name="voxmobile_summary_text_3">Nombre del cliente:</string>
+	<string name="voxmobile_summary_text_4">Correo electrónico:</string>
+	<string name="voxmobile_summary_text_5">Número de tarjeta de crédito:</string>
+	<string name="voxmobile_summary_text_6">Tarjeta de crédito código de seguridad:</string>
+	<string name="voxmobile_summary_text_7">Targeta de crédito fecha de expiración :</string>
+	<string name="voxmobile_summary_text_8">Mi código de país:</string>
+	<string name="voxmobile_summary_text_9">Región de número del teléfono :</string>
+	<string name="voxmobile_summary_text_10">Lista de cargos:</string>
+	<string name="voxmobile_total_charges">Total de los cargos</string>
+	
+	<!-- Order Error Dialog Resources -->
+	<string name="voxmobile_order_error">Error de procesamiento de orden</string>
+	<string name="voxmobile_order_retry">Por favor, verifique la información y inténtalo de nuevo.</string>
+	<string name="voxmobile_bad_first_name">Nombre no se encuentra o no es válido.</string>
+	<string name="voxmobile_bad_last_name">Apellido no se encuentra o no es válido.</string>
+	<string name="voxmobile_bad_email">Correo electrónico no se encuentra o no es válido.</string>
+	<string name="voxmobile_bad_billing_address">Tarjeta de crédito dirección no se encuentra o no es válido.</string>
+	<string name="voxmobile_bad_billing_city">Tarjeta de crédito ciudad de facturación no se encuentra o no es válida.</string>
+	<string name="voxmobile_bad_billing_zip">Tarjeta de crédito código postal no se encuentra o no es válido.</string>
+	<string name="voxmobile_bad_billing_country">Tarjeta de crédito pais de facturación no se encuentra o no es válido.</string>
+	<string name="voxmobile_bad_cc_number">Número de tarjeta de crédito no es válido.</string>
+	<string name="voxmobile_bad_cc_month">Tarjeta de crédito mes de expiración no es válida.</string>
+	<string name="voxmobile_bad_cc_year">Tarjeta de crédito año de expiración no es válido.</string>
+	<string name="voxmobile_bad_cc_cvv">Tarjeta de crédito código de seguridad no es válido.</string>
+	<string name="voxmobile_cc_auth_fail">Tarjeta de crédito ha sido rechazada.</string>
+	<string name="voxmobile_oversubscribed">Este dispositivo ha excedido el número máximo de cuentas gratuitas.\n\nContacto support@voxcorp.net si necesita más información.</string>
+
+	<!-- Order Success Dialog Resources -->
+	<string name="voxmobile_order_success_header">Gracias para su orden</string>
+	<string name="voxmobile_order_success_mesg">Hemos recibido su orden y se lo se procese. Usted recibirá varios correos electrónicos con importante información cuenta. Una vez que hemos procesado su orden se puede configurar el teléfono y empezar a llamar. Mientras tanto, recuerde la informacion cuenta se muestra a continuación, ya que se lo necesita para acceder a su cuenta.</string>
+	<string name="voxmobile_order_success_charge">Tarjeta de crédito ha sido cargada</string>
+	
+	<!-- Provision Wait Resources -->
+	<string name="voxmobile_provision_wait">Su cuenta de que se está creando. Esto suele tardar menos de cinco minutos.\n\nSu teléfono se configurará automáticamente después de la configuración de su cuenta se ha completado.\n\nDe forma segura puede cerrar esta pantalla si no quieres esperar a que este proceso finalice..</string>
+	<string name="voxmobile_checking_status">Comprobando el estado del orden</string>
+	
+	<!-- Account List Resources -->
+	<string name="voxmobile_check_status">Compruebe el estado del orden</string>
+	<string name="voxmobile_manage">Maneja su cuenta de VoX Móvil</string>
+</resources>

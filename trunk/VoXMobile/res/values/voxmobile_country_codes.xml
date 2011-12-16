@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="voxmobile_country_code_array">
+        <item></item> <!-- blank place holder; do not remove -->
+        <item>US</item>
+        <item>CA</item>
+        <item>PR</item>
+        <item>AF</item> <!-- Afghanistan -->
+        <item>AL</item> <!-- Albania -->
+        <item>DZ</item> <!-- Algeria -->
+        <item>AS</item> <!-- American Samoa -->
+        <item>AD</item> <!-- Andorra -->
+        <item>AO</item> <!-- Angola -->
+        <item>AI</item> <!-- Anguilla -->
+        <item>AQ</item> <!-- Antarctica -->
+        <item>AG</item> <!-- Antigua and Barbuda -->
+        <item>AR</item> <!-- Argentina -->
+        <item>AM</item> <!-- Armenia -->
+        <item>AW</item> <!-- Aruba -->
+        <item>AU</item> <!-- Australia -->
+        <item>AT</item> <!-- Austria -->
+        <item>AZ</item> <!-- Azerbaijan -->
+        <item>BS</item> <!-- Bahamas -->
+        <item>BH</item> <!-- Bahrain -->
+        <item>BD</item> <!-- Bangladesh -->
+        <item>BB</item> <!-- Barbados -->
+        <item>BY</item> <!-- Belarus -->
+        <item>BE</item> <!-- Belgium -->
+        <item>BZ</item> <!-- Belize -->
+        <item>BJ</item> <!-- Benin -->
+        <item>BM</item> <!-- Bermuda -->
+        <item>BT</item> <!-- Bhutan -->
+        <item>BO</item> <!-- Bolivia -->
+        <item>BA</item> <!-- Bosnia and Herzegovina -->
+        <item>BW</item> <!-- Botswana -->
+        <item>BV</item> <!-- Bouvet Island -->
+        <item>BR</item> <!-- Brazil -->
+        <item>IO</item> <!-- British Indian Ocean Territory -->
+        <item>VG</item> <!-- British Virgin Islands -->
+        <item>BN</item> <!-- Brunei Darussalam -->
+        <item>BG</item> <!-- Bulgaria -->
+        <item>BF</item> <!-- Burkina Faso -->
+        <item>BI</item> <!-- Burundi -->
+        <item>KH</item> <!-- Cambodia -->
+        <item>CM</item> <!-- Cameroon -->
+        <item>CA</item> <!-- Canada -->
+        <item>CV</item> <!-- Cape Verde -->
+        <item>KY</item> <!-- Cayman Islands -->
+        <item>CF</item> <!-- Central African Republic -->
+        <item>TD</item> <!-- Chad -->
+        <item>CL</item> <!-- Chile -->
+        <item>CN</item> <!-- China -->
+        <item>CX</item> <!-- Christmas Island -->
+        <item>CC</item> <!-- Cocos (Keeling) Islands -->
+        <item>CO</item> <!-- Colombia -->
+        <item>KM</item> <!-- Comoros -->
+        <item>CD</item> <!-- Congo, Democratic Republic of the -->
+        <item>CG</item> <!-- Congo, Republic of the -->
+        <item>CK</item> <!-- Cook Islands -->
+        <item>CR</item> <!-- Costa Rica -->
+        <item>CI</item> <!-- Cote D'Ivoire -->
+        <item>HR</item> <!-- Croatia -->
+        <item>CU</item> <!-- Cuba -->
+        <item>CY</item> <!-- Cyprus -->
+        <item>CZ</item> <!-- Czech Republic -->
+        <item>DK</item> <!-- Denmark -->
+        <item>DJ</item> <!-- Djibouti -->
+        <item>DM</item> <!-- Dominica -->
+        <item>DO</item> <!-- Dominican Republic -->
+        <item>EC</item> <!-- Ecuador -->
+        <item>EG</item> <!-- Egypt -->
+        <item>SV</item> <!-- El Salvador -->
+        <item>GQ</item> <!-- Equatorial Guinea -->
+        <item>ER</item> <!-- Eritrea -->
+        <item>EE</item> <!-- Estonia -->
+        <item>ET</item> <!-- Ethiopia -->
+        <item>FK</item> <!-- Falkland Islands -->
+        <item>FO</item> <!-- Faroe Islands -->
+        <item>FJ</item> <!-- Fiji -->
+        <item>FI</item> <!-- Finland -->
+        <item>FR</item> <!-- France -->
+        <item>GF</item> <!-- French Guiana -->
+        <item>PF</item> <!-- French Polynesia -->
+        <item>TF</item> <!-- French Southern Territories -->
+        <item>GA</item> <!-- Gabon -->
+        <item>GM</item> <!-- Gambia -->
+        <item>GE</item> <!-- Georgia -->
+        <item>DE</item> <!-- Germany -->
+        <item>GH</item> <!-- Ghana -->
+        <item>GI</item> <!-- Gibraltar -->
+        <item>GR</item> <!-- Greece -->
+        <item>GL</item> <!-- Greenland -->
+        <item>GD</item> <!-- Grenada -->
+        <item>GP</item> <!-- Guadeloupe -->
+        <item>GU</item> <!-- Guam -->
+        <item>GT</item> <!-- Guatemala -->
+        <item>GN</item> <!-- Guinea -->
+        <item>GW</item> <!-- Guinea-Bissau -->
+        <item>GY</item> <!-- Guyana -->
+        <item>HT</item> <!-- Haiti -->
+        <item>HM</item> <!-- Heard Island and Mcdonald Islands -->
+        <item>VA</item> <!-- Vatican City -->
+        <item>HN</item> <!-- Honduras -->
+        <item>HK</item> <!-- Hong Kong -->
+        <item>HU</item> <!-- Hungary -->
+        <item>IS</item> <!-- Iceland -->
+        <item>IN</item> <!-- India -->
+        <item>ID</item> <!-- Indonesia -->
+        <item>IR</item> <!-- Iran -->
+        <item>IQ</item> <!-- Iraq -->
+        <item>IE</item> <!-- Ireland -->
+        <item>IL</item> <!-- Israel -->
+        <item>IT</item> <!-- Italy -->
+        <item>JM</item> <!-- Jamaica -->
+        <item>JP</item> <!-- Japan -->
+        <item>JO</item> <!-- Jordan -->
+        <item>KZ</item> <!-- Kazakhstan -->
+        <item>KE</item> <!-- Kenya -->
+        <item>KI</item> <!-- Kiribati -->
+        <item>KP</item> <!-- Korea, Democratic People's Republic of -->
+        <item>KR</item> <!-- Korea, Republic of -->
+        <item>KW</item> <!-- Kuwait -->
+        <item>KG</item> <!-- Kyrgyzstan -->
+        <item>LA</item> <!-- Lao People's Democratic Republic -->
+        <item>LV</item> <!-- Latvia -->
+        <item>LB</item> <!-- Lebanon -->
+        <item>LS</item> <!-- Lesotho -->
+        <item>LR</item> <!-- Liberia -->
+        <item>LY</item> <!-- Libyan Arab Jamahiriya -->
+        <item>LI</item> <!-- Liechtenstein -->
+        <item>LT</item> <!-- Lithuania -->
+        <item>LU</item> <!-- Luxembourg -->
+        <item>MO</item> <!-- Macao -->
+        <item>MK</item> <!-- Macedonia -->
+        <item>MG</item> <!-- Madagascar -->
+        <item>MW</item> <!-- Malawi -->
+        <item>MY</item> <!-- Malaysia -->
+        <item>MV</item> <!-- Maldives -->
+        <item>ML</item> <!-- Mali -->
+        <item>MT</item> <!-- Malta -->
+        <item>MH</item> <!-- Marshall Islands -->
+        <item>MQ</item> <!-- Martinique -->
+        <item>MR</item> <!-- Mauritania -->
+        <item>MU</item> <!-- Mauritius -->
+        <item>YT</item> <!-- Mayotte -->
+        <item>MX</item> <!-- Mexico -->
+        <item>FM</item> <!-- Micronesia, Federated States of -->
+        <item>MD</item> <!-- Moldova, Republic of -->
+        <item>MC</item> <!-- Monaco -->
+        <item>MN</item> <!-- Mongolia -->
+        <item>MS</item> <!-- Montserrat -->
+        <item>MA</item> <!-- Morocco -->
+        <item>MZ</item> <!-- Mozambique -->
+        <item>MM</item> <!-- Myanmar -->
+        <item>NA</item> <!-- Namibia -->
+        <item>NR</item> <!-- Nauru -->
+        <item>NP</item> <!-- Nepal -->
+        <item>NL</item> <!-- Netherlands -->
+        <item>AN</item> <!-- Netherlands Antilles -->
+        <item>NC</item> <!-- New Caledonia -->
+        <item>NZ</item> <!-- New Zealand -->
+        <item>NI</item> <!-- Nicaragua -->
+        <item>NE</item> <!-- Niger -->
+        <item>NG</item> <!-- Nigeria -->
+        <item>NU</item> <!-- Niue -->
+        <item>NF</item> <!-- Norfolk Island -->
+        <item>MP</item> <!-- Northern Mariana Islands -->
+        <item>NO</item> <!-- Norway -->
+        <item>OM</item> <!-- Oman -->
+        <item>PK</item> <!-- Pakistan -->
+        <item>PW</item> <!-- Palau -->
+        <item>PS</item> <!-- Palestinian Territory -->
+        <item>PA</item> <!-- Panama -->
+        <item>PG</item> <!-- Papua New Guinea -->
+        <item>PY</item> <!-- Paraguay -->
+        <item>PE</item> <!-- Peru -->
+        <item>PH</item> <!-- Philippines -->
+        <item>PN</item> <!-- Pitcairn -->
+        <item>PL</item> <!-- Poland -->
+        <item>PT</item> <!-- Portugal -->
+        <item>PR</item> <!-- Puerto Rico -->
+        <item>QA</item> <!-- Qatar -->
+        <item>RE</item> <!-- Reunion -->
+        <item>RO</item> <!-- Romania -->
+        <item>RU</item> <!-- Russian Federation -->
+        <item>RW</item> <!-- Rwanda -->
+        <item>SH</item> <!-- Saint Helena -->
+        <item>KN</item> <!-- Saint Kitts and Nevis -->
+        <item>LC</item> <!-- Saint Lucia -->
+        <item>PM</item> <!-- Saint Pierre and Miquelon -->
+        <item>VC</item> <!-- Saint Vincent and the Grenadines -->
+        <item>WS</item> <!-- Samoa -->
+        <item>SM</item> <!-- San Marino -->
+        <item>ST</item> <!-- Sao Tome and Principe -->
+        <item>SA</item> <!-- Saudi Arabia -->
+        <item>SN</item> <!-- Senegal -->
+        <item>CS</item> <!-- Serbia and Montenegro -->
+        <item>SC</item> <!-- Seychelles -->
+        <item>SL</item> <!-- Sierra Leone -->
+        <item>SG</item> <!-- Singapore -->
+        <item>SK</item> <!-- Slovakia -->
+        <item>SI</item> <!-- Slovenia -->
+        <item>SB</item> <!-- Solomon Islands -->
+        <item>SO</item> <!-- Somalia -->
+        <item>ZA</item> <!-- South Africa -->
+        <item>GS</item> <!-- South Georgia -->
+        <item>ES</item> <!-- Spain -->
+        <item>LK</item> <!-- Sri Lanka -->
+        <item>SD</item> <!-- Sudan -->
+        <item>SR</item> <!-- Suriname -->
+        <item>SJ</item> <!-- Svalbard and Jan Mayen -->
+        <item>SZ</item> <!-- Swaziland -->
+        <item>SE</item> <!-- Sweden -->
+        <item>CH</item> <!-- Switzerland -->
+        <item>SY</item> <!-- Syrian Arab Republic -->
+        <item>TW</item> <!-- Taiwan -->
+        <item>TJ</item> <!-- Tajikistan -->
+        <item>TZ</item> <!-- Tanzania -->
+        <item>TH</item> <!-- Thailand -->
+        <item>TL</item> <!-- Timor-Leste -->
+        <item>TG</item> <!-- Togo -->
+        <item>TK</item> <!-- Tokelau -->
+        <item>TO</item> <!-- Tonga -->
+        <item>TT</item> <!-- Trinidad and Tobago -->
+        <item>TN</item> <!-- Tunisia -->
+        <item>TR</item> <!-- Turkey -->
+        <item>TM</item> <!-- Turkmenistan -->
+        <item>TC</item> <!-- Turks and Caicos Islands -->
+        <item>TV</item> <!-- Tuvalu -->
+        <item>UG</item> <!-- Uganda -->
+        <item>UA</item> <!-- Ukraine -->
+        <item>AE</item> <!-- United Arab Emirates -->
+        <item>GB</item> <!-- United Kingdom -->
+        <item>US</item> <!-- United States -->
+        <item>UY</item> <!-- Uruguay -->
+        <item>us</item> <!-- USA -->
+        <item>VI</item> <!-- US Virgin Islands -->
+        <item>UZ</item> <!-- Uzbekistan -->
+        <item>VU</item> <!-- Vanuatu -->
+        <item>VE</item> <!-- Venezuela -->
+        <item>VN</item> <!-- Viet Nam -->
+        <item>WF</item> <!-- Wallis and Futuna -->
+        <item>EH</item> <!-- Western Sahara -->
+        <item>YE</item> <!-- Yemen -->
+        <item>ZM</item> <!-- Zambia -->
+        <item>ZW</item> <!-- Zimbabwe -->  
+    </string-array>
+</resources>
