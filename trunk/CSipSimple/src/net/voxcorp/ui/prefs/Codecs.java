@@ -47,7 +47,6 @@ import net.voxcorp.R;
 import net.voxcorp.api.SipConfigManager;
 import net.voxcorp.utils.Log;
 import net.voxcorp.utils.PreferencesWrapper;
-import net.voxcorp.voxmobile.utils.CodecHelper;
 import net.voxcorp.voxmobile.utils.Consts;
 import net.voxcorp.voxmobile.utils.VoXSettings;
 import net.voxcorp.widgets.DragnDropListView;
@@ -78,7 +77,7 @@ public class Codecs extends ListActivity implements OnClickListener {
     	Short index = 0;
     	for(int i = 0; i < codecs.size(); i++, index++) {
     		HashMap<String, Object> codec = codecs.get(i);
-    		if (!CodecHelper.isPreferredCodec((String) codec.get(CODEC_ID))) {
+    		if (!isPreferredCodec((String) codec.get(CODEC_ID))) {
     			break;
     		}
     	}
@@ -156,7 +155,7 @@ public class Codecs extends ListActivity implements OnClickListener {
 					return ;
 				}
 				
-				boolean isPreferredCodec = CodecHelper.isPreferredCodec((String) item.get(CODEC_ID));
+				boolean isPreferredCodec = isPreferredCodec((String) item.get(CODEC_ID));
 				int firstNonPreferredCodec = getFirstNonPreferredCodecIndex();
 				
 				// Prevent preferred codec priority from being set too low
@@ -276,7 +275,7 @@ public class Codecs extends ListActivity implements OnClickListener {
 	private short getActivationPriority(HashMap<String, Object> codec) {
 		// If we are activating a preferred codec then make sure the
 		// priority is set to one higher than the first non-preferred codec
-		if (!CodecHelper.isPreferredCodec((String) codec.get(CODEC_ID))) {
+		if (!isPreferredCodec((String) codec.get(CODEC_ID))) {
 			return (short) 1;
 		}
 		HashMap<String, Object> c = codecs.get(getFirstNonPreferredCodecIndex());
@@ -420,5 +419,8 @@ public class Codecs extends ListActivity implements OnClickListener {
 		initDatas();
 		((SimpleAdapter) adapter).notifyDataSetChanged();
 	}
-	
+
+	private boolean isPreferredCodec(String codec) {
+		return codec.startsWith("AMR") || codec.startsWith("G729") || codec.startsWith("SILK");
+	}
 }
