@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	android:orientation="vertical" android:background="@android:color/black"
+	android:id="@+id/acc_list_chooser_wrapper">
+
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal">
+		<ListView android:id="@+id/ListView01" android:layout_width="fill_parent"
+			android:layout_height="fill_parent" android:scrollbarStyle="outsideOverlay" />
+	</LinearLayout>
+    
+	<ImageView android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:scaleType="fitXY"
+		android:gravity="fill_horizontal" android:src="@drawable/divider_horizontal_dark" />
+
+	<FrameLayout android:layout_height="0dip" android:layout_width="fill_parent"
+		android:layout_weight="1">
+		<ListView android:id="@android:id/android:list" android:layout_width="fill_parent"
+			android:layout_height="fill_parent" android:scrollbarStyle="outsideOverlay" />
+
+		<ScrollView android:id="@android:id/empty" android:layout_width="fill_parent"
+			android:layout_height="fill_parent" android:fillViewport="true">
+
+			<TextView android:id="@+id/emptyText" 
+			    android:layout_width="fill_parent"
+				android:layout_height="wrap_content" 
+				android:text="No accounts found" 
+				android:textSize="20sp"
+				android:textColor="?android:attr/textColorSecondary" 
+				android:paddingLeft="10dip"
+				android:paddingRight="10dip" 
+				android:paddingTop="10dip" 
+				android:gravity="center"
+				android:lineSpacingMultiplier="0.92" />
+		</ScrollView>
+
+	</FrameLayout>
+    	
+</LinearLayout>
