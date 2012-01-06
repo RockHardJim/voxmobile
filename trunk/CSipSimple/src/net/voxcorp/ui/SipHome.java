@@ -101,11 +101,6 @@ public class SipHome extends TabActivity {
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		boolean isDebuggable = (0 != (getApplicationInfo().flags &= ApplicationInfo.FLAG_DEBUGGABLE));
-		if (isDebuggable && Consts.MODE_ACTIVE == Consts.MODE_PRODUCTION) {
-		  finish();
-		  return;
-		}
 		
 		prefWrapper = new PreferencesWrapper(this);
 		prefProviderWrapper = new PreferencesProviderWrapper(this);
@@ -352,6 +347,20 @@ public class SipHome extends TabActivity {
 		onForeground = true;
 		
 		prefWrapper.setQuit(false);
+
+		boolean isDebuggable = (0 != (getApplicationInfo().flags &= ApplicationInfo.FLAG_DEBUGGABLE));
+		if (isDebuggable && Consts.MODE_ACTIVE == Consts.MODE_PRODUCTION) {
+			new AlertDialog.Builder(this)
+			.setTitle(R.string.warning)
+			.setMessage(getString(R.string.voxmobile_corrupted))
+			.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					disconnectAndQuit();
+				}
+			})
+			.show();
+			return;
+		}
 
 		Log.d(THIS_FILE, "WE CAN NOW start SIP service");
 		startSipService();
