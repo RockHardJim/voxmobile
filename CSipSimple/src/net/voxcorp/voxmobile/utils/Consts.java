@@ -31,4 +31,6 @@ public class Consts {
 	public static final int REST_UNSUPPORTED = 2;
 	public static final int REST_HTTP_ERROR = 3;
 	public static final int REST_ERROR = 4;
+
+	public static final String VOX_MOBILE_INVITE_EVENT = "send_invitation";	
 }
