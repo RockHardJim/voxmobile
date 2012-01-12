@@ -12,4 +12,9 @@
 	<string name="voxmobile_confirm_disable_g729_msg">Disabling this feature may result in poor audio quality.\n\nAre you sure you want to disable G.729 Audio?</string>
 	<string name="voxmobile_yes">Yes</string>
 	<string name="voxmobile_no">No</string>
+	<string name="voxmobile_invite">Invite a Friend</string>
+	<string name="voxmobile_invite_error">You must add a VoX Mobile account before inviting friends.\n\nWould you like do that now?</string>
+    <string name="voxmobile_invite_title">How do you want to send your invitation?</string>
+    <string name="voxmobile_invite_subject">Lets try VoX Mobile</string>
+    <string name="voxmobile_invite_message">If you have an Android phone we can talk for free using VoX Mobile. Get it from:\n\nhttps://market.android.com/details?id=net.voxcorp\n\nMy VoX Mobile number is</string>
 </resources>

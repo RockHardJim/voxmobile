@@ -19,9 +19,10 @@ package net.voxcorp.ui;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import android.app.AlertDialog;
-import android.app.TabActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -60,18 +61,21 @@ import net.voxcorp.utils.NightlyUpdater.UpdaterPopupLauncher;
 import net.voxcorp.utils.PreferencesProviderWrapper;
 import net.voxcorp.utils.PreferencesWrapper;
 import net.voxcorp.voxmobile.provider.DBContract.ProvisionCheckContract;
+import net.voxcorp.voxmobile.ui.TrackedTabActivity;
 import net.voxcorp.voxmobile.utils.Consts;
 import net.voxcorp.voxmobile.utils.OrderHelper;
 import net.voxcorp.widgets.IndicatorTab;
 import net.voxcorp.wizards.BasePrefsWizard;
 import net.voxcorp.wizards.WizardUtils.WizardInfo;
+import net.voxcorp.wizards.impl.VoXMobile;
 
-public class SipHome extends TabActivity {
+public class SipHome extends TrackedTabActivity {
 	public static final int ACCOUNTS_MENU = Menu.FIRST + 1;
 	public static final int PARAMS_MENU = Menu.FIRST + 2;
 	public static final int CLOSE_MENU = Menu.FIRST + 3;
 	public static final int HELP_MENU = Menu.FIRST + 4;
 	public static final int DISTRIB_ACCOUNT_MENU = Menu.FIRST + 5;
+	public static final int INVITE_MENU = Menu.FIRST + 6;
 	
 
 	public static final String LAST_KNOWN_VERSION_PREF = "last_known_version";
@@ -431,6 +435,7 @@ public class SipHome extends TabActivity {
 		}
 		menu.add(Menu.NONE, PARAMS_MENU, Menu.NONE, R.string.prefs).setIcon(android.R.drawable.ic_menu_preferences);
 		menu.add(Menu.NONE, HELP_MENU, Menu.NONE, R.string.help).setIcon(android.R.drawable.ic_menu_help);
+		menu.add(Menu.NONE, INVITE_MENU, Menu.NONE, R.string.voxmobile_invite).setIcon(android.R.drawable.ic_menu_send);
 		menu.add(Menu.NONE, CLOSE_MENU, Menu.NONE, R.string.menu_disconnect).setIcon(R.drawable.ic_lock_power_off);
 
 	}
@@ -451,8 +456,52 @@ public class SipHome extends TabActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		SipProfile account;
+		SipProfile account = null;
+		DBAdapter db = null;
 		switch (item.getItemId()) {
+		case INVITE_MENU:
+			db = new DBAdapter(this);
+			db.open();
+
+			List<SipProfile> accounts = db.getListAccounts();
+			Iterator<SipProfile> iterator = accounts.iterator();
+			while (iterator.hasNext()) {
+				SipProfile sp = iterator.next();
+		        if (VoXMobile.isVoXMobile(sp.proxies)) {
+	        		account = sp;
+		        	if (sp.active) break;
+		        }
+			}
+			db.close();
+			if (account == null) {
+				// No VoX Mobile SIP accounts found
+				new AlertDialog.Builder(this)
+				.setTitle(R.string.voxmobile_attention)
+				.setMessage(getString(R.string.voxmobile_invite_error))
+				.setPositiveButton(R.string.voxmobile_yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						startActivity(new Intent(SipHome.this, AccountsList.class));
+					}
+				})
+				.setNegativeButton(R.string.voxmobile_no, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+					}
+				})
+				.show();
+
+				return true;
+			}
+
+			String body = getString(R.string.voxmobile_invite_message);
+			body += String.format(" %s.", account.username);
+
+			Intent sendIntent = new Intent(Intent.ACTION_SEND);
+			sendIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.voxmobile_invite_subject));
+			sendIntent.putExtra(Intent.EXTRA_TEXT, body);
+			sendIntent.setType("text/plain");
+			startActivity(Intent.createChooser(sendIntent, getString(R.string.voxmobile_invite_title)));
+			trackEvent(Consts.VOX_MOBILE_INVITE_EVENT, "yes", 0);
+			return true;
 		case ACCOUNTS_MENU:
 			startActivity(new Intent(this, AccountsList.class));
 			return true;
@@ -489,7 +538,7 @@ public class SipHome extends TabActivity {
 			return true;
 		case DISTRIB_ACCOUNT_MENU:
 			WizardInfo distribWizard = CustomDistribution.getCustomDistributionWizard();
-			DBAdapter db = new DBAdapter(this);
+			db = new DBAdapter(this);
 			db.open();
 			account = db.getAccountForWizard(distribWizard.id);
 			db.close();
