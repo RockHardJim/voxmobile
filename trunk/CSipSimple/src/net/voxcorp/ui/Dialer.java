@@ -300,8 +300,7 @@ public class Dialer extends Activity implements OnClickListener, OnLongClickList
 	private static final int TEXT_VIEW = 1;
 	
 	private boolean needDualPaneMode() {
-		int orientation = getResources().getConfiguration().orientation;
-		return (isTablet && (orientation == Configuration.ORIENTATION_LANDSCAPE) );
+		return false;
 	}
 	
 	private void initPaneMode() {
