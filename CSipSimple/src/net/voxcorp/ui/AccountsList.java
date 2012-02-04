@@ -221,6 +221,18 @@ public class AccountsList extends Activity implements OnItemClickListener {
     		VoXObserverState.reset();
     	}
     	
+    	private void setError(int httpCode, String errorMsg) {
+			VoXObserverState.mHttpCode = httpCode;
+
+			if (httpCode == HttpStatus.OK.value()) {
+				VoXObserverState.mError = "";
+			} else if (httpCode != 0) {
+				VoXObserverState.mError = "" + httpCode + ": " + HttpStatus.valueOf(httpCode).getReasonPhrase();
+			} else {
+				VoXObserverState.mError = errorMsg;
+			}
+    	}
+    	
     	@Override
     	public void onChange(boolean selfChange) {
     		super.onChange(selfChange);
@@ -234,13 +246,7 @@ public class AccountsList extends Activity implements OnItemClickListener {
     		if (c.moveToFirst()) {
     			VoXObserverState.mSyncStatus = c.getInt(RequestContract.UPDATED_INDEX);
     			VoXObserverState.mSuccess = c.getInt(RequestContract.SUCCESS_INDEX) == DBBoolean.TRUE;
-    			VoXObserverState.mHttpCode = c.getInt(RequestContract.HTTP_STATUS_INDEX);
-    			    			
-    			if (VoXObserverState.mHttpCode == HttpStatus.OK.value()) {
-    				VoXObserverState.mError = c.getString(RequestContract.ERROR_INDEX);
-    			} else if (VoXObserverState.mHttpCode != 0) {
-    				VoXObserverState.mError = "" + VoXObserverState.mHttpCode + ": " + HttpStatus.valueOf(VoXObserverState.mHttpCode).getReasonPhrase();
-    			}
+    			setError(c.getInt(RequestContract.HTTP_STATUS_INDEX), c.getString(RequestContract.ERROR_INDEX));
     		} else {
     			VoXObserverState.mSyncStatus = SyncStatus.STALE;
     		}
@@ -275,7 +281,7 @@ public class AccountsList extends Activity implements OnItemClickListener {
     		}
     		
     		Cursor c = managedQuery(VersionCheckContract.CONTENT_URI, VersionCheckContract.PROJECTION, null, null, null);
-    		if (c == null) return false;
+    		
     		try {
     			if (c.getCount() == 0) {
     				if (allowUpdate) {
