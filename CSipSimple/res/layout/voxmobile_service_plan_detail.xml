@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+	Copyright (C) 2011 VoX Communications 
+ -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content" android:layout_height="wrap_content">
+
+    <ScrollView android:id="@+id/ScrollView01" 
+	    android:layout_width="fill_parent" 
+	    android:layout_height="wrap_content"
+    	android:layout_marginBottom="75dp" 
+    	android:layout_marginLeft="10dp"
+    	android:layout_marginRight="10dp">
+    	
+    	<LinearLayout android:orientation="vertical"
+    		android:layout_width="fill_parent" 
+    		android:layout_height="wrap_content">
+        	<TextView android:id="@+id/TextView01" 
+        		android:layout_width="fill_parent" 
+        		android:layout_height="wrap_content"
+        		android:textSize="20sp"
+        		android:textStyle="bold"
+        		android:layout_marginBottom="10dp"/>
+	    	<TextView android:id="@+id/TextView02" 
+    	    	android:layout_width="fill_parent" 
+        		android:layout_height="wrap_content"
+        		android:layout_marginBottom="10dp"
+		    	android:textSize="20sp"/>
+        </LinearLayout>
+    </ScrollView>
+
+
+    <LinearLayout android:id="@+id/controls" 
+    	android:orientation="horizontal"
+    	android:layout_width="fill_parent" 
+    	android:layout_height="wrap_content"
+    	android:layout_alignParentBottom="true"
+    	style="@android:style/ButtonBar">
+    	
+        <Button android:id="@+id/Button02" 
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content"
+        android:layout_weight="1"/>
+
+        <Button android:id="@+id/Button01" 
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content"
+        android:layout_weight="1"/>
+    </LinearLayout>
+
+</RelativeLayout>

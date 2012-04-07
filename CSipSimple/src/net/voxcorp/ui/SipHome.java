@@ -62,6 +62,7 @@ import net.voxcorp.utils.PreferencesProviderWrapper;
 import net.voxcorp.utils.PreferencesWrapper;
 import net.voxcorp.voxmobile.provider.DBContract.ProvisionCheckContract;
 import net.voxcorp.voxmobile.ui.TrackedTabActivity;
+import net.voxcorp.voxmobile.ui.rates.RatesActivity;
 import net.voxcorp.voxmobile.utils.Consts;
 import net.voxcorp.voxmobile.utils.OrderHelper;
 import net.voxcorp.widgets.IndicatorTab;
@@ -76,7 +77,7 @@ public class SipHome extends TrackedTabActivity {
 	public static final int HELP_MENU = Menu.FIRST + 4;
 	public static final int DISTRIB_ACCOUNT_MENU = Menu.FIRST + 5;
 	public static final int INVITE_MENU = Menu.FIRST + 6;
-	
+	public static final int RATES_MENU = Menu.FIRST + 7;
 
 	public static final String LAST_KNOWN_VERSION_PREF = "last_known_version";
 	public static final String LAST_KNOWN_ANDROID_VERSION_PREF = "last_known_aos_version";
@@ -436,6 +437,7 @@ public class SipHome extends TrackedTabActivity {
 		menu.add(Menu.NONE, PARAMS_MENU, Menu.NONE, R.string.prefs).setIcon(android.R.drawable.ic_menu_preferences);
 		menu.add(Menu.NONE, HELP_MENU, Menu.NONE, R.string.help).setIcon(android.R.drawable.ic_menu_help);
 		menu.add(Menu.NONE, INVITE_MENU, Menu.NONE, R.string.voxmobile_invite).setIcon(android.R.drawable.ic_menu_send);
+		menu.add(Menu.NONE, RATES_MENU, Menu.NONE, R.string.voxmobile_rates).setIcon(R.drawable.ic_voxmobile_rates_menu);
 		menu.add(Menu.NONE, CLOSE_MENU, Menu.NONE, R.string.menu_disconnect).setIcon(R.drawable.ic_lock_power_off);
 
 	}
@@ -459,6 +461,9 @@ public class SipHome extends TrackedTabActivity {
 		SipProfile account = null;
 		DBAdapter db = null;
 		switch (item.getItemId()) {
+		case RATES_MENU:
+			startActivity(new Intent(this, RatesActivity.class));
+			return true;
 		case INVITE_MENU:
 			db = new DBAdapter(this);
 			db.open();
@@ -467,10 +472,10 @@ public class SipHome extends TrackedTabActivity {
 			Iterator<SipProfile> iterator = accounts.iterator();
 			while (iterator.hasNext()) {
 				SipProfile sp = iterator.next();
-		        if (VoXMobile.isVoXMobile(sp.proxies)) {
-	        		account = sp;
-		        	if (sp.active) break;
-		        }
+				if (VoXMobile.isVoXMobile(sp.proxies)) {
+					account = sp;
+					if (sp.active) break;
+				}
 			}
 			db.close();
 			if (account == null) {
@@ -500,7 +505,7 @@ public class SipHome extends TrackedTabActivity {
 			sendIntent.putExtra(Intent.EXTRA_TEXT, body);
 			sendIntent.setType("text/plain");
 			startActivity(Intent.createChooser(sendIntent, getString(R.string.voxmobile_invite_title)));
-			trackEvent(Consts.VOX_MOBILE_INVITE_EVENT, "yes", 0);
+			trackEvent(Consts.VOX_MOBILE_INVITE_EVENT, "yes", 1);
 			return true;
 		case ACCOUNTS_MENU:
 			startActivity(new Intent(this, AccountsList.class));

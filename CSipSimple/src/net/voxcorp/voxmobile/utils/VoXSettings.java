@@ -1,42 +1,53 @@
-/**
- * Copyright (C) 2012 VoX Communications
- * This file is part of VoX Mobile.
- *
- *  VoX Mobile is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  VoX Mobile is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with VoX Mobile.  If not, see <http://www.gnu.org/licenses/>.
- */
 package net.voxcorp.voxmobile.utils;
 
 public class VoXSettings {
 	
 	public static int getMode() {
-		return 0;
+		return Consts.MODE_ACTIVE;
 	}
 
 	public static String getWebserviceHost() {
-		return "";
+		switch (Consts.MODE_ACTIVE) {
+          case Consts.MODE_DEVELOPMENT:
+			  return Consts.URL_DEV;
+		  case Consts.MODE_STAGE:
+			  return Consts.URL_STAGE;
+		  default:
+			  return Consts.URL_PROD;
+		}
 	}
 	
 	public static String getStunServer() {
-		return "";
+		switch (Consts.MODE_ACTIVE) {
+          case Consts.MODE_DEVELOPMENT:
+			  return Consts.STUN_HOST_DEV;
+		  case Consts.MODE_STAGE:
+			  return Consts.STUN_HOST_STAGE;
+		  default:
+			  return Consts.STUN_HOST_PROD;
+		}
 	}
 	
 	public static String getFaqLink() {
-		return "";
+		switch (Consts.MODE_ACTIVE) {
+          case Consts.MODE_DEVELOPMENT:
+			  return Consts.FAQ_LINK_DEV;
+		  case Consts.MODE_STAGE:
+			  return Consts.FAQ_LINK_STAGE;
+		  default:
+			  return Consts.FAQ_LINK_PROD;
+		}
 	}
 	
 	public static String getGoogleAnalyticsAccount() {
-		return "";
+		switch (Consts.MODE_ACTIVE) {
+		  case Consts.MODE_DEVELOPMENT:
+			  return Consts.GOOGLE_ANALYTICS_DEV;
+		  case Consts.MODE_STAGE:
+			  return Consts.GOOGLE_ANALYTICS_STAGE;
+		  default:
+			  return Consts.GOOGLE_ANALYTICS_PROD;
+		}
 	}
 
 }

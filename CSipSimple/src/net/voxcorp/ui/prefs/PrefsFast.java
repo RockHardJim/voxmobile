@@ -91,12 +91,12 @@ public class PrefsFast extends Activity implements OnClickListener {
 	
 	private void updateFromPrefs() {
 		globIntegrate.setChecked(prefsWrapper.getPreferenceBooleanValue(SipConfigManager.INTEGRATE_WITH_DIALER));
-		boolean tgIn = prefs.getBoolean("use_3g_in", false);
-		boolean tgOut = prefs.getBoolean("use_3g_out", false);
-		boolean gprsIn = prefs.getBoolean("use_gprs_in", false);
-		boolean gprsOut = prefs.getBoolean("use_gprs_out", false);
-		boolean edgeIn = prefs.getBoolean("use_edge_in", false);
-		boolean edgeOut = prefs.getBoolean("use_edge_out", false);
+		boolean tgIn = prefs.getBoolean("use_3g_in", true);
+		boolean tgOut = prefs.getBoolean("use_3g_out", true);
+		boolean gprsIn = prefs.getBoolean("use_gprs_in", true);
+		boolean gprsOut = prefs.getBoolean("use_gprs_out", true);
+		boolean edgeIn = prefs.getBoolean("use_edge_in", true);
+		boolean edgeOut = prefs.getBoolean("use_edge_out", true);
 		boolean wifiIn = prefs.getBoolean("use_wifi_in", true);
 		boolean wifiOut = prefs.getBoolean("use_wifi_out", true);
 		
