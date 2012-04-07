@@ -444,15 +444,11 @@ public class ComposeMessageActivity extends Activity implements OnClickListener 
 
 	@Override
 	public void onClick(View v) {
-		switch (v.getId()) {
-		case R.id.subject:
+		if (v.getId() == R.id.subject) {
 			chooseSipUri();
-			break;
-		case R.id.send_button:
+		} else if (v.getId() == R.id.send_button) {
 			sendMessage();
-			break;
-		default:
-			break;
+		} else {
 		}
 	}
 }

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+	Copyright (C) 2011 VoX Communications 
+ -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content" android:layout_height="wrap_content">
+	
+    <ScrollView android:id="@+id/ScrollView01" 
+	    android:layout_width="fill_parent" 
+	    android:layout_height="wrap_content"
+    	android:layout_marginBottom="75dp" 
+    	android:layout_marginLeft="10dp"
+    	android:layout_marginRight="10dp">
+	
+       	<LinearLayout android:orientation="vertical"
+    		android:layout_width="fill_parent" 
+    		android:layout_height="wrap_content">
+    		
+        	<TextView android:layout_width="fill_parent" 
+        		android:layout_height="wrap_content"
+		    	android:textSize="20sp"
+        		android:layout_marginBottom="10dp"
+        		android:text="@string/voxmobile_did_text_1" />
+
+			<TextView
+    	   		android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"
+		    	android:textSize="20sp"
+       			android:text="@string/voxmobile_state" />
+	   		<Spinner android:id="@+id/Spinner01"
+				android:prompt="@string/voxmobile_did_state"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+			    android:paddingLeft="0dp"
+			    android:paddingTop="5dp"
+			    android:paddingBottom="5dp"
+	        	android:textColor="#000"/>
+		
+			<TextView
+    	   		android:layout_width="wrap_content"
+	    	    android:layout_height="wrap_content"
+		    	android:textSize="20sp"
+       			android:text="@string/voxmobile_city" />
+			<Spinner android:id="@+id/Spinner02"
+				android:prompt="@string/voxmobile_did_city"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+		    	android:paddingLeft="0dp"
+			    android:paddingTop="5dp"
+			    android:paddingBottom="5dp"
+	    	    android:textColor="#000"/>
+		</LinearLayout>
+	</ScrollView>		        
+		
+    <LinearLayout android:id="@+id/controls" 
+    	android:orientation="horizontal"
+    	android:layout_width="fill_parent" 
+    	android:layout_height="wrap_content"
+    	android:layout_alignParentBottom="true"
+    	style="@android:style/ButtonBar">
+		
+		<Button android:layout_height="wrap_content" 
+			android:layout_width="wrap_content" 
+			android:layout_weight="1" 
+			android:layout_marginLeft="20dip" 
+			android:layout_marginRight="20dip" 
+			android:id="@+id/Button02" 
+			android:text="@string/voxmobile_continue"></Button>
+		
+		<Button android:layout_height="wrap_content" 
+			android:layout_width="wrap_content" 
+			android:layout_weight="1" 
+			android:layout_marginLeft="20dip" 
+			android:layout_marginRight="20dip" 
+			android:id="@+id/Button01" 
+			android:text="@string/cancel"></Button>
+	</LinearLayout>
+</RelativeLayout>
