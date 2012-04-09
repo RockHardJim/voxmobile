@@ -138,11 +138,8 @@ public class UAStateReceiver extends Callback {
 			}
 		});
 		unlockCpu();
-		
-		
 	}
-	
-	
+
 	@Override
 	public void on_call_state(final int callId, pjsip_event e) {
 		lockCpu();
@@ -150,7 +147,12 @@ public class UAStateReceiver extends Callback {
 		int status_code = pjsua.getEventStatusCode(e);
 		Log.d(THIS_FILE, "Call state << (SIP Response: " + status_code + ")");
 		
-		if (status_code >= SipCallSession.StatusCode.INTERNAL_SERVER_ERROR) {
+		if (status_code == SipCallSession.StatusCode.ADDRESS_INCOMPLETE ||
+			status_code == SipCallSession.StatusCode.NOT_ACCEPTABLE_HERE ||
+			status_code == SipCallSession.StatusCode.FORBIDDEN ||
+			status_code == SipCallSession.StatusCode.NOT_FOUND ||
+			status_code == SipCallSession.StatusCode.UNRESOLVABLE_DESTINATION ||
+			status_code >= SipCallSession.StatusCode.INTERNAL_SERVER_ERROR) {
 			Intent intent = new Intent(SipManager.ACTION_SIP_NEGATIVE_SIP_RESPONSE);
 			intent.putExtra(SipManager.ACTION_SIP_NEGATIVE_SIP_RESPONSE, status_code);
 			pjService.service.sendBroadcast(intent);

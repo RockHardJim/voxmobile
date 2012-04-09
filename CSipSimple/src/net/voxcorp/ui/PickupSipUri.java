@@ -128,14 +128,11 @@ public class PickupSipUri extends Activity implements OnClickListener {
 	
 	@Override
 	public void onClick(View v) {
-		switch(v.getId()) {
-		case R.id.ok:
+		if (v.getId() == R.id.ok) {
 			sendPositiveResult();
-			break;
-		case R.id.cancel:
+		} else if (v.getId() == R.id.cancel) {
 			setResult(RESULT_CANCELED);
 			finish();
-			break;
 		}
 	}
 

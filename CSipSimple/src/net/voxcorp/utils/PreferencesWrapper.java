@@ -134,12 +134,12 @@ public class PreferencesWrapper {
 		put("use_wifi_out", true);
 		put("use_other_in", true);
 		put("use_other_out", true);
-		put("use_3g_in", false);
-		put("use_3g_out", false);
-		put("use_gprs_in", false);
-		put("use_gprs_out", false);
-		put("use_edge_in", false);
-		put("use_edge_out", false);
+		put("use_3g_in", true);
+		put("use_3g_out", true);
+		put("use_gprs_in", true);
+		put("use_gprs_out", true);
+		put("use_edge_in", true);
+		put("use_edge_out", true);
 		put(SipConfigManager.FORCE_NO_UPDATE, true);
 		
 		

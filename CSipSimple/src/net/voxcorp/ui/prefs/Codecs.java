@@ -155,25 +155,6 @@ public class Codecs extends ListActivity implements OnClickListener {
 					return ;
 				}
 				
-				boolean isPreferredCodec = isPreferredCodec((String) item.get(CODEC_ID));
-				int firstNonPreferredCodec = getFirstNonPreferredCodecIndex();
-				
-				// Prevent preferred codec priority from being set too low
-				if (isPreferredCodec && (to >= firstNonPreferredCodec)) {
-					return;
-				}
-				
-				// Prevent non-preferred codec priority from being set too high
-				if (!isPreferredCodec && (to < firstNonPreferredCodec)) {
-					return;
-				}
-				
-				// Position 0 == AMR and Position 1 == SILK/8000, so do not allow
-				// these to change priority as they are always preferred
-				if (from <= 1 || to <= 1) {
-					return;
-				}
-				
 				codecs.remove(from);
 				codecs.add(to, item);
 				
@@ -300,16 +281,6 @@ public class Codecs extends ListActivity implements OnClickListener {
         if (codec == null) {
             // If for some reason the requested item isn't available, do nothing
             return false;
-        }
-        
-        // Prevent AMR codec from being deactivated
-        if (((String) codec.get(CODEC_ID)).startsWith("AMR")) {
-        	return false;
-        }
-        
-        // Prevent SILK codecs from being deactivated
-        if (((String) codec.get(CODEC_ID)).startsWith("SILK")) {
-        	return false;
         }
         
         switch (item.getItemId()) {
