@@ -312,14 +312,17 @@ public class InCallMediaControl extends Activity implements OnSeekBarChangeListe
 				Float newValue = (float) ( value / 10.0 );
 				String key;
 				boolean useBT = sipService.getCurrentMediaState().isBluetoothScoOn;
-				if (arg0.getId() == R.id.speaker_level) {
+				switch(arg0.getId()) {
+				case R.id.speaker_level:
 					sipService.confAdjustTxLevel(0, newValue);
 					key =  useBT ? SipConfigManager.SND_BT_SPEAKER_LEVEL : SipConfigManager.SND_SPEAKER_LEVEL;
 					configurationService.setPreferenceFloat(key, newValue);
-				} else if (arg0.getId() == R.id.micro_level) {
+					break;
+				case R.id.micro_level:
 					sipService.confAdjustRxLevel(0, newValue);
 					key =  useBT ? SipConfigManager.SND_BT_MIC_LEVEL : SipConfigManager.SND_MIC_LEVEL;
 					configurationService.setPreferenceFloat(key, newValue);
+					break;
 				}
 			} catch (RemoteException e) {
 				Log.e(THIS_FILE, "Impossible to set mic/speaker level", e);
@@ -350,9 +353,11 @@ public class InCallMediaControl extends Activity implements OnSeekBarChangeListe
 	public void onCheckedChanged(CompoundButton arg0, boolean value) {
 		if(sipService != null && configurationService != null) {
 			try {
-				if (arg0.getId() == R.id.echo_cancellation) {
+				switch(arg0.getId()) {
+				case R.id.echo_cancellation:
 					sipService.setEchoCancellation(value);
 					configurationService.setPreferenceBoolean(SipConfigManager.ECHO_CANCELLATION, value);
+					break;
 				}
 				//Update quit timer
 				if(isAutoClose) {
@@ -367,8 +372,37 @@ public class InCallMediaControl extends Activity implements OnSeekBarChangeListe
 	@Override
 	public void onClick(View v) {
 		
-		if (v.getId() == R.id.save_bt) {
+		switch(v.getId()) {
+		/*
+		case R.id.record:
+			if(sipService != null) {
+				try {
+					if(sipService.getRecordedCall() != -1) {
+						sipService.stopRecording();
+					}else {
+						int callId = -1;
+						CallInfo[] calls = sipService.getCalls();
+						for(CallInfo call : calls) {
+							if(call.isActive()) {
+								callId = call.getCallId();
+								break;
+							}
+						}
+						if(callId != -1) {
+							sipService.startRecording(callId);
+						}
+					}
+					
+					updateCallButton();
+				} catch (RemoteException e) {
+					Log.e(THIS_FILE, "Impossible to record", e);
+				}
+			}
+			break;
+			*/
+		case R.id.save_bt:
 			finish();
+			break;
 		}
 	}
 	

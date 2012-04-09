@@ -192,24 +192,28 @@ public class EditFilter extends Activity implements OnItemSelectedListener, Text
 
 	@Override
 	public void onItemSelected(AdapterView<?> spinner, View arg1, int arg2, long arg3) {
-		if (spinner.getId() == R.id.filter_action) {
+		switch(spinner.getId()) {
+		case R.id.filter_action:
 			if(Filter.getActionForPosition(actionSpinner.getSelectedItemPosition()) == Filter.ACTION_REPLACE) {
 				replaceContainer.setVisibility(View.VISIBLE);
 			}else {
 				replaceContainer.setVisibility(View.GONE);
 			}
-		} else if (spinner.getId() == R.id.matcher_type) {
+			break;
+		case R.id.matcher_type:
 			if(initMatcherSpinner) {
 				matchesView.setText("");
 			}else {
 				initMatcherSpinner = true;
 			}
-		} else if (spinner.getId() == R.id.replace_type) {
+			break;
+		case R.id.replace_type:
 			if(initReplaceSpinner) {
 				replaceView.setText("");
 			}else {
 				initReplaceSpinner = true;
 			}
+			break;
 		}
 		boolean showMatcherView = Filter.getMatcherForPosition(matcherSpinner.getSelectedItemPosition() ) != Filter.MATCHER_ALL ;
 		matchesView.setVisibility(showMatcherView ? View.VISIBLE : View.GONE);

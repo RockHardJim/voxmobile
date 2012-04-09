@@ -360,36 +360,48 @@ public class InCallControls2 extends FrameLayout implements OnTriggerListener, O
 	@Override
 	public void onClick(View v) {
 		int id = v.getId();
-		if (id == R.id.clearCallButton) {
+		switch (id) {
+		case R.id.clearCallButton:
 			dispatchTriggerEvent(OnTriggerListener.CLEAR_CALL);
-		} else if (id == R.id.dialpadButton) {
+			break;
+		case R.id.dialpadButton:
 			dispatchTriggerEvent(isDialpadOn ? OnTriggerListener.DIALPAD_OFF : OnTriggerListener.DIALPAD_ON);
 			isDialpadOn = !isDialpadOn;
-		} else if (id == R.id.bluetoothButton) {
+			break;
+		case R.id.bluetoothButton:
 			if (((ToggleButton) v).isChecked()) {
 				dispatchTriggerEvent(OnTriggerListener.BLUETOOTH_ON);
 			} else {
 				dispatchTriggerEvent(OnTriggerListener.BLUETOOTH_OFF);
 			}
-		} else if (id == R.id.speakerButton) {
+			break;
+		case R.id.speakerButton:
 			if (((ToggleButton) v).isChecked()) {
 				dispatchTriggerEvent(OnTriggerListener.SPEAKER_ON);
 			} else {
 				dispatchTriggerEvent(OnTriggerListener.SPEAKER_OFF);
 			}
-		} else if (id == R.id.muteButton) {
+			break;
+		case R.id.muteButton:
 			if (((ToggleButton) v).isChecked()) {
 				dispatchTriggerEvent(OnTriggerListener.MUTE_ON);
 			} else {
 				dispatchTriggerEvent(OnTriggerListener.MUTE_OFF);
 			}
-		} else if (id == R.id.takeCallButton) {
+			break;
+		case R.id.takeCallButton:
 			dispatchTriggerEvent(OnTriggerListener.TAKE_CALL);
-		} else if (id == R.id.declineCallButton) {
+			break;
+		case R.id.declineCallButton:
 			dispatchTriggerEvent(OnTriggerListener.DECLINE_CALL);
-		} else if (id == R.id.addCallButton) {
+			break;
+		case R.id.addCallButton:
 			dispatchTriggerEvent(OnTriggerListener.ADD_CALL);
-		} else {
+			break;
+	//	case R.id.settingsButton:
+	//		dispatchTriggerEvent(OnTriggerListener.MEDIA_SETTINGS);
+		default:
+			break;
 		}
 	}
 	

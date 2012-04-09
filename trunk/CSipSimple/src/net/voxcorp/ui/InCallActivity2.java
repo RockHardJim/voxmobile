@@ -1121,12 +1121,6 @@ public class InCallActivity2 extends Activity implements OnTriggerListener, OnDi
 					break;
 				}
 				case DECLINE_CALL: 
-				{
-					if (service != null) {
-						service.hangup(call.getCallId(), SipCallSession.StatusCode.BUSY);
-					}
-					break;
-				}
 				case CLEAR_CALL:
 				{
 					if (service != null) {

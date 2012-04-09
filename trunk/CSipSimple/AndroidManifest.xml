@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="net.voxcorp"
 	android:installLocation="auto"
-	android:versionName="1.5.1" android:versionCode="1164">
+	android:versionName="1.1" android:versionCode="1155">
 	<supports-screens  
 		android:smallScreens="true" 
 		android:normalScreens="true"
 		android:largeScreens="true" 
 		android:xlargeScreens="true"/>
-	<application android:label="@string/app_name"
-	    android:icon="@drawable/ic_launcher_phone_vox"
-	    android:debuggable="true"
-	    android:allowBackup="false" >
+	<application android:label="@string/app_name" android:icon="@drawable/ic_launcher_phone_vox" android:debuggable="true" android:allowBackup="false" >
 		<activity android:label="@string/app_name" android:name="net.voxcorp.ui.SipHome" android:launchMode="singleTask"
 			android:screenOrientation="portrait" android:configChanges="orientation"
 			android:theme="@android:style/Theme.NoTitleBar">
@@ -244,63 +241,9 @@
 		<activity android:name="net.voxcorp.voxmobile.ui.AccountsListActivity"
 		    android:configChanges="orientation"
 		    android:label="@string/voxmobile_accounts" />
-		<activity android:name="net.voxcorp.voxmobile.ui.SipAccountsListActivity"
-		    android:configChanges="orientation" />
-		<activity android:name="net.voxcorp.voxmobile.ui.LoginActivity"
-		    android:configChanges="orientation"
-		    android:windowSoftInputMode="stateAlwaysVisible" />
-		<activity android:name="net.voxcorp.voxmobile.ui.ServiceErrorDialog"
-		    android:configChanges="orientation"
-		    android:theme="@android:style/Theme.Translucent.NoTitleBar"
-		    android:launchMode="singleTop" />
-
-		<!-- VoX Mobile Order UI -->
-		<activity android:name="net.voxcorp.voxmobile.ui.order.ServicePlansListActivity"
-		    android:configChanges="orientation" />
-		<activity android:name="net.voxcorp.voxmobile.ui.order.SelectCountryActivity"
-		    android:configChanges="orientation"
-		    android:theme="@style/CupcakeDialog" />
-		<activity android:name="net.voxcorp.voxmobile.ui.order.BillingInfoActivity"
-		    android:configChanges="orientation" />
-		<activity android:name="net.voxcorp.voxmobile.ui.order.DIDSelectionActivity"
-		    android:configChanges="orientation" />
-		<activity android:name="net.voxcorp.voxmobile.ui.order.OrderSummaryActivity"
-		    android:configChanges="orientation" />
-		<activity android:name="net.voxcorp.voxmobile.ui.order.OrderSuccessActivity"
-		    android:configChanges="orientation"
-		    android:launchMode="singleInstance"
-		    android:theme="@style/CupcakeDialog" />
-        <activity
-            android:name="net.voxcorp.voxmobile.ui.rates.RatesActivity"
-            android:launchMode="singleTop"
-            android:theme="@style/DarkTheme"
-            android:configChanges="orientation"
-            android:windowSoftInputMode="stateHidden" />
-        <activity android:name="net.voxcorp.voxmobile.ui.rates.DialCodeListActivity"
-            android:configChanges="orientation" />
-		<activity android:name="net.voxcorp.voxmobile.ui.FeatureWarningDialog"
-		    android:configChanges="orientation"
-		    android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        
-		<!-- VoX Mobile Services / Providers -->						
-		<service android:name="net.voxcorp.voxmobile.service.RestService"
-		    android:exported="false"></service>
 		<provider android:name="net.voxcorp.voxmobile.provider.VoXMobileProvider"
 		    android:authorities="net.voxcorp.voxmobile.provider"
 		    android:exported="false" />
-		<receiver android:name="net.voxcorp.voxmobile.service.ServerErrorBroadcastReceiver">
-		    <intent-filter>
-		        <action android:name="net.voxcorp.service.NEGATIVE_SIP_RESPONSE"/>
-		    </intent-filter>		    
-		</receiver>
-
-        <receiver android:name="net.voxcorp.voxmobile.codecs.ReceiverSilk">
-            <meta-data android:name="lib_name" android:value="libpj_silk_codec.so" />
-            <meta-data android:name="init_factory" android:value="pjmedia_codec_silk_init" />
-            <intent-filter>
-                <action android:name="net.voxcorp.codecs.action.REGISTER_CODEC" />
-            </intent-filter>
-        </receiver>
 
 	</application>
 	<uses-sdk android:minSdkVersion="7" android:targetSdkVersion="9"/>
@@ -348,5 +291,4 @@
         android:permissionGroup="android.permission-group.COST_MONEY"
         android:protectionLevel="dangerous" />
 	
-</manifest>
-
+</manifest> 

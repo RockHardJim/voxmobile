@@ -70,13 +70,8 @@ public final class SipCallSession implements Parcelable {
 		public static final int METHOD_NOT_ALLOWED = 405;
 		public static final int NOT_ACCEPTABLE = 406;
 		public static final int INTERVAL_TOO_BRIEF = 423;
-		public static final int UNRESOLVABLE_DESTINATION = 476;
-		public static final int ADDRESS_INCOMPLETE = 484;
-		public static final int BUSY = 486;
-		public static final int NOT_ACCEPTABLE_HERE = 488;
 		public static final int INTERNAL_SERVER_ERROR = 500;
 		public static final int SERVICE_UNAVAILABLE = 503;
-		public static final int PRECONDITION_FAILURE = 580;
 		public static final int DECLINE = 603;
 		/*
 	    PJSIP_SC_PROXY_AUTHENTICATION_REQUIRED = 407,

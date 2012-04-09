@@ -1,190 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- SIP Response Messages -->
-    <string name="voxmobile_invite_title">How do you want to send your invitation?</string>
-    <string name="voxmobile_invite_subject">Lets try VoX Mobile</string>
-    <string name="voxmobile_invite_message">If you have an Android phone we can talk for free using VoX Mobile. Get it from:\n\nhttps://market.android.com/details?id=net.voxcorp\n\nMy VoX Mobile number is</string>
-    <string name="voxmobile_sip_error_403">That number can only be dialed when using a premium calling plan.\n\nWould you like to send a VoX Mobile invite to that person so that you can call them for free?</string>
-    <string name="voxmobile_sip_error_580">Trial accounts may only call the United States (excluding Alaska and Hawaii), Canada, Puerto Rico, other VoX Mobile users and certain international countries.\n\nDo you want to see a list of international countries that may be called during your free trial?</string>
-    <string name="voxmobile_sip_error_603">Your free calling trial has ended.\n\nYou may continue to call other VoX Mobile users, however you must subscribe to our service in order to call everyone else.\n\nDo you want to sign-up now?</string>
-    <string name="voxmobile_sip_error_general">Unable to complete your call.</string>
-
-    <string name="voxmobile_multiple_call_support">This feature might not work properly on your device if it does not have enough processing capability.\n\nPlease use at your own discretion.</string>
-
-	<string name="voxmobile">VoX Mobile</string>
-	<string name="voxmobile_accounts">VoX Mobile Accounts</string>
-	<string name="voxmobile_sip_account">VoX Mobile Account</string>
-	<string name="voxmobile_no_accounts">No Accounts Found</string>
-	<string name="voxmobile_no_plans">No Calling Plans Found</string>
-	<string name="voxmobile_calling_plans">VoX Mobile Calling Plans</string>
-	<string name="voxmobile_login">Login</string>
-	<string name="voxmobile_login_sub">Access your account</string>    
-  	<string name="voxmobile_logout">Log Out</string>
-	<string name="voxmobile_signup">Sign Up</string>    
-	<string name="voxmobile_signup_sub">Get a new account</string>
-	<string name="voxmobile_check_usage">Account usage</string>    
-	<string name="voxmobile_check_usage_sub">View your unbilled usage</string>    
-	<string name="voxmobile_help">Help</string>
+	<string name="voxmobile_corrupted">Your version of VoX Mobile has been corrupted. Please download the application from the Android Market.</string>
 	<string name="voxmobile_attention">Attention</string>
-	<string name="voxmobile_continue">Continue</string>	
-	<string name="voxmobile_close">Close</string>
+	<string name="voxmobile_upgrade">A newer version of this application is available in the Android Market. Please upgrade your application.</string>
+	<string name="voxmobile_network_error">Network Error</string>
+	<string name="voxmobile_server_error">Server Error</string>
+	<string name="voxmobile_accounts">VoX Mobile Accounts</string>
+	<string name="voxmobile_add_vox_account">VoX Mobile Accounts</string>
+	<string name="voxmobile_add_other_account">Other Accounts</string>
+	<string name="voxmobile_confirm_disable_g729">Disable G.729 Audio</string>
+	<string name="voxmobile_confirm_disable_g729_msg">Disabling this feature may result in poor audio quality.\n\nAre you sure you want to disable G.729 Audio?</string>
 	<string name="voxmobile_yes">Yes</string>
 	<string name="voxmobile_no">No</string>
 	<string name="voxmobile_invite">Invite a Friend</string>
 	<string name="voxmobile_invite_error">You must add a VoX Mobile account before inviting friends.\n\nWould you like do that now?</string>
-	<string name="voxmobile_international_rates">International Rates</string>
-	<string name="voxmobile_trial_dial_codes">Trial User Dial Codes</string>
-	<string name="voxmobile_rates">Rates</string>
-	<string name="voxmobile_finishing">Finishing</string>
-	<string name="voxmobile_loading">Loading</string>
-	<string name="voxmobile_select_country">Select a country</string>
-	<string name="voxmobile_location">Location</string>
-	<string name="voxmobile_dial_code">Dial Code</string>
-	<string name="voxmobile_no_dial_codes">No Dial Codes Found</string>
-	<string name="voxmobile_enabled">Enabled</string>
-	<string name="voxmobile_disabled">Disabled</string>
-	<string name="voxmobile_trial_mode">Trial Account International Calling</string>
-	<string name="voxmobile_sample_call">Sample call</string>
-
-	<!-- Dialog Resources -->
-	<string name="voxmobile_back">Back</string>
-	<string name="voxmobile_add_accounts_sub">Preferred / Highest Quality</string>
-	<string name="voxmobile_add_other_accounts_sub">Third party SIP providers</string>
-	<string name="voxmobile_account_ready">Click to setup / manage</string>
-	<string name="voxmobile_account_notready">Waiting for order to complete</string>
-	<string name="voxmobile_sip_account_configured">Configured</string>
-	<string name="voxmobile_sip_account_unconfigured">Click to configure</string>
-	<string name="voxmobile_add_vox_account">VoX Mobile Accounts</string>
-	<string name="voxmobile_add_other_account">Other Accounts</string>
-	<string name="voxmobile_phone_number">Telephone number</string>
-	<string name="voxmobile_no_cost">This plan is completely free.</string>
-	<string name="voxmobile_cost">Cost</string>
-	<string name="voxmobile_per_month">per month</string>
-	<string name="voxmobile_new_account">New Account</string>
-	<string name="voxmobile_summary">Account Summary</string>
-	    
-	<!-- Dialog Resources -->
-	<string name="voxmobile_submitting_order">Submitting order, please wait...</string>
-	<string name="voxmobile_please_wait">Please wait...</string>
-	<string name="voxmobile_authenticating">Authenticating, please wait...</string>
-	<string name="voxmobile_unauthorized">Login Error</string>
-	<string name="voxmobile_unauthorized_msg">Invalid user name or password</string>
-	<string name="voxmobile_server_error">Server Error</string>
-	<string name="voxmobile_network_error">Network Error</string>
-	<string name="voxmobile_network_error_msg">Unable to reach network.</string>
-	<string name="voxmobile_did_chooser_title">Select a Phone Number</string>
-	<string name="voxmobile_corrupted">Your version of VoX Mobile has been corrupted. Please download the application from the Android Market.</string>
-	
-	<!-- Login Resources -->
-	<string name="voxmobile_login_username">User name</string>
-	<string name="voxmobile_login_password">Password</string>
-	<string name="voxmobile_login_missing_uid">Missing user name</string>
-	<string name="voxmobile_login_missing_pwd">Missing password</string>
-	<string name="voxmobile_confirm_logout">Are you sure you want to log out?</string>
-
-	<!-- Main Menu Resources -->
-	<string name="voxmobile_setup_phone">Setup Phone</string>
-	<string name="voxmobile_g729_audio">G.729 Audio</string>
-	<string name="voxmobile_enable_g729">Click to enable</string>
-	<string name="voxmobile_disable_g729">Click to disable</string>
-	<string name="voxmobile_confirm_disable_g729">Disable G.729 Audio</string>
-	<string name="voxmobile_confirm_disable_g729_msg">Disabling this feature may result in poor audio quality.\n\nAre you sure you want to disable G.729 Audio?</string>
-	<string name="voxmobile_duplicate_account">Duplicate Account</string>
-	<string name="voxmobile_duplicate_account_message">The number you selected is already in use on the following account:</string>
-	<string name="voxmobile_duplicate_login">You are already logged in to this account.</string>
-	<string name="voxmobile_already_configured">This phone number has already been configured.</string>
-	    	    	
-	<!-- Sign Up Start Resources -->
-	<string name="voxmobile_signup_header">Get Your VoX Mobile Account</string>
-	<string name="voxmobile_signup_text_1">Simply put, VoX Mobile is about saving money when you use your mobile phone. This means that you can call anyone in the US, Canada, and Puerto Rico from anywhere in the world and you\'ll also get a real telephone number so people can call you.\n\nInternational customers can also use VoX Mobile to call the US, Canada, and Puerto Rico for free with select service plans.\n\nYou also get free unlimited text messaging to other VoX Mobile customers.</string>
-	<string name="voxmobile_signup_text_2">Our Calling Plans</string>
-	<string name="voxmobile_signup_text_3">We offer service plans to fit any budget. All of our service plans are contract-free so you don\'t have to worry about being locked in to a commitment. You\'ll also get premium calling features such as caller ID, call waiting, and voice mail for free.\n\nYou can browse our service plans on the following screen to find the one that fits your needs. Plan details and pricing are available by selecting any service plan.\n\nClick \'continue\' to get started.</string>
-	<string name="voxmobile_upgrade">A newer version of this application is available in the Android Market. Please upgrade your application.</string>
-	
-	<!-- Service Plan Detail Resources -->
-	<string name="voxmobile_service_plan_details">Service Plan Details</string>
-	
-	<!-- Country Chooser Resources -->
-	<string name="voxmobile_country_msg">What country do you live in?</string>
-	
-	<!-- Billing Info Resources -->
-	<string name="voxmobile_billing_title">Billing Information</string>
-	<string name="voxmobile_first_name">First Name</string>
-	<string name="voxmobile_last_name">Last Name</string>
-	<string name="voxmobile_email_address">E-Mail Address</string>
-	<string name="voxmobile_email_address_confirm">Confirm E-Mail Address</string>
-	<string name="voxmobile_card_number">Card Number</string>
-	<string name="voxmobile_card_cvv">Card Security Code (CVV)</string>
-	<string name="voxmobile_card_month">Card Month</string>
-	<string name="voxmobile_card_year">Card Year</string>
-	<string name="voxmobile_billing_street">Card Billing Street Address</string>
-	<string name="voxmobile_billing_city">Card Billing City</string>
-	<string name="voxmobile_billing_zip">Card Billing Postal Code</string>
-	
-	<string name="voxmobile_validate_error">You entered an incorrect item</string>
-	<string name="voxmobile_invalid_email">Your email address is missing or invalid.\n\nVerify your email address and try again.</string>
-	<string name="voxmobile_email_mismatch">Email addresses do not match.\n\nVerify your email address and try again.</string>
-	<string name="voxmobile_invalid_card_number">Invalid credit card number.\n\nVerify your credit card number and try again.</string>
-	<string name="voxmobile_invalid_card_cvv">Invalid credit card security code.\n\nVerify your credit card CVV and try again.</string>
-	<string name="voxmobile_invalid_card_month">Missing credit card month.\n\nVerify your credit card expiration month and try again.</string>
-	<string name="voxmobile_invalid_steet">Invalid billing street.\n\nPlease enter the street address where you receive credit card statements and try again.</string>
-	<string name="voxmobile_invalid_city">Invalid billing city.\n\nPlease enter the street address where you receive credit card statements and try again.</string>
-	<string name="voxmobile_invalid_zip">Invalid billing postal code.\n\nPlease enter the street address where you receive credit card statements and try again.</string>
-	
-	<!-- DID Overview Resources -->
-	<string name="voxmobile_did_header">Phone Number Selection</string>
-	<string name="voxmobile_did_text_1">Now it\'s time to select a phone number. You may choose a phone number from any region you wish.\n\nFor example, if you want a Miami, Florida phone number then choose it below.</string>
-	
-	<!-- Rate Center Chooser Resources -->
-	<string name="voxmobile_rate_center">Phone Number Selection</string>
-	<string name="voxmobile_state">State / Province</string>
-	<string name="voxmobile_did_state">Choose a State/Province</string>
-	<string name="voxmobile_city">City / Location</string>
-	<string name="voxmobile_did_city">Choose a City/Location</string>
-	<string name="voxmobile_please_select">Please Select</string>
-	
-	<!-- Order Summary Resources -->
-	<string name="voxmobile_summary_header">Order Summary</string>
-	<string name="voxmobile_summary_text_1">Please review the information below. Click any item make changes or click \'continue\' to finish your order.</string>
-	<string name="voxmobile_summary_text_2">Service Plan</string>
-	<string name="voxmobile_summary_text_3">Customer Name</string>
-	<string name="voxmobile_summary_text_4">eMail Address</string>
-	<string name="voxmobile_summary_text_5">Credit Card Number</string>
-	<string name="voxmobile_summary_text_6">Credit Card Security Code</string>
-	<string name="voxmobile_summary_text_7">Credit Card Expiration Date</string>
-	<string name="voxmobile_summary_text_8">My Country Code</string>
-	<string name="voxmobile_summary_text_9">Phone Number Region</string>
-	<string name="voxmobile_summary_text_10">List of Charges</string>
-	<string name="voxmobile_total_charges">Total Charges</string>
-	
-	<!-- Order Error Dialog Resources -->
-	<string name="voxmobile_order_error">Error Processing Order</string>
-	<string name="voxmobile_order_retry">Please verify the information and try again.</string>
-	<string name="voxmobile_bad_first_name">Your first name is missing or invalid.</string>
-	<string name="voxmobile_bad_last_name">Your last name is missing or invalid.</string>
-	<string name="voxmobile_bad_email">Your email address is missing or invalid.</string>
-	<string name="voxmobile_bad_billing_address">Your credit card billing street is missing or invalid.</string>
-	<string name="voxmobile_bad_billing_city">Your credit card billing city is missing or invalid.</string>
-	<string name="voxmobile_bad_billing_zip">Your credit card billing postal code is missing or invalid.</string>
-	<string name="voxmobile_bad_billing_country">Your credit card billing country is missing or invalid.</string>
-	<string name="voxmobile_bad_cc_number">Your credit card number is invalid.</string>
-	<string name="voxmobile_bad_cc_month">Your credit card expiration month is invalid.</string>
-	<string name="voxmobile_bad_cc_year">Your credit card expiration year is invalid.</string>
-	<string name="voxmobile_bad_cc_cvv">Your credit card security code (CVV) is invalid.</string>
-	<string name="voxmobile_cc_auth_fail">Your credit card has been declined.</string>
-	<string name="voxmobile_oversubscribed">This device has exceeded the maximum number of free accounts.\n\nContact support@voxcorp.net if you need more information.</string>
-	<string name="voxmobile_general_fault">Unable to process your order because a server error has occurred. Please contact support@voxcorp.net if you continue to have problems.</string>
-
-	<!-- Order Success Dialog Resources -->
-	<string name="voxmobile_order_success_header">Thank You For Your Order</string>
-	<string name="voxmobile_order_success_mesg">We have received your order and are processing it. You will receive an email shortly with important account information. Once we have processed your order you will be able to setup your phone and start calling. In the meantime, please remember the account information shown below as it is needed to access your account.</string>
-	<string name="voxmobile_order_success_charge">Your credit card has been charged</string>
-	
-	<!-- Provision Wait Resources -->
-	<string name="voxmobile_provision_wait">Your account is currently being created. This typically takes less than 5 minutes.\n\nYour phone will be configured automatically after your account setup is complete.</string>
-	<string name="voxmobile_checking_status">Checking order status</string>
-	
-	<!-- Account List Resources -->
-	<string name="voxmobile_check_status">Check order status</string>
-	<string name="voxmobile_manage">Manage VoX Mobile</string>
+    <string name="voxmobile_invite_title">How do you want to send your invitation?</string>
+    <string name="voxmobile_invite_subject">Lets try VoX Mobile</string>
+    <string name="voxmobile_invite_message">If you have an Android phone we can talk for free using VoX Mobile. Get it from:\n\nhttps://market.android.com/details?id=net.voxcorp\n\nMy VoX Mobile number is</string>
 </resources>
