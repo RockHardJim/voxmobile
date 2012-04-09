@@ -3,20 +3,17 @@ package net.voxcorp.wizards.impl;
 import java.util.HashMap;
 
 import net.voxcorp.R;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.net.Uri;
-import android.preference.EditTextPreference;
-
 import net.voxcorp.api.SipConfigManager;
 import net.voxcorp.api.SipProfile;
 import net.voxcorp.utils.CustomDistribution;
 import net.voxcorp.utils.PreferencesWrapper;
-import net.voxcorp.voxmobile.types.SipUser;
 import net.voxcorp.voxmobile.utils.Consts;
 import net.voxcorp.voxmobile.utils.SimpleCrypto;
 import net.voxcorp.voxmobile.utils.VoXSettings;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.preference.EditTextPreference;
 
 public class VoXMobile extends BaseImplementation {
 
@@ -127,46 +124,14 @@ public class VoXMobile extends BaseImplementation {
 		return account;
 	}
 	
-	private SipProfile createAccount(SipProfile account, String sipUid, String sipPwd, String displayName) {
-		account.display_name = "(" + sipUid.substring(0, 3) + ")" +
-	                           sipUid.substring(3, 6) + "-" +
-				               sipUid.substring(6);
-
-		account.acc_id = "<sip:" + Uri.encode(sipUid) + "@"+getDomain()+">";
-		
-		String regUri = "sip:"+getDomain();
-		account.reg_uri = regUri;
-		account.proxies = new String[] { "sip:" + getDomain() } ;
-		
-		account.realm = "*";
-		account.username = sipUid;
-		account.data = sipPwd;
-		account.scheme = SipProfile.CRED_SCHEME_DIGEST;
-		account.datatype = SipProfile.CRED_DATA_PLAIN_PASSWD;
-
-		account.reg_timeout = 900;	
-		account.transport = SipProfile.TRANSPORT_UDP;
-		account.vm_nbr = sipUid;
-		account.wizard = "VOXMOBILE";
-		
-		return account;
-	}
-
 	@Override
 	public SipProfile buildAccount(SipProfile account) {
 		return updateAccount(account, accountDisplayName.getText());
 	}
 	
-	public SipProfile buildAccount(SipProfile account, SipUser sipUser) {
-		return createAccount(account, 
-				sipUser.username, 
-				sipUser.password, 
-				sipUser.displayname);
-	}
-
 	@Override
 	public int getBasePreferenceResource() {
-		return R.xml.w_voxmobile_preferences;
+		return R.xml.w_basic_preferences;
 	}
 
 	@Override

@@ -646,10 +646,14 @@ public class Dialer extends Activity implements OnClickListener, OnLongClickList
 		// b = (ImageButton)view;
 		// }
 
-		if (view_id == R.id.button0) {
+		switch (view_id) {
+
+		case R.id.button0: {
 			dialFeedback.giveFeedback(ToneGenerator.TONE_DTMF_0);
 			keyPressed(KeyEvent.KEYCODE_0);
-		} else if (view_id == R.id.deleteButton) {
+			break;
+		}
+		case R.id.deleteButton: {
 			// TODO (dc3denny) How to get this to come through speaker. Regis is
 			// doing
 			// things with audio and Bluetooth, so I'm not going to do anything
@@ -663,35 +667,55 @@ public class Dialer extends Activity implements OnClickListener, OnLongClickList
 			// b.playSoundEffect(SoundEffectConstants.CLICK); // Plays through
 			// earpiece (typ.)
 			keyPressed(KeyEvent.KEYCODE_DEL);
-		} else if (view_id == R.id.deleteTextButton) {
+			break;
+		}
+		case R.id.deleteTextButton: {
 			sipTextUri.clear();
-		} else if (view_id == R.id.dialButton) {
+			break;
+		}
+		case R.id.dialButton:{
 			placeCall(DIGIT_VIEW);
-		} else if (view_id == R.id.dialTextButton) {
+			break;
+		}
+		case R.id.dialTextButton: {
 			placeCall(TEXT_VIEW);
-		} else if (view_id == R.id.switchTextView) {
+			break;
+		}
+		case R.id.switchTextView: {
 			// b.playSoundEffect(SoundEffectConstants.CLICK);
 			flipView(true);
-		} else if (view_id == R.id.digitsText) {
+			break;
+		}
+
+		case R.id.digitsText: {
 			if (digits.length() != 0) {
 				digits.setCursorVisible(true);
 			}
-		} else if (view_id == R.id.vmButton || view_id == R.id.vmButton2) {
+			break;
+		}
+		case R.id.vmButton :
+		case R.id.vmButton2 : {
 			placeVMCall();
+			break;
+		}
 		}
 	}
 
 	public boolean onLongClick(View view) {
-		if (view.getId() == R.id.button0) {
+		// ImageButton b = (ImageButton)view;
+		switch (view.getId()) {
+		case R.id.button0: {
 			// b.playSoundEffect(SoundEffectConstants.CLICK);
 			dialFeedback.hapticFeedback();
 			keyPressed(KeyEvent.KEYCODE_PLUS);
 			return true;
-		} else if (view.getId() == R.id.deleteButton) {
+		}
+		case R.id.deleteButton: {
 			// b.playSoundEffect(SoundEffectConstants.CLICK);
 			digits.getText().clear();
 			deleteButton.setPressed(false);
 			return true;
+		}
 		}
 		return false;
 	}

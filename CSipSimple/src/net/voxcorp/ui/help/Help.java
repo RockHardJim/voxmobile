@@ -166,9 +166,11 @@ public class Help extends Activity implements OnClickListener {
 
 	@Override
 	public void onClick(View v) {
-		if (v.getId() == R.id.faq_line) {
+		switch (v.getId()) {
+		case R.id.faq_line:
 			startActivity(new Intent(this, Faq.class));
-		} else if (v.getId() == R.id.record_logs_line) {
+			break;
+		case R.id.record_logs_line:
 			Log.e(THIS_FILE, "Clicked on record logs line while isRecording is : " + isRecording());
 			if (!isRecording()) {
 				prefsWrapper.setPreferenceStringValue(SipConfigManager.LOG_LEVEL, "4");
@@ -191,17 +193,21 @@ public class Help extends Activity implements OnClickListener {
 				}
 				Log.setLogLevel(1);
 			}
-		} else if (v.getId() == R.id.issues_line) {
+			break;
+		case R.id.issues_line:
 			Intent it = new Intent(Intent.ACTION_VIEW);
 			it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			it.setData(Uri.parse("http://code.google.com/p/csipsimple/issues"));
 			startActivity(it);
-		} else if (v.getId() == R.id.legal_line) {
+			break;
+			
+		case R.id.legal_line:
 			// Do never remove this line else the distributed software may not respect some MIT license
 			// Besides remember that the application is released under GPL which mean any distribution of the app
 			// must be done under GPL license terms. Else you can be sued for not respecting GPL license terms
 			startActivity(new Intent(this, Legal.class));
-		} else if (v.getId() == R.id.nightly_update) {
+			break;
+		case R.id.nightly_update:
 			// We have to check for an update
 			final NightlyUpdater nu = new NightlyUpdater(this);
 			Thread t = new Thread() {
@@ -213,7 +219,9 @@ public class Help extends Activity implements OnClickListener {
 				};
 			};
 			t.start();
-		} else {
+			break;
+		default:
+			break;
 		}
 		
 	}
