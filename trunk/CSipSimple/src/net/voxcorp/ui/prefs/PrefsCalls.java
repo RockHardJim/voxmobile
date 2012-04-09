@@ -21,10 +21,13 @@ import net.voxcorp.R;
 import net.voxcorp.api.SipConfigManager;
 import net.voxcorp.utils.CustomDistribution;
 import net.voxcorp.utils.PreferencesWrapper;
+import net.voxcorp.voxmobile.ui.FeatureWarningDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 
 
 public class PrefsCalls extends GenericPrefs {
-
+	private boolean mWarningDisplayed = false;
 
 	@Override
 	protected int getXmlPreferences() {
@@ -50,6 +53,24 @@ public class PrefsCalls extends GenericPrefs {
 		
 	}
 
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		super.onSharedPreferenceChanged(sharedPreferences, key);
+		
+		if (!key.equals("support_multiple_calls")) {
+			return;
+		}
+		
+		if (!sharedPreferences.getBoolean(key, false)) {
+			return;
+		}
 
+		if (!mWarningDisplayed) {
+			mWarningDisplayed = true;
+			
+    		Intent intent = new Intent(this, FeatureWarningDialog.class);
+        	startActivity(intent);
+		}
+	}
 	
 }

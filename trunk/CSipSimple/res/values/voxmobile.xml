@@ -3,9 +3,11 @@
 	<string name="voxmobile_corrupted">Your version of VoX Mobile has been corrupted. Please download the application from the Android Market.</string>
 	<string name="voxmobile_attention">Attention</string>
 	<string name="voxmobile_upgrade">A newer version of this application is available in the Android Market. Please upgrade your application.</string>
+	<string name="voxmobile_multiple_call_support">This feature might not work properly on your device if it does not have enough processing capability.\n\nPlease use at your own discretion.</string>
 	<string name="voxmobile_network_error">Network Error</string>
 	<string name="voxmobile_server_error">Server Error</string>
 	<string name="voxmobile_accounts">VoX Mobile Accounts</string>
+	<string name="voxmobile_no_accounts">No Accounts Found</string>
 	<string name="voxmobile_add_vox_account">VoX Mobile Accounts</string>
 	<string name="voxmobile_add_other_account">Other Accounts</string>
 	<string name="voxmobile_confirm_disable_g729">Disable G.729 Audio</string>
@@ -14,6 +16,7 @@
 	<string name="voxmobile_no">No</string>
 	<string name="voxmobile_invite">Invite a Friend</string>
 	<string name="voxmobile_invite_error">You must add a VoX Mobile account before inviting friends.\n\nWould you like do that now?</string>
+	<string name="voxmobile_rates">Rates</string>
     <string name="voxmobile_invite_title">How do you want to send your invitation?</string>
     <string name="voxmobile_invite_subject">Lets try VoX Mobile</string>
     <string name="voxmobile_invite_message">If you have an Android phone we can talk for free using VoX Mobile. Get it from:\n\nhttps://market.android.com/details?id=net.voxcorp\n\nMy VoX Mobile number is</string>
