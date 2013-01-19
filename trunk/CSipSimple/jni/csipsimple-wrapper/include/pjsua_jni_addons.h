@@ -92,6 +92,9 @@ typedef struct csipsimple_config {
 } csipsimple_config;
 
 // methods
+PJ_DECL(int) get_vox_error_info(pjsip_event *e);
+PJ_DECL(int) get_q850_reason_code(pjsip_event *e);
+PJ_DECL(int) lookup_q850_cause(const char *cause);
 PJ_DECL(int) codecs_get_nbr();
 PJ_DECL(pj_str_t) codecs_get_id(int codec_id) ;
 PJ_DECL(pj_status_t) send_dtmf_info(int current_call, pj_str_t digits);

@@ -68,6 +68,7 @@ import net.voxcorp.utils.Log;
 import net.voxcorp.utils.PreferencesProviderWrapper;
 import net.voxcorp.utils.Threading;
 import net.voxcorp.utils.TimerWrapper;
+import net.voxcorp.wizards.impl.VoXMobile;
 
 public class UAStateReceiver extends Callback {
 	static String THIS_FILE = "SIP UA Receiver";
@@ -144,26 +145,31 @@ public class UAStateReceiver extends Callback {
 	public void on_call_state(final int callId, pjsip_event e) {
 		lockCpu();
 		
-		int status_code = pjsua.getEventStatusCode(e);
+		final int status_code = pjsua.getEventStatusCode(e);
 		Log.d(THIS_FILE, "Call state << (SIP Response: " + status_code + ")");
-		
-		if (status_code == SipCallSession.StatusCode.ADDRESS_INCOMPLETE ||
-			status_code == SipCallSession.StatusCode.NOT_ACCEPTABLE_HERE ||
-			status_code == SipCallSession.StatusCode.FORBIDDEN ||
-			status_code == SipCallSession.StatusCode.NOT_FOUND ||
-			status_code == SipCallSession.StatusCode.UNRESOLVABLE_DESTINATION ||
-			status_code >= SipCallSession.StatusCode.INTERNAL_SERVER_ERROR) {
-			Intent intent = new Intent(SipManager.ACTION_SIP_NEGATIVE_SIP_RESPONSE);
-			intent.putExtra(SipManager.ACTION_SIP_NEGATIVE_SIP_RESPONSE, status_code);
-			pjService.service.sendBroadcast(intent);
+
+		if (status_code < SipCallSession.StatusCode.PREPAID_CREDIT_CARD_DECLINED) {
+
+			// Handle custom message dialog, but not prepaid-specific conditions
+			if (status_code == SipCallSession.StatusCode.ADDRESS_INCOMPLETE ||
+					status_code == SipCallSession.StatusCode.NOT_ACCEPTABLE_HERE ||
+					status_code == SipCallSession.StatusCode.FORBIDDEN ||
+					status_code == SipCallSession.StatusCode.NOT_FOUND ||
+					status_code == SipCallSession.StatusCode.UNRESOLVABLE_DESTINATION ||
+					status_code >= SipCallSession.StatusCode.INTERNAL_SERVER_ERROR) {
+						Intent intent = new Intent(SipManager.ACTION_SIP_NEGATIVE_SIP_RESPONSE);
+						intent.putExtra(SipManager.ACTION_SIP_NEGATIVE_SIP_RESPONSE, status_code);
+						pjService.service.sendBroadcast(intent);
+				}
 		}
-		
+
 		pjService.service.getExecutor().execute(new SipRunnable() {
 			@Override
 			public void doRun() throws SameThreadException {
 				//Get current infos
 				SipCallSession callInfo = updateCallInfoFromStack(callId);
 				int callState = callInfo.getCallState();
+				callInfo.setLastStatusCode(status_code);
 				
 				// If disconnected immediate stop required stuffs
 				if (callState == SipCallSession.InvState.DISCONNECTED) {
@@ -698,7 +704,9 @@ public class UAStateReceiver extends Callback {
 							notificationManager.showNotificationForMissedCall(cv);
 						}
 					}
-					
+
+					SipProfile acc = null;
+
 					//If needed fill native database
 					if(saveFlag && pjService.prefsWrapper.getPreferenceBooleanValue(SipConfigManager.INTEGRATE_WITH_CALLLOGS)) {
 						//Don't add with new flag
@@ -723,7 +731,7 @@ public class UAStateReceiver extends Callback {
 								ContentValues extraCv = new ContentValues();
 								
 								if(callInfo.getAccId() != SipProfile.INVALID_ID) {
-									SipProfile acc = SipService.getAccount(callInfo.getAccId(), database);
+									acc = SipService.getAccount(callInfo.getAccId(), database);
 									if(acc != null && acc.display_name != null) {
 										extraCv.put(CallLogHelper.EXTRA_SIP_PROVIDER, acc.display_name);
 									}
@@ -734,6 +742,36 @@ public class UAStateReceiver extends Callback {
 					}
 					callInfo.setIncoming(false);
 					callInfo.callStart = 0;
+
+					// Handle trial accounts disconnecting, broadcast 'buy now' intent
+					if (acc == null) {
+						acc = SipService.getAccount(callInfo.getAccId(), database);
+					}
+					if (acc != null) {
+						if (VoXMobile.isVoXMobile(acc.proxies)) {
+							
+							int status_code = callInfo.getLastStatusCode();
+							
+							switch (VoXMobile.getAccountType(acc.wizard)) {
+							case TRIAL:
+								if (status_code == 200) {
+									Intent it = new Intent(SipManager.ACTION_VOXMOBILE_BUY_NOW);
+									pjService.service.sendBroadcast(it);
+								}
+								break;
+							case PAYGO:
+							case PREPAID:
+							    if (status_code == SipCallSession.StatusCode.PREPAID_CREDIT_CARD_DECLINED ||
+							        status_code == SipCallSession.StatusCode.PREPAID_CASH_BALANCE_REQUIRED ||
+							        status_code == SipCallSession.StatusCode.PREPAID_NO_FUNDS) {
+							    	Intent intent = new Intent(SipManager.ACTION_VOXMOBILE_PREPAID_ALERT);
+							    	intent.putExtra(SipManager.ACTION_VOXMOBILE_PREPAID_ALERT, status_code);
+							    	pjService.service.sendBroadcast(intent);
+							    }
+								break;
+							}
+						}
+					}
 					
 					
 					broadCastAndroidCallState("IDLE", callInfo.getRemoteContact());

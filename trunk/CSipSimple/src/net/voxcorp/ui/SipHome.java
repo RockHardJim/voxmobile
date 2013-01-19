@@ -17,31 +17,14 @@
  */
 package net.voxcorp.ui;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.text.TextUtils;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.TabHost;
-import android.widget.TabHost.TabSpec;
-import android.widget.Toast;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 
 import net.voxcorp.R;
 import net.voxcorp.api.SipConfigManager;
@@ -60,14 +43,48 @@ import net.voxcorp.utils.NightlyUpdater;
 import net.voxcorp.utils.NightlyUpdater.UpdaterPopupLauncher;
 import net.voxcorp.utils.PreferencesProviderWrapper;
 import net.voxcorp.utils.PreferencesWrapper;
+import net.voxcorp.voxmobile.provider.DBContract.AccountContract;
 import net.voxcorp.voxmobile.provider.DBContract.ProvisionCheckContract;
+import net.voxcorp.voxmobile.service.ServiceHelper;
+import net.voxcorp.voxmobile.types.AccountSearch;
+import net.voxcorp.voxmobile.ui.SipAccountsListActivity;
+import net.voxcorp.voxmobile.ui.TopUpPrepaidMain;
 import net.voxcorp.voxmobile.ui.TrackedTabActivity;
+import net.voxcorp.voxmobile.ui.rates.RatesActivity;
+import net.voxcorp.voxmobile.types.VersionCheck;
 import net.voxcorp.voxmobile.utils.Consts;
-import net.voxcorp.voxmobile.utils.OrderHelper;
 import net.voxcorp.widgets.IndicatorTab;
 import net.voxcorp.wizards.BasePrefsWizard;
 import net.voxcorp.wizards.WizardUtils.WizardInfo;
 import net.voxcorp.wizards.impl.VoXMobile;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.TabHost;
+import android.widget.TabHost.TabSpec;
+import android.widget.Toast;
 
 public class SipHome extends TrackedTabActivity {
 	public static final int ACCOUNTS_MENU = Menu.FIRST + 1;
@@ -77,6 +94,8 @@ public class SipHome extends TrackedTabActivity {
 	public static final int DISTRIB_ACCOUNT_MENU = Menu.FIRST + 5;
 	public static final int INVITE_MENU = Menu.FIRST + 6;
 	public static final int RATES_MENU = Menu.FIRST + 7;
+	public static final int MANAGE_ACCOUNT_MENU = Menu.FIRST + 8;
+	public static final int TOP_UP_MENU = Menu.FIRST + 9;
 
 	public static final String LAST_KNOWN_VERSION_PREF = "last_known_version";
 	public static final String LAST_KNOWN_ANDROID_VERSION_PREF = "last_known_aos_version";
@@ -96,15 +115,141 @@ public class SipHome extends TrackedTabActivity {
 	private Intent dialerIntent,calllogsIntent, messagesIntent;
 	private PreferencesWrapper prefWrapper;
 	private PreferencesProviderWrapper prefProviderWrapper;
+	private String mRestError;
 	
 	private boolean has_tried_once_to_activate_account = false;
 //	private ImageButton pickupContact;
 
+	private IntentFilter accountChangedFilter = new IntentFilter(SipManager.ACTION_ACCOUNT_CHANGED);
+	private int activeAccountId = SipProfile.INVALID_ID;
+	private BroadcastReceiver accountChangedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(SipManager.ACTION_ACCOUNT_CHANGED)) {
+				activeAccountId = intent.getIntExtra("ACCOUNT_ID", SipProfile.INVALID_ID);
+			}
+		}
+	};
 
+	// Set up account search handler for RESTing
+	private static int ACCOUNT_SEARCH_SUCCESS = -1;
+	static class AccountSearchHandler extends Handler {
+		private WeakReference<SipHome> mRef;
+
+		AccountSearchHandler(SipHome obj) {
+			super();
+			mRef = new WeakReference<SipHome>(obj);
+		}
+		
+		@Override
+		public void handleMessage(Message msg) {
+			final SipHome a = mRef.get();
+
+    		if (a == null) {
+    			return;
+    		}
+
+    		a.mRestError = msg.getData().getString("error");
+			if (msg.arg1 != ACCOUNT_SEARCH_SUCCESS) {
+				a.showDialog(msg.arg1);
+			}
+		}
+	};
+	private AccountSearchHandler mAccountSearchHandler = new AccountSearchHandler(this);
 	
+	// Set up version check handler for RESTing
+	static class VersionCheckHandler extends Handler {
+		private WeakReference<SipHome> mRef;
+
+		VersionCheckHandler(SipHome obj) {
+			super();
+			mRef = new WeakReference<SipHome>(obj);
+		}
+
+		@Override
+		public void handleMessage(Message msg) {
+			final SipHome a = mRef.get();
+
+    		if (a == null) {
+    			return;
+    		}
+
+    		if (msg.arg1 != VOX_MOBILE_VERSION_CHECK_SUCCESS) {
+    			Log.d(THIS_FILE, "PANIC!!! Cannget Get Version Check");
+    			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(a);
+    			Editor editor = prefs.edit();
+    			editor.putBoolean("VOXMOBILE_SUPPORTED", false);
+    			a.showDialog(msg.arg1);
+    			editor.commit();
+    			return;
+    		}
+
+   			a.mVersionCheck = msg.getData().getParcelable("version_check");
+
+			String apiSupported = a.mVersionCheck.api_supported ? "YES" : "NO";
+			String buildSupported = a.mVersionCheck.build_supported ? "YES" : "NO";
+			Log.d(THIS_FILE, String.format("Version Check Result [API Supported: %s] [Build Supported: %s]", apiSupported, buildSupported));
+
+   			boolean supported = a.mVersionCheck.api_supported && a.mVersionCheck.build_supported; 
+
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(a);
+			Editor editor = prefs.edit();
+   			editor.putBoolean("VOXMOBILE_SUPPORTED", supported);
+			editor.commit();
+
+			if (supported) {
+				a.checkNoAccounts();
+			}
+		}
+	};
+	private VersionCheckHandler mVersionCheckHandler = new VersionCheckHandler(this);
+	private VersionCheck mVersionCheck;
+	private static final int VOX_MOBILE_VERSION_CHECK_SUCCESS = -100;
+
+	private void doVoXMobileVersionCheck() {
+
+		Runnable runnable = new Runnable() {
+
+			@Override
+			public void run() {
+
+				Message msg = new Message();
+				try {
+					ServiceHelper helper = new ServiceHelper(SipHome.this);
+					VersionCheck reply = helper.checkVersion();
+
+					Bundle data = new Bundle();
+					data.putParcelable("version_check", reply);
+					msg.setData(data);
+
+					if (reply.httpStatus == HttpStatus.UNAUTHORIZED.value()) {
+						msg.arg1 = Consts.REST_UNAUTHORIZED;
+					} else if (!reply.success && reply.httpStatus == HttpStatus.OK.value()) {
+						msg.arg1 = Consts.REST_ERROR;
+					} else if (reply.httpStatus == 0) {
+						msg.arg1 = Consts.REST_ERROR;
+					} else if (reply.httpStatus != HttpStatus.OK.value()) {
+						msg.arg1 = Consts.REST_HTTP_ERROR;
+					} else if (!reply.api_supported || !reply.build_supported) {
+						msg.arg1 = Consts.REST_UNSUPPORTED;
+					} else {
+						msg.arg1 = VOX_MOBILE_VERSION_CHECK_SUCCESS;
+					}
+
+				} catch (Exception e) {
+					msg.arg1 = Consts.REST_ERROR;
+				} finally {
+					mVersionCheckHandler.sendMessage(msg);
+				}
+			}
+		};
+		new Thread(runnable).start();
+	}
 	
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState)  {
+		
+		registerReceiver(accountChangedReceiver, accountChangedFilter);
 		
 		prefWrapper = new PreferencesWrapper(this);
 		prefProviderWrapper = new PreferencesProviderWrapper(this);
@@ -121,6 +266,7 @@ public class SipHome extends TrackedTabActivity {
 		
 
 		setContentView(R.layout.home);
+		
 
 		dialerIntent = new Intent(this, Dialer.class);
 		calllogsIntent = new Intent(this, CallLogsList.class);
@@ -158,8 +304,6 @@ public class SipHome extends TrackedTabActivity {
 			};
 		};
 		t.start();
-		
-		OrderHelper.reset(this);
 
 		// Kick off provision check task
         getContentResolver().update(ProvisionCheckContract.CONTENT_URI, null, null, null);
@@ -266,7 +410,10 @@ public class SipHome extends TrackedTabActivity {
 				Compatibility.setFirstRunParameters(prefWrapper);
 			}
 		}
+        doVoXMobileVersionCheck();
+	}
 
+	private void checkNoAccounts() {
 		// If we have no account yet, open account panel,
 		if (!has_tried_once_to_activate_account) {
 			SipProfile account = null;
@@ -395,6 +542,7 @@ public class SipHome extends TrackedTabActivity {
 
 	@Override
 	protected void onDestroy() {
+		unregisterReceiver(accountChangedReceiver);
 		super.onDestroy();
 		Log.d(THIS_FILE, "---DESTROY SIP HOME END---");
 	}
@@ -424,25 +572,61 @@ public class SipHome extends TrackedTabActivity {
 		finish();
 	}
 
-
 	private void populateMenu(Menu menu) {
 		WizardInfo distribWizard = CustomDistribution.getCustomDistributionWizard();
 		if(distribWizard != null) {
 			menu.add(Menu.NONE, DISTRIB_ACCOUNT_MENU, Menu.NONE, "My " + distribWizard.label).setIcon(distribWizard.icon);
 		}
+		menu.add(Menu.NONE, TOP_UP_MENU, Menu.NONE, R.string.voxmobile_top_up).setIcon(R.drawable.ic_voxmobile_menu_topup);
+		menu.add(Menu.NONE, MANAGE_ACCOUNT_MENU, Menu.NONE, R.string.voxmobile_manage_account).setIcon(R.drawable.ic_voxmobile_menu_manage);
 		if(CustomDistribution.distributionWantsOtherAccounts()) {
 			menu.add(Menu.NONE, ACCOUNTS_MENU, Menu.NONE, (distribWizard == null)?R.string.accounts:R.string.other_accounts).setIcon(R.drawable.ic_menu_accounts);
-		}
+		}	
+		menu.add(Menu.NONE, RATES_MENU, Menu.NONE, R.string.voxmobile_rates).setIcon(R.drawable.ic_voxmobile_rates_menu);
+		menu.add(Menu.NONE, INVITE_MENU, Menu.NONE, R.string.voxmobile_invite).setIcon(android.R.drawable.ic_menu_send);
 		menu.add(Menu.NONE, PARAMS_MENU, Menu.NONE, R.string.prefs).setIcon(android.R.drawable.ic_menu_preferences);
 		menu.add(Menu.NONE, HELP_MENU, Menu.NONE, R.string.help).setIcon(android.R.drawable.ic_menu_help);
-		menu.add(Menu.NONE, INVITE_MENU, Menu.NONE, R.string.voxmobile_invite).setIcon(android.R.drawable.ic_menu_send);
-		menu.add(Menu.NONE, RATES_MENU, Menu.NONE, R.string.voxmobile_rates).setIcon(R.drawable.ic_voxmobile_rates_menu);
 		menu.add(Menu.NONE, CLOSE_MENU, Menu.NONE, R.string.menu_disconnect).setIcon(R.drawable.ic_lock_power_off);
 
 	}
 
+	private SipProfile getActiveSipProfile() {
+		SipProfile sp = null;
+		if (activeAccountId != SipProfile.INVALID_ID) {
+			DBAdapter database = new DBAdapter(this);
+			database.open();
+			List<SipProfile> accountsList = database.getListAccounts(true);
+			database.close();
+			for (final SipProfile a : accountsList) {
+				if (a.id == activeAccountId) {
+					sp = a;
+					break;
+				}			
+			}
+		}
+		return sp;
+	}
+
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
+		// VoX menu items may not always be present
+		MenuItem miVoXAccount = menu.findItem(MANAGE_ACCOUNT_MENU);
+		MenuItem miVoXTopUp = menu.findItem(TOP_UP_MENU);
+		if (miVoXAccount != null) {
+			boolean isVoXMobile = false;
+			boolean isPrepaid = false;
+
+			SipProfile sp = getActiveSipProfile();
+			if ((sp != null) && (sp.id != SipProfile.INVALID_ID)) {
+				isVoXMobile = VoXMobile.isVoXMobile(sp.proxies);
+				isPrepaid = 
+						VoXMobile.getAccountType(sp.wizard) == VoXMobile.VoXAccountType.PAYGO ||
+						VoXMobile.getAccountType(sp.wizard) == VoXMobile.VoXAccountType.PREPAID;
+			}
+
+			miVoXAccount.setVisible(isVoXMobile);
+			miVoXTopUp.setVisible(isPrepaid);
+		}
 
 	//	PreferencesWrapper prefsWrapper = new PreferencesWrapper(this);
 	//	menu.findItem(CLOSE_MENU).setVisible(!prefsWrapper.isValidConnectionForIncoming());
@@ -454,29 +638,144 @@ public class SipHome extends TrackedTabActivity {
 		populateMenu(menu);
 		return super.onCreateOptionsMenu(menu);
 	}
+	
+	private void voxmobileAccountAction(boolean requestTopUp) {
+		final ProgressDialog mProgress = ProgressDialog.show(this, "", getString(R.string.voxmobile_please_wait), true, false);
+		final boolean isTopUp = requestTopUp; 
+		final SipProfile account = getActiveSipProfile();
+		final String username = account.username;
+
+		if ((account != null) && (account.id != SipProfile.INVALID_ID) && VoXMobile.isVoXMobile(account.proxies)) {
+			Runnable runnable = new Runnable() {
+				private Context mContext;
+				
+				private String[] getUuids() {
+					// Build array of all existing account UUIDs
+					ArrayList<String> uuid_list = new ArrayList<String>();
+					Cursor c = managedQuery(
+							AccountContract.CONTENT_URI,
+							AccountContract.PROJECTION, null, null, null);
+					c.moveToFirst();
+					while (!c.isAfterLast()) {
+						uuid_list.add(c.getString(AccountContract.UUID_INDEX));
+						c.moveToNext();
+					}
+
+					if (uuid_list.size() == 0) {
+						return null;
+					}
+
+					return uuid_list.toArray(new String[uuid_list.size()]);
+				}
+
+				@Override
+				public void run() {
+					mContext = SipHome.this;
+					String[] list = getUuids();
+					if (list == null) return;
+
+					Message msg = new Message();
+					try {
+						ServiceHelper helper = new ServiceHelper(mContext);
+						AccountSearch reply = helper.accountSearch(username, list);
+
+						Bundle data = new Bundle();
+						data.putString("error", reply.error);
+						msg.setData(data);
+
+						if (reply.httpStatus == HttpStatus.UNAUTHORIZED.value()) {
+							msg.arg1 = Consts.REST_UNAUTHORIZED;
+						} else if (reply.httpStatus == 0) {
+							msg.arg1 = Consts.REST_ERROR;
+						} else if (reply.httpStatus != HttpStatus.OK.value()) {
+							msg.arg1 = Consts.REST_HTTP_ERROR;
+						} else {
+							Intent intent;
+							if (isTopUp) {
+								intent = new Intent(SipHome.this, TopUpPrepaidMain.class);
+								intent.putExtra(AccountContract.UUID, reply.uuid);
+								intent.putExtra(AccountContract.ACCOUNT_NO, reply.account_no);
+							} else {
+								intent = new Intent(SipHome.this, SipAccountsListActivity.class);
+								intent.putExtra(SipAccountsListActivity.ACTION_MANAGE, true);
+								intent.putExtra(SipAccountsListActivity.UUID, reply.uuid);
+								intent.putExtra(SipAccountsListActivity.ACCOUNT, reply.account_no);
+							}
+							startActivity(intent);
+							msg.arg1 = ACCOUNT_SEARCH_SUCCESS;
+						}
+
+			        } catch (ResourceAccessException eHost) {
+			            Log.e(THIS_FILE, "ResourceAccessException while RESTing", eHost);
+		                mRestError = getString(R.string.voxmobile_network_error_msg);
+		                msg.arg1 = Consts.REST_ERROR;
+					} catch (HttpStatusCodeException eHttp) {
+			            Log.e(THIS_FILE, "HttpStatusCodeException while RESTing", eHttp);
+			            mRestError = eHttp.getStatusText();
+			            msg.arg1 = Consts.REST_HTTP_ERROR;
+					} catch (Exception e) {
+			            Log.e(THIS_FILE, "Problem while RESTing", e);
+			            mRestError = e.getCause().getMessage();
+						msg.arg1 = Consts.REST_ERROR;
+					} finally {
+						mAccountSearchHandler.sendMessage(msg);
+						mProgress.dismiss();
+					}
+				}
+				
+			};
+			new Thread(runnable).start();
+		}
+	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		SipProfile account = null;
-		DBAdapter db = null;
 		switch (item.getItemId()) {
+		case TOP_UP_MENU:
+			voxmobileAccountAction(true);
+			return true;
+		case MANAGE_ACCOUNT_MENU:
+			voxmobileAccountAction(false);
+			return true;
 		case RATES_MENU:
+			final String items[] = {
+					getString(R.string.voxmobile_rates_free_60),
+					getString(R.string.voxmobile_rates_unlimited_60),
+					getString(R.string.voxmobile_rates_all) };
+
+			AlertDialog.Builder ab = new AlertDialog.Builder(this)
+			.setTitle(getString(R.string.voxmobile_please_select))
+			.setNegativeButton(getString(R.string.voxmobile_back), new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface d, int choice) {
+					d.dismiss();
+					}
+				})
+			.setItems(items, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface d, int choice) {
+					d.dismiss();
+					Intent intent = new Intent(SipHome.this, RatesActivity.class);
+					Bundle bundle = new Bundle();
+					switch (choice) {
+					case 0:
+						bundle.putParcelable(RatesActivity.EXTRA_MODE, RatesActivity.RateMode.FREE_60);
+						break;
+					case 1:
+						bundle.putParcelable(RatesActivity.EXTRA_MODE, RatesActivity.RateMode.UNLIMITED_60);
+						break;
+					default:
+						bundle.putParcelable(RatesActivity.EXTRA_MODE, RatesActivity.RateMode.NORMAL);
+					}
+					intent.putExtra(RatesActivity.EXTRA_DATA, bundle);
+					startActivity(intent);
+				}
+			});
+			ab.show();
+
 			return true;
 		case INVITE_MENU:
-			db = new DBAdapter(this);
-			db.open();
-
-			List<SipProfile> accounts = db.getListAccounts();
-			Iterator<SipProfile> iterator = accounts.iterator();
-			while (iterator.hasNext()) {
-				SipProfile sp = iterator.next();
-				if (VoXMobile.isVoXMobile(sp.proxies)) {
-					account = sp;
-					if (sp.active) break;
-				}
-			}
-			db.close();
-			if (account == null) {
+			account = getActiveSipProfile();
+			if ((account == null) || (account.id == SipProfile.INVALID_ID) || !VoXMobile.isVoXMobile(account.proxies)) {
 				// No VoX Mobile SIP accounts found
 				new AlertDialog.Builder(this)
 				.setTitle(R.string.voxmobile_attention)
@@ -541,7 +840,7 @@ public class SipHome extends TrackedTabActivity {
 			return true;
 		case DISTRIB_ACCOUNT_MENU:
 			WizardInfo distribWizard = CustomDistribution.getCustomDistributionWizard();
-			db = new DBAdapter(this);
+			DBAdapter db = new DBAdapter(this);
 			db.open();
 			account = db.getAccountForWizard(distribWizard.id);
 			db.close();
@@ -568,5 +867,58 @@ public class SipHome extends TrackedTabActivity {
 		}
 		serviceIntent = null;
 		finish();
+	}
+	
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		switch (id) {
+		case Consts.REST_UNAUTHORIZED:
+			return new AlertDialog.Builder(this)
+					.setIcon(android.R.drawable.ic_dialog_info)
+					.setTitle(R.string.voxmobile_attention)
+					.setMessage(getString(R.string.voxmobile_unauthorized_msg))
+					.setPositiveButton(getString(R.string.ok),
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int whichButton) {
+									checkNoAccounts();
+								}
+							}).create();
+		case Consts.REST_UNSUPPORTED:
+			return new AlertDialog.Builder(this)
+					.setIcon(android.R.drawable.ic_dialog_alert)
+					.setTitle(getString(R.string.voxmobile_attention))
+					.setMessage(getString(R.string.voxmobile_upgrade))
+					.setPositiveButton(getString(R.string.ok),
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int whichButton) {
+									checkNoAccounts();
+								}
+							}).create();
+		case Consts.REST_HTTP_ERROR:
+			return new AlertDialog.Builder(this)
+					.setIcon(android.R.drawable.ic_dialog_alert)
+					.setTitle(getString(R.string.voxmobile_server_error))
+					.setMessage(mRestError)
+					.setPositiveButton(getString(R.string.ok),
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int whichButton) {
+									removeDialog(Consts.REST_HTTP_ERROR);
+									checkNoAccounts();
+								}
+							}).create();
+		case Consts.REST_ERROR:
+			return new AlertDialog.Builder(this)
+					.setIcon(android.R.drawable.ic_dialog_alert)
+					.setTitle(getString(R.string.voxmobile_network_error))
+					.setMessage(mRestError)
+					.setPositiveButton(getString(R.string.ok),
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int whichButton) {
+									removeDialog(Consts.REST_ERROR);
+									checkNoAccounts();
+								}
+							}).create();
+		}
+		return null;
 	}
 }
