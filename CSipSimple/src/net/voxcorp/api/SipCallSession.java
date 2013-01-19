@@ -78,6 +78,12 @@ public final class SipCallSession implements Parcelable {
 		public static final int SERVICE_UNAVAILABLE = 503;
 		public static final int PRECONDITION_FAILURE = 580;
 		public static final int DECLINE = 603;
+
+		// Custom SIP result codes needed to support prepaid
+		public static final int PREPAID_CREDIT_CARD_DECLINED = 901;
+		public static final int PREPAID_CASH_BALANCE_REQUIRED = 902;
+		public static final int PREPAID_NO_FUNDS = 903;
+
 		/*
 	    PJSIP_SC_PROXY_AUTHENTICATION_REQUIRED = 407,
 	    PJSIP_SC_REQUEST_TIMEOUT = 408,

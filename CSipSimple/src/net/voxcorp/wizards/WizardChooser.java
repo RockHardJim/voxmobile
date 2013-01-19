@@ -59,14 +59,16 @@ public class WizardChooser extends ExpandableListActivity {
 		
 		// Find the VOXMOBILE wizard and remove it
 		Iterator<Map<String, Object>> it = childDatas.get(0).iterator();
-		int i = 0;
 		while (it.hasNext()) {
 			Map<String, Object> m = (Map<String, Object>)it.next();
-			if ("VOXMOBILE".equals(m.get("ID"))) {
-				childDatas.get(0).remove(i);
-				break;
+			String wiz_type = (String)m.get("ID");
+			if (wiz_type.startsWith("VOXMOBILE")) {
+				childDatas.get(0).remove(0);
+				// Since we found a match we'll grab the iterator
+				// again and start over. It's a hack, but it makes
+				// searching/removing all VoX wizards a bit easier
+				it = childDatas.get(0).iterator();
 			}
-			i++;
 		}
 		
 		WizardsListAdapter adapter = new WizardsListAdapter(

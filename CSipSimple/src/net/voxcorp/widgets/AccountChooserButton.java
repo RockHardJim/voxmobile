@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
@@ -33,6 +34,7 @@ import android.widget.TextView;
 
 import net.voxcorp.R;
 import net.voxcorp.api.ISipService;
+import net.voxcorp.api.SipManager;
 import net.voxcorp.api.SipProfile;
 import net.voxcorp.db.DBAdapter;
 import net.voxcorp.utils.AccountListUtils;
@@ -165,6 +167,9 @@ public class AccountChooserButton extends LinearLayout implements OnClickListene
 			onAccountChange.onChooseAccount(account);
 		}
 		
+		Intent intent = new Intent(SipManager.ACTION_ACCOUNT_CHANGED);
+		intent.putExtra("ACCOUNT_ID", (account == null) ? SipProfile.INVALID_ID : account.id);
+		getContext().sendBroadcast(intent);
 	}
 
 	public void updateRegistration(boolean canChangeIfValid) {

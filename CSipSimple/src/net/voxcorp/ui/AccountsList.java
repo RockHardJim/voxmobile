@@ -22,27 +22,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
-
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.database.ContentObserver;
-import android.database.Cursor;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector;
@@ -55,12 +50,7 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.Window;
-import net.voxcorp.voxmobile.provider.DBContract.DBBoolean;
-import net.voxcorp.voxmobile.provider.DBContract.SyncStatus;
-import net.voxcorp.voxmobile.provider.DBContract.RequestContract;
-import net.voxcorp.voxmobile.provider.DBContract.VersionCheckContract;
 import net.voxcorp.voxmobile.ui.AccountsListActivity;
-import net.voxcorp.voxmobile.utils.Consts;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
@@ -113,196 +103,7 @@ public class AccountsList extends Activity implements OnItemClickListener {
 	private static final int NEED_LIST_UPDATE = 1;
 	private static final int UPDATE_LINE = 2;
 	
-    // mVoXActivityLock prevents net.voxcorp.voxmobile.ui.AccountListsActivity
-    // from being started more than once, which can happen in the case of upgrading
-    // legacy builds (ie, <= 998). This happens because of all the REST stuff that
-    // triggers observer callbacks, some of which we want to ignore and prevent
-    // the duplicate starting of the activity.
-    private static boolean mVoXActivityLock = false;
-    private static VoXObserver mVoXObserver;
-    private ProgressDialog mProgressDialog = null;
-    
-    private void registerContentObservers() {
-    	ContentResolver cr = getContentResolver();
-    	mVoXObserver = new VoXObserver(new Handler());
-    	cr.registerContentObserver(RequestContract.CONTENT_URI, true, mVoXObserver);
-    	cr.registerContentObserver(VersionCheckContract.CONTENT_URI, true, mVoXObserver);
-    }
-    
-    private void unregisterContentObservers() {
-    	ContentResolver cr = getContentResolver();
-    	if (mVoXObserver != null) {
-    		cr.unregisterContentObserver(mVoXObserver);
-    		mVoXObserver = null;
-    	}
-    }
-    
-    private void showProgressDialog() {
-    	if (mProgressDialog != null) return;
-    	mProgressDialog = ProgressDialog.show(this, "", "Please wait...");
-    }
-    
-    private void dismissProgressDialog() {
-    	if (mProgressDialog == null) return;
-    	mProgressDialog.dismiss();
-    	mProgressDialog = null;
-    }
-    
-    @Override
-    protected Dialog onCreateDialog(int id) {
-    	LinearLayout btn = (LinearLayout) findViewById(R.id.add_account);
-    	btn.setEnabled(true);
-    	
-    	dismissProgressDialog();
-    	
-    	switch (id) {
-    	case Consts.REST_UNAUTHORIZED:
-    		return new AlertDialog.Builder(AccountsList.this)
-    		.setIcon(android.R.drawable.ic_dialog_alert)
-    		.setTitle(R.string.voxmobile_attention)
-    		.setMessage(getString(R.string.voxmobile_corrupted))
-    		.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-    			public void onClick(DialogInterface dialog, int whichButton) {
-    				
-    			}
-    		}).create();
-    	case Consts.REST_UNSUPPORTED:
-    		return new AlertDialog.Builder(AccountsList.this)
-    		.setIcon(android.R.drawable.ic_dialog_alert)
-    		.setTitle(getString(R.string.voxmobile_attention))
-    		.setMessage(getString(R.string.voxmobile_upgrade))
-    		.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-    			public void onClick(DialogInterface dialog, int whichButton) {
-    				
-    			}
-    		}).create();
-    	case Consts.REST_HTTP_ERROR:
-    		return new AlertDialog.Builder(AccountsList.this)
-    		.setIcon(android.R.drawable.ic_dialog_alert)
-    		.setTitle(getString(R.string.voxmobile_network_error))
-    		.setMessage(VoXObserverState.mError)
-    		.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-    			public void onClick(DialogInterface dialog, int whichButton) {
-    				
-    			}
-    		}).create();
-    	case Consts.REST_ERROR:
-    		return new AlertDialog.Builder(AccountsList.this)
-    		.setIcon(android.R.drawable.ic_dialog_alert)
-    		.setTitle(getString(R.string.voxmobile_server_error))
-    		.setMessage(VoXObserverState.mError)
-    		.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-    			public void onClick(DialogInterface dialog, int whichButton) {
-    				
-    			}
-    		}).create();
-    	}
-    	return null;
-    }
-    
-    private static class VoXObserverState {
-    	private static boolean mSuccess = false;
-    	private static int mSyncStatus = SyncStatus.STALE;
-    	private static int mHttpCode = 0;
-    	private static String mError = "";
-    	
-    	private static void reset() {
-    		mSuccess = false;
-    		mSyncStatus = SyncStatus.STALE;
-    		mHttpCode = 0;
-    		mError = "";
-    	}
-    }
-    
-    private class VoXObserver extends ContentObserver {
-    	
-    	public VoXObserver(Handler h) {
-    		super(h);
-    		VoXObserverState.reset();
-    	}
-    	
-    	private void setError(int httpCode, String errorMsg) {
-			VoXObserverState.mHttpCode = httpCode;
-
-			if (httpCode == HttpStatus.OK.value()) {
-				VoXObserverState.mError = "";
-			} else if (httpCode != 0) {
-				VoXObserverState.mError = "" + httpCode + ": " + HttpStatus.valueOf(httpCode).getReasonPhrase();
-			} else {
-				VoXObserverState.mError = errorMsg;
-			}
-    	}
-    	
-    	@Override
-    	public void onChange(boolean selfChange) {
-    		super.onChange(selfChange);
-    		
-    		Cursor c = managedQuery(RequestContract.CONTENT_URI, RequestContract.PROJECTION, null, null, null);
-    		if (c.getCount() == 0) {
-    			c.close();
-    			return;
-    		}
-    		
-    		if (c.moveToFirst()) {
-    			VoXObserverState.mSyncStatus = c.getInt(RequestContract.UPDATED_INDEX);
-    			VoXObserverState.mSuccess = c.getInt(RequestContract.SUCCESS_INDEX) == DBBoolean.TRUE;
-    			setError(c.getInt(RequestContract.HTTP_STATUS_INDEX), c.getString(RequestContract.ERROR_INDEX));
-    		} else {
-    			VoXObserverState.mSyncStatus = SyncStatus.STALE;
-    		}
-    		c.close();
-    		
-    		switch (VoXObserverState.mSyncStatus) {
-    		case SyncStatus.UPDATING:
-    			showProgressDialog();
-    			break;
-    		case SyncStatus.CURRENT:
-    			dismissProgressDialog();
-    			
-    			if (VoXObserverState.mHttpCode == HttpStatus.UNAUTHORIZED.value()) {
-    				showDialog(Consts.REST_UNAUTHORIZED);
-    			} else if (VoXObserverState.mHttpCode != HttpStatus.OK.value()) {
-    				showDialog(Consts.REST_HTTP_ERROR);
-    			} else if (!VoXObserverState.mSuccess) {
-    				showDialog(Consts.REST_ERROR);
-    			} else if (checkSupported(false)) {
-    				if (!mVoXActivityLock) {
-    					mVoXActivityLock = true;
-    					startActivityForResult(new Intent(AccountsList.this, AccountsListActivity.class), VOX_ACCOUNTS);
-    				}
-    			}
-    			break;
-    		}
-    	}
-    	
-    	public boolean checkSupported(boolean allowUpdate) {
-    		if (VoXObserverState.mSyncStatus == SyncStatus.UPDATING) {
-    			return false;
-    		}
-    		
-    		Cursor c = managedQuery(VersionCheckContract.CONTENT_URI, VersionCheckContract.PROJECTION, null, null, null);
-    		
-    		try {
-    			if (c.getCount() == 0) {
-    				if (allowUpdate) {
-    					getContentResolver().update(VersionCheckContract.CONTENT_URI, null, null, null);
-    				}
-    				return false;
-    			}
-    			
-    			if (c.moveToFirst()) {
-    				boolean supported = c.getInt(VersionCheckContract.SUPPORTED_INDEX) == DBBoolean.TRUE;
-    				if (!supported) {
-    					showDialog(Consts.REST_UNSUPPORTED);
-    				}
-    				return supported;
-    			}
-    			return false;
-    		} finally {
-    			c.close();
-    		}
-    	}
-    }
+	private boolean mVoXVersionSupported;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -313,7 +114,9 @@ public class AccountsList extends Activity implements OnItemClickListener {
 		setContentView(R.layout.accounts_list);
 		w.setFeatureDrawableResource(Window.FEATURE_LEFT_ICON, R.drawable.ic_list_accounts);
 
-		
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		mVoXVersionSupported = prefs.getBoolean("VOXMOBILE_SUPPORTED", false);
+
 		// Fill accounts with currently avalaible accounts
 		updateList();
 		
@@ -371,22 +174,8 @@ public class AccountsList extends Activity implements OnItemClickListener {
 		}catch(Exception e) {
 			//Just ignore that
 		}
-		dismissProgressDialog();
 	}
 	
-	@Override
-	protected void onResume() {
-		super.onResume();
-		registerContentObservers();
-		mVoXActivityLock = false;
-	}
-	
-	@Override
-	protected void onPause() {
-		super.onPause();
-		unregisterContentObservers();
-	}
-
     @Override
     public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
         AdapterView.AdapterContextMenuInfo info;
@@ -487,12 +276,22 @@ public class AccountsList extends Activity implements OnItemClickListener {
     
     
     private void clickAddAccount() {
-    	LinearLayout btn = (LinearLayout) findViewById(R.id.add_account);
-    	btn.setEnabled(false);
-    	
-    	if (!mVoXActivityLock && mVoXObserver.checkSupported(true)) {
-    		mVoXActivityLock = true;
+    	if (mVoXVersionSupported) {
+        	LinearLayout btn = (LinearLayout) findViewById(R.id.add_account);
+        	btn.setEnabled(false);
+
     		startActivityForResult(new Intent(AccountsList.this, AccountsListActivity.class), VOX_ACCOUNTS);
+			overridePendingTransition(R.anim.voxmobile_slide_in_left, R.anim.voxmobile_slide_out_left);
+    	} else {
+			new AlertDialog.Builder(this)
+    		.setIcon(android.R.drawable.ic_dialog_alert)
+			.setTitle(getString(R.string.voxmobile_attention))
+			.setMessage(getString(R.string.voxmobile_upgrade))
+			.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+				}
+			})
+			.show();
     	}
     }	
 
@@ -518,7 +317,6 @@ public class AccountsList extends Activity implements OnItemClickListener {
 		super.onActivityResult(requestCode, resultCode, data); 
 		switch(requestCode){
 		case VOX_ACCOUNTS:
-			mVoXActivityLock = false;
 			LinearLayout btn = (LinearLayout) findViewById(R.id.add_account);
 			btn.setEnabled(true);
 			break;
@@ -686,7 +484,23 @@ public class AccountsList extends Activity implements OnItemClickListener {
 			tagView.labelView.setText(account.display_name);
             
             //Update status label and color
-			tagView.statusView.setText(accountStatusDisplay.statusLabel);
+			String acctType = "";
+			if (VoXMobile.isVoXMobile(account.proxies)) {
+				switch (VoXMobile.getAccountType(account.wizard)) {
+				case PAYGO:
+					acctType = getString(R.string.voxmobile_type_paygo) + " / ";
+					break;
+				case PREPAID:
+					acctType = getString(R.string.voxmobile_type_prepaid) + " / ";
+					break;
+				case TRIAL:
+					acctType = getString(R.string.voxmobile_type_trial) + " / ";
+					break;
+				default:
+					break;
+				}
+			}
+			tagView.statusView.setText(acctType + accountStatusDisplay.statusLabel);
 			tagView.labelView.setTextColor(accountStatusDisplay.statusColor);
             
             //Update checkbox selection

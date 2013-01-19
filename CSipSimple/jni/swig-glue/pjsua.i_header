@@ -415,10 +415,21 @@ void setCallbackObject(Callback* callback) {
 }
 
 int getEventStatusCode(pjsip_event *e) {
-        if (e && e->type == PJSIP_EVENT_TSX_STATE)
-                return e->body.tsx_state.tsx->status_code;
-        else
+        if (!e || e->type != PJSIP_EVENT_TSX_STATE) {
                 return 0;
+        }
+
+        int retval = get_q850_reason_code(e);
+        if (retval > 0) {
+                return retval;
+        }
+
+        retval = get_vox_error_info(e);
+        if (retval > 0) {
+                return retval;
+        } else {
+                return e->body.tsx_state.tsx->status_code;
+        }
 }
 %}
 

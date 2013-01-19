@@ -215,6 +215,18 @@ public class WizardUtils {
 					R.drawable.ic_wizard_voxmobile, 99999999,
 					new Locale[]{ Locale.US}, false, false,
 					VoXMobile.class));
+			WIZARDS_DICT.put("VOXMOBILE-PAYGO", new WizardInfo("VOXMOBILE-PAYGO", "VoX Mobile",
+					R.drawable.ic_wizard_voxmobile_paygo, 99999999,
+					new Locale[]{ Locale.US}, false, false,
+					VoXMobile.class));
+			WIZARDS_DICT.put("VOXMOBILE-PREPAID", new WizardInfo("VOXMOBILE-PREPAID", "VoX Mobile",
+					R.drawable.ic_wizard_voxmobile_prepaid, 99999999,
+					new Locale[]{ Locale.US}, false, false,
+					VoXMobile.class));
+			WIZARDS_DICT.put("VOXMOBILE-TRIAL", new WizardInfo("VOXMOBILE-TRIAL", "VoX Mobile",
+					R.drawable.ic_wizard_voxmobile_trial, 99999999,
+					new Locale[]{ Locale.US}, false, false,
+					VoXMobile.class));
 			
 			//World wide
 			WIZARDS_DICT.put("EKIGA", new WizardInfo("EKIGA", "Ekiga", 

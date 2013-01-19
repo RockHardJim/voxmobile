@@ -43,12 +43,16 @@ public final class SipManager {
 	public static final String ACTION_SIP_MESSAGES = "net.voxcorp.phone.action.MESSAGES";
 	
 	// SERVICE BROADCASTS
-	public static final String ACTION_SIP_NEGATIVE_SIP_RESPONSE = "net.voxcorp.service.NEGATIVE_SIP_RESPONSE";	public static final String ACTION_SIP_CALL_CHANGED = "net.voxcorp.service.CALL_CHANGED";
+	public static final String ACTION_SIP_NEGATIVE_SIP_RESPONSE = "net.voxcorp.service.NEGATIVE_SIP_RESPONSE";
+	public static final String ACTION_SIP_CALL_CHANGED = "net.voxcorp.service.CALL_CHANGED";
 	public static final String ACTION_SIP_REGISTRATION_CHANGED = "net.voxcorp.service.REGISTRATION_CHANGED";
 	public static final String ACTION_SIP_MEDIA_CHANGED = "net.voxcorp.service.MEDIA_CHANGED";
 	public static final String ACTION_SIP_ACCOUNT_ACTIVE_CHANGED = "net.voxcorp.service.ACCOUNT_ACTIVE_CHANGED";
 	public static final String ACTION_SIP_CAN_BE_STOPPED = "net.voxcorp.service.ACTION_SIP_CAN_BE_STOPPED";
 	public static final String ACTION_ZRTP_SHOW_SAS = "net.voxcorp.service.SHOW_SAS";
+	public static final String ACTION_VOXMOBILE_BUY_NOW = "net.voxcorp.voxmobile.ui.PROMPT_BUY_NOW";
+	public static final String ACTION_VOXMOBILE_PREPAID_ALERT = "net.voxcorp.voxmobile.ui.PREPAID_ALERT";
+	public static final String ACTION_ACCOUNT_CHANGED = "net.voxcorp.service.ACCOUNT_CHANGED";
 	
 	public static final String ACTION_SIP_MESSAGE_RECEIVED = "net.voxcorp.service.MESSAGE_RECEIVED";
 	//TODO : message sent?
