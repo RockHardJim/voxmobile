@@ -31,6 +31,8 @@
 #define THIS_FILE	"android_jni_dev.cpp"
 #define DRIVER_NAME	"ANDROID"
 
+#include "pj_loader.h"
+
 struct android_aud_factory
 {
 	pjmedia_aud_dev_factory base;
@@ -522,7 +524,6 @@ static pj_status_t android_destroy(pjmedia_aud_dev_factory *f)
 /* API: Get device count. */
 static unsigned android_get_dev_count(pjmedia_aud_dev_factory *f)
 {
-	PJ_LOG(4,(THIS_FILE, "Get dev count"));
 	int count = 1;
 	PJ_UNUSED_ARG(f);
 	return count < 0 ? 0 : count;
@@ -535,7 +536,6 @@ static pj_status_t android_get_dev_info(pjmedia_aud_dev_factory *f,
 {
 
 	PJ_UNUSED_ARG(f);
-	PJ_LOG(4,(THIS_FILE, "Get dev info"));
 
 	pj_bzero(info, sizeof(*info));
 
@@ -607,7 +607,6 @@ static pj_status_t android_create_stream(pjmedia_aud_dev_factory *f,
 	pj_pool_t *pool;
 	struct android_aud_stream *stream;
 	pj_status_t status;
-	int has_set_in_call = 0;
 	int state = 0;
 
 	PJ_ASSERT_RETURN(play_cb && rec_cb && p_aud_strm, PJ_EINVAL);
@@ -653,11 +652,10 @@ static pj_status_t android_create_stream(pjmedia_aud_dev_factory *f,
 	jmethodID constructor_method=0, get_min_buffer_size_method = 0, method_id = 0;
 
 
-	status = on_setup_audio_wrapper(param->clock_rate);
+	status = on_validate_audio_clock_rate_wrapper(param->clock_rate);
 	if(status != PJ_SUCCESS){
 		return PJMEDIA_EAUD_INVOP;
 	}
-	has_set_in_call = 1;
 
 /*
 	if (attachResult != 0) {
@@ -677,6 +675,7 @@ static pj_status_t android_create_stream(pjmedia_aud_dev_factory *f,
 
 	PJ_LOG(3, (THIS_FILE, "Sample format is : %d for %d ", sampleFormat, param->bits_per_sample));
 
+	on_setup_audio_wrapper(PJ_TRUE);
 
 
 	if (stream->dir & PJMEDIA_DIR_CAPTURE) {
@@ -901,10 +900,7 @@ static pj_status_t android_create_stream(pjmedia_aud_dev_factory *f,
 	return PJ_SUCCESS;
 
 on_error:
-
-	if(has_set_in_call == 1){
-		on_teardown_audio_wrapper();
-	}
+	on_teardown_audio_wrapper();
 	DETACH_JVM(jni_env);
 	pj_pool_release(pool);
 	return PJ_ENOMEM;
@@ -975,6 +971,7 @@ static pj_status_t strm_start(pjmedia_aud_stream *s)
 	ATTACH_JVM(jni_env);
 
 	pj_status_t status;
+	on_setup_audio_wrapper(PJ_FALSE);
 
 	//Start threads
 	if(stream->record){
@@ -996,9 +993,11 @@ static pj_status_t strm_start(pjmedia_aud_stream *s)
 
 	PJ_LOG(4,(THIS_FILE, "Starting done"));
 
-	status = PJ_SUCCESS;
+	DETACH_JVM(jni_env);
+	return PJ_SUCCESS;
 
 on_error:
+	on_teardown_audio_wrapper();
 	DETACH_JVM(jni_env);
 	if(status != PJ_SUCCESS){
 		strm_destroy(&stream->base);
@@ -1058,7 +1057,7 @@ static pj_status_t strm_stop(pjmedia_aud_stream *s)
 		}
 	}
 
-
+	on_teardown_audio_wrapper();
 
 	PJ_LOG(4,(THIS_FILE, "Stopping Done"));
 
@@ -1109,12 +1108,12 @@ static pj_status_t strm_destroy(pjmedia_aud_stream *s)
 		PJ_LOG(2,(THIS_FILE, "Nothing to release !!! track"));
 	}
 
-	//Unset media in call
-	on_teardown_audio_wrapper();
 
 //	pj_sem_destroy(stream->audio_launch_sem);
 	pj_pool_release(stream->pool);
 	PJ_LOG(3,(THIS_FILE, "Stream is destroyed"));
+
+	on_teardown_audio_wrapper();
 
 	DETACH_JVM(jni_env);
 	return PJ_SUCCESS;

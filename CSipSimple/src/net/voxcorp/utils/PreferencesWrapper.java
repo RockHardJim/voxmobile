@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,28 +18,30 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.utils;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.regex.Pattern;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageInfo;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.text.format.DateFormat;
 
 import net.voxcorp.api.SipConfigManager;
-import net.voxcorp.ui.SipHome;
-import net.voxcorp.voxmobile.utils.VoXSettings;
+import net.voxcorp.voxmobile.utils.VoXMobileSettings;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.regex.Pattern;
 
 
 public class PreferencesWrapper {
@@ -46,12 +51,15 @@ public class PreferencesWrapper {
 	public static final String IS_ADVANCED_USER = "is_advanced_user";
 	public static final String HAS_ALREADY_SETUP = "has_already_setup";
 	public static final String HAS_ALREADY_SETUP_SERVICE = "has_already_setup_service";
+    public static final String LAST_KNOWN_VERSION_PREF = "last_known_version";
+    public static final String LAST_KNOWN_ANDROID_VERSION_PREF = "last_known_aos_version";
 	
 	
 	private static final String THIS_FILE = "PreferencesWrapper";
 	private SharedPreferences prefs;
 	private ContentResolver resolver;
 	private Context context;
+    private Editor sharedEditor;
 
 	
 	
@@ -69,10 +77,18 @@ public class PreferencesWrapper {
 		put(SipConfigManager.TLS_TRANSPORT_PORT, "0");
 		put(SipConfigManager.KEEP_ALIVE_INTERVAL_WIFI, "80");
 		put(SipConfigManager.KEEP_ALIVE_INTERVAL_MOBILE, "40");
+        put(SipConfigManager.TCP_KEEP_ALIVE_INTERVAL_WIFI, "180");
+        put(SipConfigManager.TCP_KEEP_ALIVE_INTERVAL_MOBILE, "120");
+        put(SipConfigManager.TLS_KEEP_ALIVE_INTERVAL_WIFI, "180");
+        put(SipConfigManager.TLS_KEEP_ALIVE_INTERVAL_MOBILE, "120");
 		put(SipConfigManager.RTP_PORT, "4000");
 		put(SipConfigManager.OVERRIDE_NAMESERVER, "");
 		put(SipConfigManager.TIMER_MIN_SE, "90");
 		put(SipConfigManager.TIMER_SESS_EXPIRES, "1800");
+        put(SipConfigManager.TSX_T1_TIMEOUT, "-1");
+        put(SipConfigManager.TSX_T2_TIMEOUT, "-1");
+        put(SipConfigManager.TSX_T4_TIMEOUT, "-1");
+        put(SipConfigManager.TSX_TD_TIMEOUT, "-1");
 		
 		put(SipConfigManager.SND_AUTO_CLOSE_TIME, "1");
 		put(SipConfigManager.ECHO_CANCELLATION_TAIL, "200");
@@ -80,14 +96,17 @@ public class PreferencesWrapper {
 		put(SipConfigManager.SND_MEDIA_QUALITY, "4");
 		put(SipConfigManager.SND_CLOCK_RATE, "16000");
 		put(SipConfigManager.SND_PTIME, "20");
-		put(SipConfigManager.BITS_PER_SAMPLE, "16");
 		put(SipConfigManager.SIP_AUDIO_MODE, "0");
 		put(SipConfigManager.MICRO_SOURCE, "1");
-		//put(SipConfigManager.THREAD_COUNT, "0");
+		put(SipConfigManager.THREAD_COUNT, "0");
 		put(SipConfigManager.HEADSET_ACTION, "0");
 		put(SipConfigManager.AUDIO_IMPLEMENTATION, "0");
+		put(SipConfigManager.H264_PROFILE, "66");
+		put(SipConfigManager.H264_LEVEL, "0");
+        put(SipConfigManager.H264_BITRATE, "0");
+        put(SipConfigManager.VIDEO_CAPTURE_SIZE, "");
 		
-		put(SipConfigManager.STUN_SERVER, VoXSettings.getStunServer());
+		put(SipConfigManager.STUN_SERVER, VoXMobileSettings.getStunServer());
 		put(SipConfigManager.TURN_SERVER, "");
 		put(SipConfigManager.TURN_USERNAME, "");
 		put(SipConfigManager.TURN_PASSWORD, "");
@@ -97,14 +116,20 @@ public class PreferencesWrapper {
 		put(SipConfigManager.PRIVKEY_FILE, "");
 		put(SipConfigManager.TLS_PASSWORD, "");
 		put(SipConfigManager.TLS_METHOD, "0");
+		put(SipConfigManager.NETWORK_ROUTES_POLLING, "0");
 		
 		put(SipConfigManager.DSCP_VAL, "26");
 		put(SipConfigManager.DTMF_MODE, "0");
-		
+        put(SipConfigManager.DTMF_PAUSE_TIME, "300");
+        put(SipConfigManager.DTMF_WAIT_TIME, "2000");
 
-		put(SipConfigManager.GSM_INTEGRATION_TYPE, "0");
-		put(SipConfigManager.DIAL_PRESS_TONE_MODE, "0");
-		put(SipConfigManager.DIAL_PRESS_VIBRATE_MODE, "0");
+        /**
+         *  VoX Mobile :: revert r2086 because we like it how it was before.
+         */
+        put(SipConfigManager.GSM_INTEGRATION_TYPE, Integer.toString(SipConfigManager.GENERIC_TYPE_AUTO));
+		put(SipConfigManager.DIAL_PRESS_TONE_MODE, Integer.toString(SipConfigManager.GENERIC_TYPE_AUTO));
+		put(SipConfigManager.DIAL_PRESS_VIBRATE_MODE, Integer.toString(SipConfigManager.GENERIC_TYPE_AUTO));
+        put(SipConfigManager.DTMF_PRESS_TONE_MODE, Integer.toString(SipConfigManager.GENERIC_TYPE_PREVENT));
 		
 		put(SipConfigManager.DEFAULT_CALLER_ID, "");
 		put(SipConfigManager.THEME, "");
@@ -128,24 +153,31 @@ public class PreferencesWrapper {
 		put(SipConfigManager.ENABLE_ICE, false);
 		put(SipConfigManager.ENABLE_TURN, false);
 		put(SipConfigManager.ENABLE_STUN, true);
+        put(SipConfigManager.ENABLE_STUN2, false);
 		put(SipConfigManager.ENABLE_QOS, false);
 		put(SipConfigManager.USE_COMPACT_FORM, false);
-		put("use_wifi_in", true);
-		put("use_wifi_out", true);
-		put("use_other_in", true);
-		put("use_other_out", true);
-		put("use_3g_in", true);
-		put("use_3g_out", true);
-		put("use_gprs_in", true);
-		put("use_gprs_out", true);
-		put("use_edge_in", true);
-		put("use_edge_out", true);
+		put(SipConfigManager.USE_WIFI_IN, true);
+		put(SipConfigManager.USE_WIFI_OUT, true);
+		put(SipConfigManager.USE_OTHER_IN, true);
+		put(SipConfigManager.USE_OTHER_OUT, true);
+		put(SipConfigManager.USE_3G_IN, true);
+		put(SipConfigManager.USE_3G_OUT, true);
+		put(SipConfigManager.USE_GPRS_IN, true);
+		put(SipConfigManager.USE_GPRS_OUT, true);
+		put(SipConfigManager.USE_EDGE_IN, true);
+		put(SipConfigManager.USE_EDGE_OUT, true);
+        put(SipConfigManager.USE_ANYWAY_IN, true);
+        put(SipConfigManager.USE_ANYWAY_OUT, true);
 		put(SipConfigManager.FORCE_NO_UPDATE, true);
+        put(SipConfigManager.DISABLE_TCP_SWITCH, true);
+        put(SipConfigManager.DISABLE_RPORT, false);
+        put(SipConfigManager.ADD_BANDWIDTH_TIAS_IN_SDP, false);
 		
 		
 		//Media
 		put(SipConfigManager.ECHO_CANCELLATION, true);
 		put(SipConfigManager.ENABLE_VAD, false);
+        put(SipConfigManager.ENABLE_NOISE_SUPPRESSION, false);
 		put(SipConfigManager.USE_SOFT_VOLUME, false);
 		put(SipConfigManager.USE_ROUTING_API, false);
 		put(SipConfigManager.USE_MODE_API, false);
@@ -155,6 +187,12 @@ public class PreferencesWrapper {
 		put(SipConfigManager.USE_WEBRTC_HACK, false);
 		put(SipConfigManager.DO_FOCUS_AUDIO, true);
 		put(SipConfigManager.INTEGRATE_WITH_NATIVE_MUSIC, true);
+		put(SipConfigManager.AUTO_CONNECT_BLUETOOTH, false);
+        put(SipConfigManager.AUTO_CONNECT_SPEAKER, false);
+        put(SipConfigManager.AUTO_DETECT_SPEAKER, false);
+		put(SipConfigManager.CODECS_PER_BANDWIDTH, false);
+		put(SipConfigManager.RESTART_AUDIO_ON_ROUTING_CHANGES, true);
+        put(SipConfigManager.SETUP_AUDIO_BEFORE_INIT, true);
 		
 		//UI
 		put(SipConfigManager.PREVENT_SCREEN_ROTATION, true);
@@ -165,12 +203,17 @@ public class PreferencesWrapper {
 		put(SipConfigManager.ICON_IN_STATUS_BAR_NBR, false);
 		put(SipConfigManager.INTEGRATE_WITH_CALLLOGS, true);
 		put(SipConfigManager.INTEGRATE_WITH_DIALER, true);
+		put(SipConfigManager.INTEGRATE_TEL_PRIVILEGED, false);
+		put(SipConfigManager.USE_ALTERNATE_UNLOCKER, false);
 		put(HAS_BEEN_QUIT, false);
 		put(HAS_ALREADY_SETUP_SERVICE, false);
+		put(SipConfigManager.LOG_USE_DIRECT_FILE, false);
+		put(SipConfigManager.START_WITH_TEXT_DIALER, false);
 		
 		//Calls
 		put(SipConfigManager.AUTO_RECORD_CALLS, false);
 		put(SipConfigManager.SUPPORT_MULTIPLE_CALLS, false);
+        put(SipConfigManager.USE_VIDEO, false);
 		
 		//Secure
 		put(SipConfigManager.TLS_VERIFY_SERVER, false);
@@ -188,14 +231,81 @@ public class PreferencesWrapper {
 		put(SipConfigManager.SND_STREAM_LEVEL, (float)8.0);
 	}};
 	
+	private static boolean HAS_MANAGED_VERSION_UPGRADE = false;
 	
 	public PreferencesWrapper(Context aContext) {
 		context = aContext;
 		prefs = PreferenceManager.getDefaultSharedPreferences(aContext);
 		resolver = aContext.getContentResolver();
 		
+		// Check if we need an upgrade here
+		// BUNDLE MODE -- upgrade settings
+		if(!HAS_MANAGED_VERSION_UPGRADE) {
+            Integer runningVersion = needUpgrade();
+            if (runningVersion != null) {
+                Editor editor = prefs.edit();
+                editor.putInt(LAST_KNOWN_VERSION_PREF, runningVersion);
+                editor.commit();
+            }
+            HAS_MANAGED_VERSION_UPGRADE = true;
+		}
+	}
+
+    /**
+     * Check wether an upgrade is needed
+     * 
+     * @return null if not needed, else the new version to upgrade to
+     */
+    private Integer needUpgrade() {
+        Integer runningVersion = null;
+        // Application upgrade
+        PackageInfo pinfo = PreferencesProviderWrapper.getCurrentPackageInfos(context);
+        if (pinfo != null) {
+            runningVersion = pinfo.versionCode;
+            int lastSeenVersion = prefs.getInt(LAST_KNOWN_VERSION_PREF, 0);
+
+            Log.d(THIS_FILE, "Last known version is " + lastSeenVersion
+                    + " and currently we are running " + runningVersion);
+            if (lastSeenVersion != runningVersion) {
+                Compatibility.updateVersion(this, lastSeenVersion, runningVersion);
+            } else {
+                runningVersion = null;
+            }
+        }
+
+        // Android upgrade
+        if(prefs != null){
+            int lastSeenVersion = prefs.getInt(LAST_KNOWN_ANDROID_VERSION_PREF, 0);
+            Log.d(THIS_FILE, "Last known android version " + lastSeenVersion);
+            if (lastSeenVersion != Compatibility.getApiLevel()) {
+                Compatibility.updateApiVersion(this, lastSeenVersion,
+                        Compatibility.getApiLevel());
+                Editor editor = prefs.edit();
+                editor.putInt(LAST_KNOWN_ANDROID_VERSION_PREF, Compatibility.getApiLevel());
+                editor.commit();
+            }
+        }
+        return runningVersion;
+    }
+	
+	
+	/**
+	 * Enter in edit mode
+	 * To use for bulk modifications
+	 */
+	public void startEditing() {
+	    sharedEditor = prefs.edit();
 	}
 	
+	/**
+	 * Leave edit mode
+	 */
+	public void endEditing() {
+	    if(sharedEditor != null) {
+	        sharedEditor.commit();
+	        sharedEditor = null;
+	    }
+	}
 
 	//Public setters
 	/**
@@ -204,10 +314,13 @@ public class PreferencesWrapper {
 	 * @param value the value for this key
 	 */
 	public void setPreferenceStringValue(String key, String value) {
-		//TODO : authorized values
-		Editor editor = prefs.edit();
-		editor.putString(key, value);
-		editor.commit();
+	    if(sharedEditor == null) {
+    		Editor editor = prefs.edit();
+    		editor.putString(key, value);
+    		editor.commit();
+	    }else {
+	        sharedEditor.putString(key, value);
+	    }
 	}
 	
 	/**
@@ -216,9 +329,13 @@ public class PreferencesWrapper {
 	 * @param value the value for this key
 	 */
 	public void setPreferenceBooleanValue(String key, boolean value) {
-		Editor editor = prefs.edit();
-		editor.putBoolean(key, value);
-		editor.commit();
+	    if(sharedEditor == null) {
+    		Editor editor = prefs.edit();
+    		editor.putBoolean(key, value);
+    		editor.commit();
+	    }else {
+	        sharedEditor.putBoolean(key, value);
+	    }
 	}
 	
 	/**
@@ -227,15 +344,21 @@ public class PreferencesWrapper {
 	 * @param value the value for this key
 	 */
 	public void setPreferenceFloatValue(String key, float value) {
-		Editor editor = prefs.edit();
-		editor.putFloat(key, value);
-		editor.commit();
-		Log.d(THIS_FILE, "Changed value of "+key+" : "+value);
+	    if(sharedEditor == null) {
+    		Editor editor = prefs.edit();
+    		editor.putFloat(key, value);
+    		editor.commit();
+	    }else {
+	        sharedEditor.putFloat(key, value);
+	    }
 	}
 	
 	//Private static getters
 	// For string
 	private static String gPrefStringValue(SharedPreferences aPrefs, String key) {
+	    if(aPrefs == null) {
+	        return STRING_PREFS.get(key);
+	    }
 		if(STRING_PREFS.containsKey(key)) {
 			return aPrefs.getString(key, STRING_PREFS.get(key));
 		}
@@ -244,18 +367,30 @@ public class PreferencesWrapper {
 	
 	// For boolean
 	private static Boolean gPrefBooleanValue(SharedPreferences aPrefs, String key) {
+	    if(aPrefs == null) {
+	        return BOOLEAN_PREFS.get(key);
+	    }
 		if(BOOLEAN_PREFS.containsKey(key)) {
 			return aPrefs.getBoolean(key, BOOLEAN_PREFS.get(key));
 		}
-		return aPrefs.getBoolean(key, (Boolean) null);
+		if(aPrefs.contains(key)) {
+		    return aPrefs.getBoolean(key, false);
+		}
+		return null;
 	}
 	
 	// For float
 	private static Float gPrefFloatValue(SharedPreferences aPrefs, String key) {
+	    if(aPrefs == null) {
+	        return FLOAT_PREFS.get(key);
+	    }
 		if(FLOAT_PREFS.containsKey(key)) {
 			return aPrefs.getFloat(key, FLOAT_PREFS.get(key));
 		}
-		return aPrefs.getFloat(key, (Float) null) ;
+		if(aPrefs.contains(key)) {
+		    return aPrefs.getFloat(key, 0.0f); 
+		}
+		return null;
 	}
 	
 	public static Class<?> gPrefClass(String key) {
@@ -301,13 +436,17 @@ public class PreferencesWrapper {
 	 * @param key the key preference to retrieve
 	 * @return the value
 	 */
-	public int getPreferenceIntegerValue(String key) {
+	public Integer getPreferenceIntegerValue(String key) {
 		try {
 			return Integer.parseInt(getPreferenceStringValue(key));
 		}catch(NumberFormatException e) {
-			Log.e(THIS_FILE, "Invalid "+key+" format : expect a int");
+			Log.d(THIS_FILE, "Invalid "+key+" format : expect a int");
 		}
-		return Integer.parseInt(STRING_PREFS.get(key));
+		String val = STRING_PREFS.get(key);
+		if(val != null) {
+		    return Integer.parseInt(val);
+		}
+		return null;
 	}
 	
 	/**
@@ -354,16 +493,22 @@ public class PreferencesWrapper {
 		
 		
 		// And get latest known version so that restore will be able to apply necessary patches
-		int lastSeenVersion = prefs.getInt(SipHome.LAST_KNOWN_VERSION_PREF, 0);
+		int lastSeenVersion = prefs.getInt(LAST_KNOWN_VERSION_PREF, 0);
 		try {
-			jsonSipSettings.put(SipHome.LAST_KNOWN_VERSION_PREF, lastSeenVersion);
+			jsonSipSettings.put(LAST_KNOWN_VERSION_PREF, lastSeenVersion);
 		} catch (JSONException e) {
 			Log.e(THIS_FILE, "Not able to add last known version pref");
 		}
 		return jsonSipSettings;
 	}
 	
+	/**
+	 * Restore settings from a json object
+	 * @param jsonSipSettings the json objet to restore from
+	 */
 	public void restoreSipSettings(JSONObject jsonSipSettings) {
+	    
+	    startEditing();
 		for(String key : STRING_PREFS.keySet() ) {
 			try {
 				String val = jsonSipSettings.getString(key);
@@ -399,43 +544,17 @@ public class PreferencesWrapper {
 		
 		// And get latest known version so that restore will be able to apply necessary patches
 		try {
-			Integer lastSeenVersion = jsonSipSettings.getInt(SipHome.LAST_KNOWN_VERSION_PREF);
+			Integer lastSeenVersion = jsonSipSettings.getInt(LAST_KNOWN_VERSION_PREF);
 			if(lastSeenVersion != null) {
-				Editor editor = prefs.edit();
-				editor.putInt(SipHome.LAST_KNOWN_VERSION_PREF, lastSeenVersion);
-				editor.commit();
+			    sharedEditor.putInt(LAST_KNOWN_VERSION_PREF, lastSeenVersion);
 			}
 		} catch (JSONException e) {
 			Log.e(THIS_FILE, "Not able to add last known version pref");
 		}
-	}
-	
-	
-	public SharedPreferences getDirectPrefs() {
-		return prefs;
-	}
-	
-	
-
-	public ArrayList<String> getAllIncomingNetworks(){
-		ArrayList<String> incomingNetworks = new ArrayList<String>();
-		String[] availableNetworks = {"3g", "edge", "gprs", "wifi", "other"};
-		for(String network:availableNetworks) {
-			if(getPreferenceBooleanValue("use_"+network+"_in")) {
-				incomingNetworks.add(network);
-			}
-		}
 		
-		return incomingNetworks;
+		endEditing();
 	}
 	
-
-	public void disableAllForIncoming() {
-		String[] availableNetworks = {"3g", "edge", "gprs", "wifi", "other"};
-		for(String network:availableNetworks) {
-			setPreferenceBooleanValue("use_"+network+"_in", false);
-		}
-	}
 	
 	
 	private boolean hasStunServer(String string) {
@@ -468,7 +587,11 @@ public class PreferencesWrapper {
 	public short getCodecPriority(String codecName, String type, String defaultValue) {
 		String key = SipConfigManager.getCodecKey(codecName, type); 
 		if(key != null) {
-			return (short) Integer.parseInt(prefs.getString(key, defaultValue));
+		    try {
+		        return (short) Integer.parseInt(prefs.getString(key, defaultValue));
+		    }catch(NumberFormatException e) {
+		        Log.e(THIS_FILE, "Invalid codec priority", e);
+		    }
 		}
 		return (short) Integer.parseInt(defaultValue);
 	}
@@ -485,15 +608,18 @@ public class PreferencesWrapper {
 	// ---- 
 	// UI related
 	// ----
-	public boolean getDialPressTone() {
-		int mode = getPreferenceIntegerValue(SipConfigManager.DIAL_PRESS_TONE_MODE);
+	public boolean dialPressTone(boolean inCall) {
+		Integer mode = getPreferenceIntegerValue(inCall ? SipConfigManager.DTMF_PRESS_TONE_MODE : SipConfigManager.DIAL_PRESS_TONE_MODE);
+		if(mode == null) {
+		    mode = inCall ? SipConfigManager.GENERIC_TYPE_PREVENT : SipConfigManager.GENERIC_TYPE_AUTO; 
+		}
 		switch (mode) {
-		case 0:
+		case SipConfigManager.GENERIC_TYPE_AUTO:
 			return Settings.System.getInt(resolver,
 	                Settings.System.DTMF_TONE_WHEN_DIALING, 1) == 1;
-		case 1:
+		case SipConfigManager.GENERIC_TYPE_FORCE:
 			return true;
-		case 2:
+		case SipConfigManager.GENERIC_TYPE_PREVENT:
 			return false;
 		default:
 			break;
@@ -501,15 +627,15 @@ public class PreferencesWrapper {
 		return false;
 	}
 
-	public boolean getDialPressVibrate() {
+	public boolean dialPressVibrate() {
 		int mode = getPreferenceIntegerValue(SipConfigManager.DIAL_PRESS_VIBRATE_MODE);
 		switch (mode) {
-		case 0:
+		case SipConfigManager.GENERIC_TYPE_AUTO:
 			return Settings.System.getInt(resolver,
 	                Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) == 1;
-		case 1:
+		case SipConfigManager.GENERIC_TYPE_FORCE:
 			return true;
-		case 2:
+		case SipConfigManager.GENERIC_TYPE_PREVENT:
 			return false;
 		default:
 			break;
@@ -517,59 +643,9 @@ public class PreferencesWrapper {
 		return false;
 	}
 
-	public boolean startIsDigit() {
-		return !prefs.getBoolean("start_with_text_dialer", false);
-	}
-
-	public boolean getUseAlternateUnlocker() {
-		return prefs.getBoolean("use_alternate_unlocker", false);
-	}
-	
-	public boolean invertProximitySensor() {
-		return getPreferenceBooleanValue(SipConfigManager.INVERT_PROXIMITY_SENSOR);
-	}
-
-	
-	public int getLogLevel() {
-		int prefsValue = getPreferenceIntegerValue(SipConfigManager.LOG_LEVEL);
-		if(prefsValue <= 6 && prefsValue >= 1) {
-			return prefsValue;
-		}
-		return 1;
-	}
-	
-	
-	public final static int GSM_TYPE_AUTO = 0;
-	public final static int GSM_TYPE_FORCE = 1;
-	public final static int GSM_TYPE_PREVENT = 2;
-	
-	public int getGsmIntegrationType() {
-		int prefsValue = 1;
-		String gsmType = getPreferenceStringValue(SipConfigManager.GSM_INTEGRATION_TYPE);
-		try {
-			prefsValue = Integer.parseInt(gsmType);
-		}catch(NumberFormatException e) {
-			Log.e(THIS_FILE, "Gsm type " + gsmType + " not well formated");
-		}
-		return prefsValue;
-	}
-	
-
-	
-	/**
-	 * Check wether setup has already been done
-	 * @return
-	 */
-	public boolean hasAlreadySetup() {
-		return prefs.getBoolean(HAS_ALREADY_SETUP, false);
-	}
-	
-
-
-	private static String CONFIG_FOLDER = "configs";
-	private static String RECORDS_FOLDER = "records";
-	private static String LOGS_FOLDER = "logs";
-	private static String ZRTP_FOLDER = "zrtp";
+	private final static String CONFIG_FOLDER = "configs";
+	private final static String RECORDS_FOLDER = "records";
+	private final static String LOGS_FOLDER = "logs";
 	 
 	private static File getStorageFolder(Context ctxt, boolean preferCache) {
 		File root = Environment.getExternalStorageDirectory();
@@ -578,7 +654,7 @@ public class PreferencesWrapper {
 		}
 		
 	    if (root.canWrite()){
-			File dir = new File(root.getAbsolutePath() + File.separator + "VoXMobile");
+			File dir = new File(root.getAbsolutePath() + File.separator + CustomDistribution.getSDCardFolder());
 			if(!dir.exists()) {
 				dir.mkdirs();
 				Log.d(THIS_FILE, "Create directory " + dir.getAbsolutePath());
@@ -611,31 +687,63 @@ public class PreferencesWrapper {
 		return getSubFolder(ctxt, LOGS_FOLDER, false);
 	}
 	
+	public static File getLogsFile(Context ctxt, boolean isPjsip) {
+        File dir = PreferencesWrapper.getLogsFolder(ctxt);
+        File outFile = null;
+        if( dir != null) {
+            Date d = new Date();
+            StringBuffer fileName = new StringBuffer();
+            if(isPjsip) {
+                fileName.append("pjsip");
+            }
+            fileName.append("logs_");
+            fileName.append(DateFormat.format("yy-MM-dd_kkmmss", d));
+            fileName.append(".txt");
+            outFile = new File(dir.getAbsoluteFile() + File.separator + fileName.toString());
+        }
+        
+        return outFile;
+	}
+	
 	public static File getZrtpFolder(Context ctxt) {
-		return getSubFolder(ctxt, ZRTP_FOLDER, true);
+	    return ctxt.getFilesDir();
+		/*return getSubFolder(ctxt, ZRTP_FOLDER, true);*/
 	}
 	
 	public static void cleanLogsFiles(Context ctxt) {
 		File logsFolder = getLogsFolder(ctxt);
 		if(logsFolder != null) {
 			File[] files = logsFolder.listFiles();
-			for(File file: files) {
-				if(file.isFile()) {
-					file.delete();
-				}
+			if(files != null) {
+    			for(File file: files) {
+    				if(file.isFile()) {
+    					file.delete();
+    				}
+    			}
 			}
 		}
 	}
 
+	/**
+	 * Get current mode for the user
+	 * By default the user is a default user. If becomes an advanced user he will have access to expert mode.
+	 * @return
+	 */
 	public boolean isAdvancedUser() {
 		return prefs.getBoolean(IS_ADVANCED_USER, false);
 	}
 
-
+	/**
+	 * Toogle the user into an expert user. It will give him access to expert settings if was an expert user
+	 */
 	public void toogleExpertMode() {
 		setPreferenceBooleanValue(IS_ADVANCED_USER, !isAdvancedUser());
 	}
 	
+	/**
+	 * Turn the application as quited by user. It will not register anymore
+	 * @param quit true if the app should be considered as finished.
+	 */
 	public void setQuit(boolean quit) {
 		setPreferenceBooleanValue(HAS_BEEN_QUIT, quit);
 	}
@@ -644,19 +752,49 @@ public class PreferencesWrapper {
 	// Codec list management -- only internal use set at each start of the sip stack
 	public static final String CODECS_SEPARATOR = "|";
 	public static final String CODECS_LIST = "codecs_list";
+    public static final String CODECS_VIDEO_LIST = "codecs_video_list";
 	public static final String BACKUP_PREFIX = "backup_";
 	public static final String LIB_CAP_TLS = "cap_tls";
 	public static final String LIB_CAP_SRTP = "cap_srtp";
 	
-	
+    /**
+     * Get list of audio codecs registered in preference system
+     * 
+     * @return List of possible audio codecs
+     * @see PreferencesProviderWrapper#setCodecList(java.util.List)
+     */
 	public String[] getCodecList() {
 		return TextUtils.split(prefs.getString(CODECS_LIST, ""),  Pattern.quote(CODECS_SEPARATOR) );
 	}
 
+    /**
+     * Get list of video codecs registered in preference system by
+     * 
+     * @return List of possible video codecs
+     * @see PreferencesProviderWrapper#setVideoCodecList(java.util.List)
+     */
+    public String[] getVideoCodecList() {
+        return TextUtils.split(prefs.getString(CODECS_VIDEO_LIST, ""),  Pattern.quote(CODECS_SEPARATOR) );
+    }
+	
+    /**
+     * Get the capability of the lib registered in preference system
+     * 
+     * @param cap on of the lib capabilty. <br/>
+     *            For now valid caps are
+     *            {@link PreferencesProviderWrapper#LIB_CAP_SRTP} and
+     *            {@link PreferencesProviderWrapper#LIB_CAP_TLS}
+     * @return True if the lib if capable of this feature
+     */
 	public boolean getLibCapability(String cap) {
 		return prefs.getBoolean(BACKUP_PREFIX + cap, false);
 	}
 
+    /**
+     * Retrieve the context used for this preference wrapper
+     * 
+     * @return an android context
+     */
 	public Context getContext() {
 		return context;
 	}

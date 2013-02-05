@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,60 +18,46 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.ui;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
-import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
 import net.voxcorp.R;
-import net.voxcorp.api.ISipService;
-import net.voxcorp.api.SipManager;
 import net.voxcorp.api.SipProfile;
-import net.voxcorp.service.SipService;
-import net.voxcorp.utils.Log;
 import net.voxcorp.widgets.EditSipUri;
 import net.voxcorp.widgets.EditSipUri.ToCall;
 
 public class PickupSipUri extends Activity implements OnClickListener {
 
-	private static final String THIS_FILE = "PickupUri";
 	private EditSipUri sipUri;
 	private Button okBtn;
-	private BroadcastReceiver registrationReceiver;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.pickup_uri);
 		
 		
 		//Set window size
-		LayoutParams params = getWindow().getAttributes();
-		params.width = LayoutParams.FILL_PARENT;
-		getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
+//		LayoutParams params = getWindow().getAttributes();
+//		params.width = LayoutParams.FILL_PARENT;
+//		getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
 		
 		//Set title
-		((TextView) findViewById(R.id.my_title)).setText(R.string.pickup_sip_uri);
-		((ImageView) findViewById(R.id.my_icon)).setImageResource(android.R.drawable.ic_menu_call);
+		// TODO -- use dialog instead
+//		((TextView) findViewById(R.id.my_title)).setText(R.string.pickup_sip_uri);
+//		((ImageView) findViewById(R.id.my_icon)).setImageResource(android.R.drawable.ic_menu_call);
 		
 		
 		okBtn = (Button) findViewById(R.id.ok);
@@ -90,47 +79,16 @@ public class PickupSipUri extends Activity implements OnClickListener {
 		});
 		sipUri.setShowExternals(false);
 		
-		registrationReceiver = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				updateRegistrations();
-			}
-		};
 		
 	}
 	
 	
 	@Override
-	protected void onResume() {
-		super.onResume();
-		Log.d(THIS_FILE, "Resume pickup URI");
-		// Bind service
-		bindService(new Intent(this, SipService.class), connection, Context.BIND_AUTO_CREATE);
-		registerReceiver(registrationReceiver, new IntentFilter(SipManager.ACTION_SIP_REGISTRATION_CHANGED));
-	}
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-		// Unbind service
-		try {
-			unbindService(connection);
-		}catch (Exception e) {
-			//Just ignore that -- TODO : should be more clean
-		}
-
-		try {
-			unregisterReceiver(registrationReceiver);
-		} catch (Exception e) {
-			// Nothing to do here -- TODO : should be more clean
-		}
-	}
-	
-	@Override
 	public void onClick(View v) {
-		if (v.getId() == R.id.ok) {
+		int vId = v.getId();
+		if (vId == R.id.ok) {
 			sendPositiveResult();
-		} else if (v.getId() == R.id.cancel) {
+		} else if (vId == R.id.cancel) {
 			setResult(RESULT_CANCELED);
 			finish();
 		}
@@ -140,36 +98,23 @@ public class PickupSipUri extends Activity implements OnClickListener {
 		Intent resultValue = new Intent();
 		 ToCall result = sipUri.getValue();
 		 if(result != null) {
+		     // Restore existing extras.
+		     Intent it = getIntent();
+		     if(it != null) {
+		         Bundle b = it.getExtras();
+		         if(b != null) {
+		             resultValue.putExtras(b);
+		         }
+		     }
 			 resultValue.putExtra(Intent.EXTRA_PHONE_NUMBER,
 						result.getCallee());
-			 resultValue.putExtra(SipProfile.FIELD_ACC_ID,
+			 resultValue.putExtra(SipProfile.FIELD_ID,
 						result.getAccountId());
 			 setResult(RESULT_OK, resultValue);
 		 }else {
 			setResult(RESULT_CANCELED);
 		 }
 		finish();
-	}
-	
-	private ISipService service;
-	private ServiceConnection connection = new ServiceConnection() {
-
-		@Override
-		public void onServiceConnected(ComponentName arg0, IBinder arg1) {
-			service = ISipService.Stub.asInterface(arg1);
-			sipUri.updateService(service);
-			updateRegistrations();
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName arg0) {
-			service = null;
-		}
-
-	};
-	
-	private void updateRegistrations(){
-		sipUri.updateRegistration();
 	}
 	
 }

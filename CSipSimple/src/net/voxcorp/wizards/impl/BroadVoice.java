@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,15 +18,16 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.wizards.impl;
 
-import android.net.Uri;
 import android.preference.EditTextPreference;
 import android.text.InputType;
 import android.text.TextUtils;
 
 import net.voxcorp.R;
 import net.voxcorp.api.SipProfile;
+import net.voxcorp.api.SipUri;
 
 public class BroadVoice extends SimpleImplementation {
 	
@@ -52,7 +56,7 @@ public class BroadVoice extends SimpleImplementation {
 		
 		// Allow to add suffix x11
 		boolean recycle = true;
-		accountSuffix = (EditTextPreference) parent.findPreference(SUFFIX_KEY);
+		accountSuffix = (EditTextPreference) findPreference(SUFFIX_KEY);
 		if(accountSuffix == null) {
 			accountSuffix = new EditTextPreference(parent);
 			accountSuffix.setKey(SUFFIX_KEY);
@@ -62,6 +66,11 @@ public class BroadVoice extends SimpleImplementation {
 			recycle = false;
 		}
 		
+
+        if(!recycle) {
+            addPreference(accountSuffix);
+        }
+        
 		String uName = account.getSipUserName();
 		String[] uNames = uName.split("x");
 		
@@ -70,10 +79,6 @@ public class BroadVoice extends SimpleImplementation {
 			accountSuffix.setText(uNames[1]);
 		}
 
-        if(!recycle) {
-            parent.getPreferenceScreen().addPreference(accountSuffix);
-    	}
-		
 	}
 
 	
@@ -83,6 +88,7 @@ public class BroadVoice extends SimpleImplementation {
 		account.proxies = null;
 		account.reg_timeout = 3600;
 		account.contact_rewrite_method = 1;
+        account.try_clean_registers = 0;
 		
 		String finalUsername = accountUsername.getText().trim();
 		if(accountSuffix != null) {
@@ -92,7 +98,7 @@ public class BroadVoice extends SimpleImplementation {
 			}
 		}
 		
-		account.acc_id = "<sip:" + Uri.encode(finalUsername) + "@"+getDomain()+">";
+		account.acc_id = "<sip:" + SipUri.encodeUser(finalUsername) + "@"+getDomain()+">";
 		
 		return account;
 	}

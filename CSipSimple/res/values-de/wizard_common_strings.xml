@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
   <string name="w_common_display_name">Kontoname</string>
   <string name="w_common_display_name_desc">Zeigt den Namen dieses Kontos</string>
@@ -10,4 +10,10 @@
   <string name="w_common_password_desc">Passwort für dieses Konto</string>
   <string name="w_common_server">SIP Server</string>
   <string name="w_common_server_desc">SIP Server Domainname IP[:Port]</string>
+  <string name="create_account">Erstelle Account</string>
+  <string name="first_name">Vorname</string>
+  <string name="last_name">Nachname</string>
+  <string name="email_address">E-Mail</string>
+  <string name="captcha">Captcha</string>
+  <string name="country_code">Ländercode</string>
 </resources>

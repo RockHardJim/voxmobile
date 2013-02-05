@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,6 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.wizards.impl;
 
 import android.preference.ListPreference;
@@ -53,7 +57,7 @@ public class BelCentrale extends SimpleImplementation {
 				"pbx6", "pbx7", "pbx8", "pbx9", "pbx10", "pbx11", "pbx12", "pbx13", "pbx15"};
 
 		boolean recycle = true;
-		accountState = (ListPreference) parent.findPreference(STATE_KEY);
+		accountState = (ListPreference) findPreference(STATE_KEY);
 		if(accountState == null) {
 			accountState = new ListPreference(parent);
 			accountState.setKey(STATE_KEY);
@@ -68,7 +72,7 @@ public class BelCentrale extends SimpleImplementation {
         accountState.setDefaultValue("login");
         
         if(!recycle) {
-        	parent.getPreferenceScreen().addPreference(accountState);
+        	addPreference(accountState);
         }
         
 
@@ -77,7 +81,7 @@ public class BelCentrale extends SimpleImplementation {
 	        for(CharSequence state : states) {
 	        	String currentComp = "sip:"+state+".belcentrale.nl";
 	        	if( domain.startsWith(currentComp) ) {
-	        		accountState.setValue((String) state);
+	        		accountState.setValue(state.toString());
 	        		break;
 	        	}
 	        }

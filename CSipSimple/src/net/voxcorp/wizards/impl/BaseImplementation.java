@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,11 +18,10 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.wizards.impl;
 
-import java.util.List;
-import java.util.regex.Pattern;
-
+import android.content.Intent;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceGroup;
@@ -28,10 +30,14 @@ import android.preference.PreferenceScreen;
 import net.voxcorp.R;
 import net.voxcorp.api.SipProfile;
 import net.voxcorp.models.Filter;
+import net.voxcorp.ui.prefs.GenericPrefs;
 import net.voxcorp.utils.Log;
 import net.voxcorp.utils.PreferencesWrapper;
 import net.voxcorp.wizards.BasePrefsWizard;
 import net.voxcorp.wizards.WizardIface;
+
+import java.util.List;
+import java.util.regex.Pattern;
 
 public abstract class BaseImplementation implements WizardIface {
 	protected BasePrefsWizard parent;
@@ -60,20 +66,62 @@ public abstract class BaseImplementation implements WizardIface {
 		return Pattern.matches(regex, edt.getText());
 	}
 
+    /**
+     * @see EditTextPreference#getText()
+     * @param edt
+     */
 	protected String getText(EditTextPreference edt){
 		return edt.getText();
 	}
 	
-	
-	public void setStringFieldSummary(String fieldName){
+
+    /**
+     * @see GenericPrefs#setStringFieldSummary(String)
+     * @param fieldName
+     */
+	protected void setStringFieldSummary(String fieldName){
 		parent.setStringFieldSummary(fieldName);
 	}
-	
+
+    /**
+     * @see GenericPrefs#setPasswordFieldSummary(String)
+     * @param fieldName
+     */
 	protected void setPasswordFieldSummary(String fieldName){
 		parent.setPasswordFieldSummary(fieldName);
 	}
 	
-	protected void hidePreference(String parentGroup, String fieldName) {
+	/**
+	 * @see GenericPrefs#setListFieldSummary(String)
+	 * @param fieldName
+	 */
+    protected void setListFieldSummary(String fieldName){
+        parent.setListFieldSummary(fieldName);
+    }
+	
+    /**
+     * @see PreferenceScreen#findPreference(CharSequence)
+     */
+    @SuppressWarnings("deprecation")
+    protected Preference findPreference(String fieldName) {
+        return parent.findPreference(fieldName);
+    }
+    /**
+     * @see PreferenceScreen#addPreference(Preference)
+     */
+    @SuppressWarnings("deprecation")
+    protected void addPreference(Preference pref) {
+        parent.getPreferenceScreen().addPreference(pref);
+        markFieldValid(pref);
+    }
+    
+    /**
+     * Hide a preference from the preference screen.
+     * @param parentGroup key for parent group if any. If null no parent group are searched
+     * @param fieldName key for the field to remove
+     */
+	@SuppressWarnings("deprecation")
+    protected void hidePreference(String parentGroup, String fieldName) {
 		PreferenceScreen pfs = parent.getPreferenceScreen();
 		PreferenceGroup parentPref = pfs; 
 		if (parentGroup != null) {
@@ -118,8 +166,29 @@ public abstract class BaseImplementation implements WizardIface {
 		return !isNotValid;
 	}
 	
-	public void setDefaultParams(PreferencesWrapper prefs) {}
+	/**
+	 * Set global preferences for this wizard
+	 * If some preference that need restart are modified here
+	 * Do not forget to return true in need restart
+	 */
+	public void setDefaultParams(PreferencesWrapper prefs) {
+		// By default empty implementation
+	}
+	
+	@Override
+	public boolean needRestart() {
+		return false;
+	}
+	
 	public List<Filter> getDefaultFilters(SipProfile acc) {
 		return null;
 	}
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // By default empty implementation
+    }
+    
+    public void onStart() {}
+    public void onStop() {}
+    
 }

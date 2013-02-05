@@ -2,7 +2,7 @@
 
 move_generic_lib() {
 	echo -n "Moving $1.so to $2 project ... "
-	libs_files=$(ls libs/*/${1}.so 2> /dev/null | wc -l)
+	libs_files=$(ls libs/*/${1}.so 2> /dev/null | wc -l | sed -e 's/^[ \t]*//')
 	if [ "$libs_files" != "0" ]; then
 		for lib_folder in libs/*; do
 			if [ -d ${lib_folder} ]; then
@@ -12,7 +12,7 @@ move_generic_lib() {
 		done
 		echo "[OK]";
 	else
-		echo "[KO] - lib not built"
+		echo "[--] - plugin not built"
 	fi
 }
 
@@ -22,7 +22,11 @@ move_lib() {
 
 move_lib "g7221" "Pack"
 move_lib "codec2" "Pack"
-move_lib "silk" "Pack"
+move_lib "opus" "Pack"
 move_lib "g726" "Pack"
+move_lib "aac" "Pack"
 move_generic_lib "libcrypto" "CSipSimpleCrypto"
 move_generic_lib "libssl" "CSipSimpleCrypto"
+move_generic_lib "libpj_video_android" "CSipSimpleVideoPlugin"
+move_generic_lib "libpj_screen_capture_android" "CSipSimpleVideoPlugin"
+move_generic_lib "libpj_vpx" "CSipSimpleVideoPlugin"

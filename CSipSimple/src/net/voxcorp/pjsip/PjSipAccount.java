@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,12 +20,22 @@
  */
 package net.voxcorp.pjsip;
 
+import org.pjsip.pjsua.csipsimple_acc_config;
+import org.pjsip.pjsua.pj_qos_params;
+import org.pjsip.pjsua.pj_qos_type;
 import org.pjsip.pjsua.pj_str_t;
 import org.pjsip.pjsua.pjmedia_srtp_use;
 import org.pjsip.pjsua.pjsip_cred_info;
 import org.pjsip.pjsua.pjsua;
 import org.pjsip.pjsua.pjsuaConstants;
 import org.pjsip.pjsua.pjsua_acc_config;
+import org.pjsip.pjsua.pjsua_ice_config;
+import org.pjsip.pjsua.pjsua_ice_config_use;
+import org.pjsip.pjsua.pjsua_ipv6_use;
+import org.pjsip.pjsua.pjsua_stun_use;
+import org.pjsip.pjsua.pjsua_transport_config;
+import org.pjsip.pjsua.pjsua_turn_config;
+import org.pjsip.pjsua.pjsua_turn_config_use;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -33,21 +46,24 @@ import net.voxcorp.api.SipUri;
 import net.voxcorp.api.SipUri.ParsedSipContactInfos;
 import net.voxcorp.utils.Log;
 import net.voxcorp.utils.PreferencesProviderWrapper;
-import net.voxcorp.voxmobile.utils.SimpleCrypto;
-import net.voxcorp.wizards.impl.VoXMobile;
 
 public class PjSipAccount {
 	
 	//private static final String THIS_FILE = "PjSipAcc";
 	
-	
-	//For now everything is public, easiest to manage
-	public String display_name;
+	private String displayName;
+	// For now everything is public, easiest to manage
 	public String wizard;
 	public boolean active;
 	public pjsua_acc_config cfg;
-	public Integer id;
+	public csipsimple_acc_config css_cfg;
+	public Long id;
 	public Integer transport = 0;
+	private int profile_vid_auto_show = -1;
+	private int profile_vid_auto_transmit = -1;
+    private int profile_enable_qos;
+    private int profile_qos_dscp;
+    private boolean profile_default_rtp_port = true;
 	
 	//private boolean hasZrtpValue = false;
 
@@ -55,24 +71,29 @@ public class PjSipAccount {
 	
 	public PjSipAccount() {
 		cfg = new pjsua_acc_config();
-		
 		pjsua.acc_config_default(cfg);
-		// By default keep alive interval is now 0 since it's managed globally at android level
-		cfg.setKa_interval(0);
+		
+		css_cfg = new csipsimple_acc_config();
+		pjsua.csipsimple_acc_config_default(css_cfg);
 	}
 	
+	/**
+	 * Initialize from a SipProfile (public api) object
+	 * @param profile the sip profile to use
+	 */
 	public PjSipAccount(SipProfile profile) {
+	    this();
+	    
 		if(profile.id != SipProfile.INVALID_ID) {
 			id = profile.id;
 		}
-		display_name = profile.display_name;
+		
+		displayName = profile.display_name;
 		wizard = profile.wizard;
 		transport = profile.transport;
 		active = profile.active;
 		transport = profile.transport;
 
-		cfg = new pjsua_acc_config();
-		pjsua.acc_config_default(cfg);
 		
 		cfg.setPriority(profile.priority);
 		if(profile.acc_id != null) {
@@ -102,19 +123,16 @@ public class PjSipAccount {
 		
 		cfg.setAllow_contact_rewrite(profile.allow_contact_rewrite ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
 		cfg.setContact_rewrite_method(profile.contact_rewrite_method);
+        cfg.setAllow_via_rewrite(profile.allow_via_rewrite ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
 		
 		
 		if(profile.use_srtp != -1) {
 			cfg.setUse_srtp(pjmedia_srtp_use.swigToEnum(profile.use_srtp));
 			cfg.setSrtp_secure_signaling(0);
 		}
-		// TODO : Reactivate that
-		/*
-		if(profile.use_zrtp > 0) {
-			cfg.setUse_zrtp(pjmedia_zrtp_use.swigToEnum(profile.use_zrtp));
-			hasZrtpValue = true;
-		}
-		*/
+		
+		css_cfg.setUse_zrtp(profile.use_zrtp);
+		
 		
 		if(profile.proxies != null) {
 			Log.d("PjSipAccount", "Create proxy "+profile.proxies.length);
@@ -146,20 +164,78 @@ public class PjSipAccount {
 				cred_info.setData_type(profile.datatype);
 			}
 			if(profile.data != null) {
-				if (VoXMobile.isVoXMobile(profile.proxies)) {
-					cred_info.setData(pjsua.pj_str_copy(SimpleCrypto.decrypt(profile.data)));
-				} else {
-					cred_info.setData(pjsua.pj_str_copy(profile.data));
-				}
+				cred_info.setData(pjsua.pj_str_copy(profile.data));
 			}
 		}else {
 			cfg.setCred_count(0);
 		}
+		
+        cfg.setMwi_enabled(profile.mwi_enabled ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
+        cfg.setIpv6_media_use(profile.ipv6_media_use == 1 ? pjsua_ipv6_use.PJSUA_IPV6_ENABLED
+                : pjsua_ipv6_use.PJSUA_IPV6_DISABLED);
+		
+		// RFC5626
+		cfg.setUse_rfc5626(profile.use_rfc5626? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
+		if(!TextUtils.isEmpty(profile.rfc5626_instance_id)) {
+		    cfg.setRfc5626_instance_id(pjsua.pj_str_copy(profile.rfc5626_instance_id));
+		}
+		if(!TextUtils.isEmpty(profile.rfc5626_reg_id)) {
+            cfg.setRfc5626_reg_id(pjsua.pj_str_copy(profile.rfc5626_reg_id));
+        }
+		
+		
+		// Video
+		profile_vid_auto_show = profile.vid_in_auto_show;
+		profile_vid_auto_transmit = profile.vid_out_auto_transmit;
+		
+		
+		// Rtp cfg
+		pjsua_transport_config rtpCfg = cfg.getRtp_cfg();
+		if(profile.rtp_port >= 0) {
+		    rtpCfg.setPort(profile.rtp_port);
+		    profile_default_rtp_port = false;
+		}
+		if(!TextUtils.isEmpty(profile.rtp_public_addr)) {
+		    rtpCfg.setPublic_addr(pjsua.pj_str_copy(profile.rtp_public_addr));
+		}
+        if(!TextUtils.isEmpty(profile.rtp_bound_addr)) {
+            rtpCfg.setBound_addr(pjsua.pj_str_copy(profile.rtp_bound_addr));
+        }
+        
+        profile_enable_qos = profile.rtp_enable_qos;
+        profile_qos_dscp = profile.rtp_qos_dscp;
+        
+        cfg.setSip_stun_use(profile.sip_stun_use == 0 ? pjsua_stun_use.PJSUA_STUN_USE_DISABLED : pjsua_stun_use.PJSUA_STUN_USE_DEFAULT);
+        cfg.setMedia_stun_use(profile.media_stun_use == 0 ? pjsua_stun_use.PJSUA_STUN_USE_DISABLED : pjsua_stun_use.PJSUA_STUN_USE_DEFAULT);
+        if(profile.ice_cfg_use == 1) {
+            cfg.setIce_cfg_use(pjsua_ice_config_use.PJSUA_ICE_CONFIG_USE_CUSTOM);
+            pjsua_ice_config iceCfg = cfg.getIce_cfg();
+            iceCfg.setEnable_ice( (profile.ice_cfg_enable == 1 )? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
+        }else {
+            cfg.setIce_cfg_use(pjsua_ice_config_use.PJSUA_ICE_CONFIG_USE_DEFAULT);
+        }
+        if(profile.turn_cfg_use == 1) {
+            cfg.setTurn_cfg_use(pjsua_turn_config_use.PJSUA_TURN_CONFIG_USE_CUSTOM);
+            pjsua_turn_config turnCfg = cfg.getTurn_cfg();
+            turnCfg.setEnable_turn( (profile.turn_cfg_enable == 1) ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
+            turnCfg.setTurn_server( pjsua.pj_str_copy(profile.turn_cfg_server) );
+            pjsua.set_turn_credentials(
+                    pjsua.pj_str_copy(profile.turn_cfg_user),
+                    pjsua.pj_str_copy(profile.turn_cfg_password), 
+                    pjsua.pj_str_copy("*"), 
+                    turnCfg.getTurn_auth_cred());
+        }else {
+            cfg.setTurn_cfg_use(pjsua_turn_config_use.PJSUA_TURN_CONFIG_USE_DEFAULT);
+        }
 	}
 	
 	
 
 
+	/**
+	 * Automatically apply csipsimple specific parameters to the account
+	 * @param ctxt
+	 */
 	public void applyExtraParams(Context ctxt) {
 		
 		// Transport
@@ -206,8 +282,6 @@ public class PjSipAccount {
 		//Caller id
 		PreferencesProviderWrapper prefs = new PreferencesProviderWrapper(ctxt);
 		String defaultCallerid = prefs.getPreferenceStringValue(SipConfigManager.DEFAULT_CALLER_ID);
-		
-		
 		// If one default caller is set 
 		if (!TextUtils.isEmpty(defaultCallerid)) {
 			String accId = PjSipService.pjStrToString(cfg.getId());
@@ -219,21 +293,55 @@ public class PjSipAccount {
 			}
 		}
 		
-		cfg.setKa_interval(prefs.getKeepAliveInterval());
+		// Keep alive
+		cfg.setKa_interval(prefs.getUdpKeepAliveInterval());
 		
-		// TODO : reactivate that
-		/*
-		if(!hasZrtpValue) {
-			int useZrtp = prefs.getPreferenceIntegerValue(SipConfigManager.USE_ZRTP);
-			if(useZrtp == 1 || useZrtp == 2) {
-				cfg.setUse_zrtp(pjmedia_zrtp_use.swigToEnum(useZrtp));
-			}
-			Log.d("Pj profile", "--> added zrtp "+ useZrtp);
+		// Video 
+		if(profile_vid_auto_show >= 0) {
+		    cfg.setVid_in_auto_show((profile_vid_auto_show == 1) ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
+		}else {
+		    cfg.setVid_in_auto_show(pjsuaConstants.PJ_TRUE);
 		}
-		*/
+		if(profile_vid_auto_transmit >= 0) {
+            cfg.setVid_out_auto_transmit((profile_vid_auto_transmit == 1) ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
+        }else {
+            cfg.setVid_out_auto_transmit(pjsuaConstants.PJ_TRUE);
+        }
+		
+		
+		// RTP cfg
+		pjsua_transport_config rtpCfg = cfg.getRtp_cfg();
+		if(profile_default_rtp_port) {
+		    rtpCfg.setPort(prefs.getRTPPort());
+		}
+		boolean hasQos = prefs.getPreferenceBooleanValue(SipConfigManager.ENABLE_QOS);
+        if(profile_enable_qos >= 0) {
+            hasQos = (profile_enable_qos == 1);
+        }
+        if(hasQos) {
+            // TODO - video?
+            rtpCfg.setQos_type(pj_qos_type.PJ_QOS_TYPE_VOICE);
+            pj_qos_params qosParam = rtpCfg.getQos_params();
+            
+            short dscpVal = (short) prefs.getDSCPVal();
+            if(profile_qos_dscp >= 0) {
+                // If not set, we don't need to change dscp value
+                dscpVal = (short) profile_qos_dscp;
+                qosParam.setDscp_val(dscpVal);
+                qosParam.setFlags((short) 1); // DSCP
+            }
+        }
+        
 	}
 	
 	
+	/**
+	 * @return the displayName
+	 */
+	public String getDisplayName() {
+		return displayName;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if(o != null && o.getClass() == PjSipAccount.class) {

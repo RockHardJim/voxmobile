@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,222 +18,255 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.widgets;
 
-import java.util.regex.Pattern;
-
-import android.app.Activity;
 import android.content.Context;
+import android.database.Cursor;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AlphabetIndexer;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.SectionIndexer;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import net.voxcorp.R;
-import net.voxcorp.api.ISipService;
 import net.voxcorp.api.SipProfile;
-import net.voxcorp.db.DBAdapter;
 import net.voxcorp.models.Filter;
 import net.voxcorp.utils.Log;
-import net.voxcorp.utils.contacts.ContactsSearchListAdapter;
+import net.voxcorp.utils.contacts.ContactsAutocompleteAdapter;
 import net.voxcorp.utils.contacts.ContactsWrapper;
-import net.voxcorp.utils.contacts.ContactsWrapper.OnPhoneNumberSelected;
 import net.voxcorp.widgets.AccountChooserButton.OnAccountChangeListener;
+
+import java.util.regex.Pattern;
 
 public class EditSipUri extends LinearLayout implements TextWatcher, OnItemClickListener {
 
-	protected static final String THIS_FILE = "EditSipUri";
-	private AutoCompleteTextView dialUser;
-	private AccountChooserButton accountChooserButtonText;
-	private TextView domainTextHelper;
-	private ListView completeList;
-	private SimpleCursorAdapter contactsAdapter;
-	private ContactsSearchListAdapter autoCompleteAdapter;
-	
-	
-	public EditSipUri(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		LayoutInflater inflater = LayoutInflater.from(context);
-		inflater.inflate(R.layout.edit_sip_uri, this, true);
-		
-		dialUser = (AutoCompleteTextView) findViewById(R.id.dialtxt_user);
-		accountChooserButtonText = (AccountChooserButton) findViewById(R.id.accountChooserButtonText);
-		domainTextHelper = (TextView) findViewById(R.id.dialtxt_domain_helper);
-		completeList = (ListView) findViewById(R.id.autoCompleteList);
-		
-		autoCompleteAdapter = new ContactsSearchListAdapter(context);
-		
-		//Map events
-		accountChooserButtonText.setOnAccountChangeListener(new OnAccountChangeListener() {
-			@Override
-			public void onChooseAccount(SipProfile account) {
-				updateDialTextHelper();
-				int accId = SipProfile.INVALID_ID;
-				if(account != null) {
-					accId = account.id;
-				}
-				autoCompleteAdapter.setSelectedAccount(accId);
-			}
-		});
-		dialUser.addTextChangedListener(this);
-		
-		contactsAdapter =  ContactsWrapper.getInstance().getAllContactsAdapter((Activity)context, android.R.layout.two_line_list_item, new int[] {android.R.id.text1 });
-		completeList.setAdapter(contactsAdapter);
-		completeList.setOnItemClickListener(this);
-		
-		dialUser.setAdapter(autoCompleteAdapter);
-		
-	}
-	
-	public class ToCall {
-		private Integer accountId;
-		private String callee;
-		public ToCall(Integer acc, String uri) {
-			accountId = acc;
-			callee = uri;
-		}
-		
-		/**
-		 * @return the pjsipAccountId
-		 */
-		public Integer getAccountId() {
-			return accountId;
-		}
-		/**
-		 * @return the callee
-		 */
-		public String getCallee() {
-			return callee;
-		}
-	};
-	
-	public void updateService(ISipService service) {
-		accountChooserButtonText.updateService(service);
-	}
-	
-	public void updateRegistration() {
-		boolean canChangeIfValid = TextUtils.isEmpty(dialUser.getText().toString());
-		accountChooserButtonText.updateRegistration(canChangeIfValid);
-	}
-	
+    protected static final String THIS_FILE = "EditSipUri";
+    private AutoCompleteTextView dialUser;
+    private AccountChooserButton accountChooserButtonText;
+    private TextView domainTextHelper;
+    private ListView completeList;
+    private ContactAdapter contactsAdapter;
+    private ContactsAutocompleteAdapter autoCompleteAdapter;
 
-	private void updateDialTextHelper() {
+    public EditSipUri(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        setGravity(Gravity.CENTER_HORIZONTAL);
+        setOrientation(VERTICAL);
+        LayoutInflater inflater = LayoutInflater.from(context);
+        inflater.inflate(R.layout.edit_sip_uri, this, true);
 
-		String dialUserValue = dialUser.getText().toString();
-		SipProfile acc = accountChooserButtonText.getSelectedAccount();
-		if(!Pattern.matches(".*@.*", dialUserValue) && acc != null && acc.id > SipProfile.INVALID_ID) {
-			domainTextHelper.setText("@"+acc.getDefaultDomain());
-		}else {
-			domainTextHelper.setText("");
-		}
-		
-	}
-	
-	public ToCall getValue() {
-		String userName = dialUser.getText().toString();
-		String toCall = ""; 
-		Integer accountToUse = null;
-		if (TextUtils.isEmpty(userName)) {
-			return null;
-		}
-		userName = userName.replaceAll("[ \t]", "");
-		SipProfile acc = accountChooserButtonText.getSelectedAccount();
-		if (acc != null) {
-			accountToUse = acc.id;
-			// If this is a sip account
-			if(accountToUse > SipProfile.INVALID_ID) {
-				if(Pattern.matches(".*@.*", userName)) {
-					toCall = "sip:" + userName +"";
-				}else {
-					toCall = "sip:" + userName + "@" + acc.getDefaultDomain();
-				}
-			}else {
-				toCall = userName;
-			}
-		}else {
-			toCall = userName;
-		}
-		
-		return new ToCall(accountToUse, toCall);
-	}
-	
-	public SipProfile getSelectedAccount() {
-		return accountChooserButtonText.getSelectedAccount();
-	}
-	
-	
-	@Override
-	public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
-		// Nothing to do here
+        dialUser = (AutoCompleteTextView) findViewById(R.id.dialtxt_user);
+        accountChooserButtonText = (AccountChooserButton) findViewById(R.id.accountChooserButtonText);
+        domainTextHelper = (TextView) findViewById(R.id.dialtxt_domain_helper);
+        completeList = (ListView) findViewById(R.id.autoCompleteList);
 
-	}
+        autoCompleteAdapter = new ContactsAutocompleteAdapter(context);
 
-	@Override
-	public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
-		updateDialTextHelper();
-		
-		//contactsAdapter.getFilter().filter(arg0);
-	}
-	
-	@Override
-	public void afterTextChanged(Editable s) {
-		updateDialTextHelper();
-	}
+        // Map events
+        accountChooserButtonText.setOnAccountChangeListener(new OnAccountChangeListener() {
+            @Override
+            public void onChooseAccount(SipProfile account) {
+                updateDialTextHelper();
+                long accId = SipProfile.INVALID_ID;
+                if (account != null) {
+                    accId = account.id;
+                }
+                autoCompleteAdapter.setSelectedAccount(accId);
+            }
+        });
+        dialUser.addTextChangedListener(this);
+        
+        if(isInEditMode()) {
+            // Don't bind cursor in this case
+            return;
+        }
+        Cursor c = ContactsWrapper.getInstance().getContactsPhones(context);
+        contactsAdapter = new ContactAdapter(context, c);
+        completeList.setAdapter(contactsAdapter);
+        completeList.setOnItemClickListener(this);
 
-	public void clear() {
-		dialUser.getText().clear();
-	}
+        dialUser.setAdapter(autoCompleteAdapter);
+        
 
-	public void setTextValue(String number) {
-		clear();
-		dialUser.getText().append(number);
-	}
+    }
 
-	public EditText getTextField() {
-		return dialUser;
-	}
-	
-	public void setListVisibility(int visibility) {
-		completeList.setVisibility(visibility);
-	}
+    private class ContactAdapter extends SimpleCursorAdapter implements SectionIndexer {
 
-	@Override
-	public void onItemClick(AdapterView<?> ad, View view, int position, long arg3) {
-		Long contactId = (Long) view.getTag();
-		ContactsWrapper.getInstance().treatContactPickerPositiveResult(getContext(), contactId.toString(), new OnPhoneNumberSelected() {
-			@Override
-			public void onTrigger(String number) {
-				SipProfile account = accountChooserButtonText.getSelectedAccount();
-				DBAdapter db = new DBAdapter(getContext());
-				String rewritten = Filter.rewritePhoneNumber(account, number.toString(), db);
-				setTextValue(rewritten);
-			}
-		});
-		Log.d(THIS_FILE, "Clicked contact "+contactId);
-	}
+        private AlphabetIndexer alphaIndexer;
 
-	public void setShowExternals(boolean b) {
-		accountChooserButtonText.setShowExternals(b);
-	}
+        public ContactAdapter(Context context, Cursor c) {
+            super(context, R.layout.contact_phone_list_item, c, new String[] {}, new int[] {});
+            alphaIndexer = new AlphabetIndexer(c, ContactsWrapper.getInstance()
+                    .getContactIndexableColumnIndex(c),
+                    " ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        }
 
-	/*
-	@Override
-	protected void onDetachedFromWindow() {
-		super.onDetachedFromWindow();
-		contactsAdapter.getCursor().close();
-		contactsAdapter.changeCursor(null);
-		contactsAdapter = null;
-		Log.d(THIS_FILE, "Finalise from window");
-	}
-	*/
+        @Override
+        public void bindView(View view, Context context, Cursor cursor) {
+            super.bindView(view, context, cursor);
+            ContactsWrapper.getInstance().bindContactPhoneView(view, context, cursor);
+        }
+
+        @Override
+        public int getPositionForSection(int arg0) {
+            return alphaIndexer.getPositionForSection(arg0);
+        }
+
+        @Override
+        public int getSectionForPosition(int arg0) {
+            return alphaIndexer.getSectionForPosition(arg0);
+        }
+
+        @Override
+        public Object[] getSections() {
+            return alphaIndexer.getSections();
+        }
+
+    }
+
+    public class ToCall {
+        private Long accountId;
+        private String callee;
+
+        public ToCall(Long acc, String uri) {
+            accountId = acc;
+            callee = uri;
+        }
+
+        /**
+         * @return the pjsipAccountId
+         */
+        public Long getAccountId() {
+            return accountId;
+        }
+
+        /**
+         * @return the callee
+         */
+        public String getCallee() {
+            return callee;
+        }
+    };
+
+    private void updateDialTextHelper() {
+
+        String dialUserValue = dialUser.getText().toString();
+
+        accountChooserButtonText.setChangeable(TextUtils.isEmpty(dialUserValue));
+
+        SipProfile acc = accountChooserButtonText.getSelectedAccount();
+        if (!Pattern.matches(".*@.*", dialUserValue) && acc != null
+                && acc.id > SipProfile.INVALID_ID) {
+            domainTextHelper.setText("@" + acc.getDefaultDomain());
+        } else {
+            domainTextHelper.setText("");
+        }
+
+    }
+
+    /**
+     * Retrieve the value of the selected sip uri
+     * 
+     * @return the contact to call as a ToCall object containing account to use
+     *         and number to call
+     */
+    public ToCall getValue() {
+        String userName = dialUser.getText().toString();
+        String toCall = "";
+        Long accountToUse = null;
+        if (TextUtils.isEmpty(userName)) {
+            return null;
+        }
+        userName = userName.replaceAll("[ \t]", "");
+        SipProfile acc = accountChooserButtonText.getSelectedAccount();
+        if (acc != null) {
+            accountToUse = acc.id;
+            // If this is a sip account
+            if (accountToUse > SipProfile.INVALID_ID) {
+                if (Pattern.matches(".*@.*", userName)) {
+                    toCall = "sip:" + userName + "";
+                } else if (!TextUtils.isEmpty(acc.getDefaultDomain())) {
+                    toCall = "sip:" + userName + "@" + acc.getDefaultDomain();
+                } else {
+                    toCall = "sip:" + userName;
+                }
+            } else {
+                toCall = userName;
+            }
+        } else {
+            toCall = userName;
+        }
+
+        return new ToCall(accountToUse, toCall);
+    }
+
+    public SipProfile getSelectedAccount() {
+        return accountChooserButtonText.getSelectedAccount();
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
+    }
+
+    @Override
+    public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
+        updateDialTextHelper();
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+        updateDialTextHelper();
+    }
+
+    /**
+     * Reset content of the field
+     * @see Editable#clear()
+     */
+    public void clear() {
+        dialUser.getText().clear();
+    }
+    
+    /**
+     * Set the content of the field
+     * @param number The new content to set in the field 
+     */
+    public void setTextValue(String number) {
+        clear();
+        dialUser.getText().append(number);
+    }
+
+    /**
+     * Retrieve the underlying text field of this widget to modify it's behavior directly
+     * @return the underlying widget
+     */
+    public EditText getTextField() {
+        return dialUser;
+    }
+
+
+    @Override
+    public void onItemClick(AdapterView<?> ad, View view, int position, long arg3) {
+        String number = (String) view.getTag();
+        SipProfile account = accountChooserButtonText.getSelectedAccount();
+        String rewritten = Filter.rewritePhoneNumber(getContext(), account.id, number);
+        setTextValue(rewritten);
+        Log.d(THIS_FILE, "Clicked contact " + number);
+    }
+
+    public void setShowExternals(boolean b) {
+        accountChooserButtonText.setShowExternals(b);
+    }
 }

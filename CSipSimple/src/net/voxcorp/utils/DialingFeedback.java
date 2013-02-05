@@ -1,13 +1,15 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * Copyright (C) 2010 Robert B. Denny, Mesa, AZ, USA
- * Copyright (C) 2008 The Android Open Source Project
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,18 +19,22 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+/**
+ * This file contains relicensed code from Apache copyright of 
+ * Copyright (C) 2008 The Android Open Source Project
+ */
+
+
 package net.voxcorp.utils;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
+import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Vibrator;
-import android.app.Activity;
 
-import net.voxcorp.utils.PreferencesWrapper;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class DialingFeedback {
 
@@ -66,30 +72,32 @@ public class DialingFeedback {
 	
 	public void resume() {
 		
-		dialPressTone = prefsWrapper.getDialPressTone();
-		dialPressVibrate = prefsWrapper.getDialPressVibrate();
-		
-		if(dialPressTone ) {
-			//Create dialtone just for user feedback
-			synchronized (toneGeneratorLock) {
-				if(toneTimer == null) {
-					toneTimer = new Timer("Dialtone-timer");
-				}
-				if (toneGenerator == null) {
-					try {
-						toneGenerator = new ToneGenerator(toneStream, TONE_RELATIVE_VOLUME);
-						//Allow user to control dialtone
-						if (!inCall) context.setVolumeControlStream(toneStream);
-					} catch (RuntimeException e) {
-						//If impossible, nothing to do
-						toneGenerator = null;
-					}
-				}
-			}
-		} else {
-			toneTimer = null;
-			toneGenerator = null;
-		}
+		dialPressTone = prefsWrapper.dialPressTone(inCall);
+		dialPressVibrate = prefsWrapper.dialPressVibrate();
+
+        if (dialPressTone) {
+            // Create dialtone just for user feedback
+            synchronized (toneGeneratorLock) {
+                if (toneTimer == null) {
+                    toneTimer = new Timer("Dialtone-timer");
+                }
+                if (toneGenerator == null) {
+                    try {
+                        toneGenerator = new ToneGenerator(toneStream, TONE_RELATIVE_VOLUME);
+                        // Allow user to control dialtone
+                        if (!inCall) {
+                            context.setVolumeControlStream(toneStream);
+                        }
+                    } catch (RuntimeException e) {
+                        // If impossible, nothing to do
+                        toneGenerator = null;
+                    }
+                }
+            }
+        } else {
+            toneTimer = null;
+            toneGenerator = null;
+        }
 		
 		//Create the vibrator
 		if (dialPressVibrate) {
@@ -111,6 +119,7 @@ public class DialingFeedback {
 		//Destroy dialtone
 		synchronized (toneGeneratorLock) {
 			if (toneGenerator != null) {
+			    toneGenerator.stopTone();
 				toneGenerator.release();
 				toneGenerator = null;
 			}
@@ -123,35 +132,61 @@ public class DialingFeedback {
 		
 	}
 
+	/**
+	 * Tone play to be used when a button in dialpad
+	 * is pressed
+	 * @param tone The tone associated to the button
+	 */
 	public void giveFeedback(int tone) {
 		
 		switch (ringerMode) {
 			case AudioManager.RINGER_MODE_NORMAL:
-				if (dialPressVibrate) vibrator.vibrate(HAPTIC_LENGTH_MS);
+				if (dialPressVibrate) {
+				    vibrator.vibrate(HAPTIC_LENGTH_MS);
+				}
 				if (dialPressTone) {
-					synchronized (toneGeneratorLock) {
-						if (toneGenerator == null) {
-							return;
-						}
-						toneGenerator.startTone(tone);
-						
-						//TODO : see if it could not be factorized
-						toneTimer.schedule(new StopTimerTask(), TONE_LENGTH_MS);
-					}					
+				    ThreadedTonePlay threadedTone = new ThreadedTonePlay(tone);
+				    threadedTone.start();
 				}
 				break;
 			case AudioManager.RINGER_MODE_VIBRATE:
-				if (dialPressVibrate) vibrator.vibrate(HAPTIC_LENGTH_MS);
+				if (dialPressVibrate) {
+				    vibrator.vibrate(HAPTIC_LENGTH_MS);
+				}
 				break;
 			case AudioManager.RINGER_MODE_SILENT:
 				break;
 		}
 	}
 	
+	/**
+	 * Haptic vibration to be used when a button in dialpad 
+	 * is long pressed for example.
+	 */
 	public void hapticFeedback() {
 		if (dialPressVibrate && ringerMode != AudioManager.RINGER_MODE_SILENT) {
 			vibrator.vibrate(HAPTIC_LENGTH_MS);
 		}
+	}
+	
+	class ThreadedTonePlay extends Thread {
+	    private final int tone;
+        
+	    ThreadedTonePlay(int t){
+	        tone = t;
+	    }
+	    
+	    @Override
+	    public void run() {
+            synchronized (toneGeneratorLock) {
+                if (toneGenerator == null) {
+                    return;
+                }
+                toneGenerator.stopTone();
+                toneGenerator.startTone(tone);
+                toneTimer.schedule(new StopTimerTask(), TONE_LENGTH_MS);
+            }
+	    }
 	}
 	
 	class StopTimerTask extends TimerTask{

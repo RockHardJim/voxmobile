@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
   <string name="take_call">Ответить</string>
   <string name="decline_call">Игнорировать</string>
@@ -13,11 +13,16 @@
   <string name="call_state_confirmed">Разговор</string>
   <string name="call_state_connecting">Набор номера</string>
   <string name="call_state_disconnected">Вызов завершен</string>
-  <string name="call_state_early">Вызов...</string>
-  <string name="call_state_incoming">Входящий вызов...</string>
+  <string name="call_state_early">Вызов…</string>
+  <string name="call_state_incoming">Входящий вызов…</string>
   <string name="call_state_null">Ошибка</string>
   <string name="unlock">Разблокировать</string>
   <string name="record">Запись</string>
   <string name="stop_recording">Стоп</string>
-  <string name="xfer">Трансфер</string>
+  <string name="xfer_uri">Передать на номер</string>
+  <string name="hold_call">Удерживать</string>
+  <string name="on_hold">В ожидании</string>
+  <string name="resume_call">Вернуться</string>
+  <string name="transfer_to_call">Передать на звонящего</string>
+  <string name="send_dtmf">Отправить DTFM</string>
 </resources>

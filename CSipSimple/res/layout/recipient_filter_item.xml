@@ -20,31 +20,35 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="?android:attr/dropDownItemStyle"
-    android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="60dip">
+    android:layout_height="60dip"
+    android:orientation="vertical" >
 
-    <TextView android:id="@+id/name"
+    <TextView
+        android:id="@+id/name"
         style="?android:attr/dropDownItemStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:singleLine="true"
-        android:textSize="18sp"  />
+        android:textSize="18sp" />
 
-    <LinearLayout android:id="@+id/name_and_label"
+    <LinearLayout
+        android:id="@+id/name_and_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal" >
 
-        <TextView android:id="@+id/label"
+        <TextView
+            android:id="@+id/label"
             style="?android:attr/dropDownItemStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:singleLine="true"
             android:textColor="?android:attr/textColorSecondary"
-            android:textSize="14sp"
-            android:singleLine="true" />
+            android:textSize="14sp" />
 
-        <TextView android:id="@+id/number"
+        <TextView
+            android:id="@+id/number"
             style="?android:attr/dropDownItemStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

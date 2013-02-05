@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,31 +18,29 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.wizards;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import android.app.ExpandableListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ExpandableListView;
-import android.widget.ImageView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
+import com.actionbarsherlock.app.SherlockExpandableListActivity;
 import net.voxcorp.R;
+import net.voxcorp.voxmobile.utils.VoXMobileUtils;
 
-public class WizardChooser extends ExpandableListActivity {
-	private String[] childFrom;
-	private int[] childTo;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public class WizardChooser extends SherlockExpandableListActivity {
 	private ArrayList<ArrayList<Map<String, Object>>> childDatas;
 
 	// private static final String THIS_FILE = "SIP ADD ACC W";
@@ -53,24 +54,13 @@ public class WizardChooser extends ExpandableListActivity {
 		Context context = getApplicationContext();
 		
 		// Now build the list adapter
-		childFrom = new String[] { WizardUtils.LABEL, WizardUtils.ICON };
-		childTo = new int[] { android.R.id.text1, R.id.icon };
 		childDatas = WizardUtils.getWizardsGroupedList();
-		
-		// Find the VOXMOBILE wizard and remove it
-		Iterator<Map<String, Object>> it = childDatas.get(0).iterator();
-		while (it.hasNext()) {
-			Map<String, Object> m = (Map<String, Object>)it.next();
-			String wiz_type = (String)m.get("ID");
-			if (wiz_type.startsWith("VOXMOBILE")) {
-				childDatas.get(0).remove(0);
-				// Since we found a match we'll grab the iterator
-				// again and start over. It's a hack, but it makes
-				// searching/removing all VoX wizards a bit easier
-				it = childDatas.get(0).iterator();
-			}
-		}
-		
+
+		/**
+		 * VoX Mobile :: remove VoX mobile wizards
+		 */
+		VoXMobileUtils.removeWizards(childDatas);
+
 		WizardsListAdapter adapter = new WizardsListAdapter(
 				this,
 				// Groups
@@ -81,7 +71,7 @@ public class WizardChooser extends ExpandableListActivity {
 				// Child
                 childDatas,
 				R.layout.wizard_row,
-				childFrom, childTo );
+				new String[] { WizardUtils.LABEL }, new int[] { android.R.id.text1 } );
 		
 		
 		setListAdapter(adapter);
@@ -119,29 +109,14 @@ public class WizardChooser extends ExpandableListActivity {
 		}
 		
 		public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-
-			View v;
-			if (convertView == null) {
-				v = newChildView(isLastChild, parent);
-			} else {
-				v = convertView;
-			}
-			bindView(v, childDatas.get(groupPosition).get(childPosition), childFrom, childTo, groupPosition, childPosition);
+			View v = super.getChildView(groupPosition, childPosition, isLastChild, convertView, parent);
+			bindView(v, childDatas.get(groupPosition).get(childPosition), groupPosition, childPosition);
 			return v;
 		}
-
-
-		private void bindView(View view, Map<String, ?> data, String[] from, int[] to, int groupPosition, int childPosition) {
+		
+		private void bindView(View view, Map<String, ?> data, int groupPosition, int childPosition) {
 			// Apply TextViews
-			TextView v = (TextView) view.findViewById(to[0]);
-			if (v != null) {
-				v.setText((String) data.get(from[0]));
-			}
-			// Apply ImageView
-			ImageView imgV = (ImageView) view.findViewById(to[1]);
-			if (imgV != null) {
-				imgV.setImageResource((Integer) data.get(from[1]));
-			}
+			((TextView) view).setCompoundDrawablesWithIntrinsicBounds((Integer) data.get( WizardUtils.ICON ), 0, 0, 0);
 		}
 	}
 

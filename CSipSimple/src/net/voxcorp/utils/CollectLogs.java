@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,20 +18,20 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.utils;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Date;
-
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.net.Uri;
-import android.text.format.DateFormat;
 
 public class CollectLogs {
 
@@ -91,15 +94,10 @@ public class CollectLogs {
         	ArrayList<String> commandLine = new ArrayList<String>();
             commandLine.add("logcat");
         	
-        	
-        	File dir = PreferencesWrapper.getLogsFolder(ctxt);
-        	if( dir != null) {
-    			Date d = new Date();
-    			outFile = new File(dir.getAbsoluteFile() + File.separator + "logs_"+DateFormat.format("MM-dd-yy_kkmmss", d)+".txt");
-    			
+            outFile = PreferencesWrapper.getLogsFile(ctxt, false);
+        	if( outFile != null) {
     			commandLine.add("-f");
     			commandLine.add(outFile.getAbsolutePath());
-    			Log.d(THIS_FILE, commandLine.toString());
         	}
 
             commandLine.add("-d");
@@ -126,7 +124,7 @@ public class CollectLogs {
 	public final static StringBuilder getDeviceInfo() {
 		final StringBuilder log = new StringBuilder();
 		
-		log.append( "Android Device Details: ");
+		log.append("Android Device Details: ");
         log.append(LINE_SEPARATOR); 
         log.append("android.os.Build.BOARD : " + android.os.Build.BOARD );
         log.append(LINE_SEPARATOR); 
@@ -139,14 +137,16 @@ public class CollectLogs {
 		log.append("android.os.Build.MODEL : " + android.os.Build.MODEL );
         log.append(LINE_SEPARATOR); 
 		log.append("android.os.Build.PRODUCT : " + android.os.Build.PRODUCT );
-        log.append(LINE_SEPARATOR); 
+        log.append(LINE_SEPARATOR);
 		log.append("android.os.Build.TAGS : " + android.os.Build.TAGS );
+        log.append(LINE_SEPARATOR);
+        log.append("android.os.Build.CPU_ABI : " + android.os.Build.CPU_ABI );
         log.append(LINE_SEPARATOR); 
 		log.append("android.os.Build.VERSION.INCREMENTAL : " + android.os.Build.VERSION.INCREMENTAL );
         log.append(LINE_SEPARATOR); 
 		log.append("android.os.Build.VERSION.RELEASE : " + android.os.Build.VERSION.RELEASE );
         log.append(LINE_SEPARATOR); 
-		log.append("android.os.Build.VERSION.SDK : " + android.os.Build.VERSION.SDK );
+		log.append("android.os.Build.VERSION.SDK_INT : " + android.os.Build.VERSION.SDK_INT );
         log.append(LINE_SEPARATOR); 
 		
 		return log;
@@ -154,7 +154,9 @@ public class CollectLogs {
 	
 	public final static String getApplicationInfo(Context ctx) {
 		String result = "";
-		result += "Version: ";
+		PackageManager pm = ctx.getPackageManager();
+        result += ctx.getApplicationInfo().loadLabel(pm);
+        result += " version ";
 		
 		PackageInfo pinfo = PreferencesProviderWrapper.getCurrentPackageInfos(ctx);
 		if(pinfo != null) {
@@ -170,7 +172,7 @@ public class CollectLogs {
 		
 		
 		Intent sendIntent = new Intent(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Android VoX Mobile Error-Log report");
+        sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Android VoX Mobile Error Log");
         sendIntent.putExtra(Intent.EXTRA_EMAIL, new String[] { CustomDistribution.getSupportEmail() });
         
         

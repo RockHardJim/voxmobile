@@ -1,11 +1,9 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
-  <string name="app_name">VoX Mobile</string>
   <string name="next">Volgende</string>
   <string name="invalid_sip_uri">Sip uri nie geldig vir oproep nie</string>
   <string name="cancel">Kanselleer</string>
   <string name="use">Gebruik :</string>
-  <string name="use_skype">Gebruik Skype</string>
   <string name="recentCalls_empty">Geen Oproep Registers</string>
   <string name="callLog_delete_entry">Skrap hierdie oproep</string>
   <string name="callLog_delete_all">Skrap alle oproepe</string>
@@ -20,6 +18,6 @@
   <string name="help">Help</string>
   <string name="ok">Anvaar</string>
   <string name="warning">WAARSKUWING</string>
-  <string name="search_in_contacts">Soek in kontakte</string>
   <string name="choose_phone">Selekteer foon</string>
+  <!--Presence stuff-->
 </resources>

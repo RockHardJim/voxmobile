@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,6 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.service;
 
 import android.content.ContentResolver;
@@ -30,6 +34,7 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.os.SystemClock;
 import android.provider.Settings;
 
 import net.voxcorp.api.MediaState;
@@ -43,8 +48,9 @@ import net.voxcorp.utils.Ringer;
 import net.voxcorp.utils.accessibility.AccessibilityWrapper;
 import net.voxcorp.utils.audio.AudioFocusWrapper;
 import net.voxcorp.utils.bluetooth.BluetoothWrapper;
+import net.voxcorp.utils.bluetooth.BluetoothWrapper.BluetoothChangeListener;
 
-public class MediaManager {
+public class MediaManager implements BluetoothChangeListener {
 	
 	final private static String THIS_FILE = "MediaManager";
 	
@@ -52,25 +58,23 @@ public class MediaManager {
 	private SipService service;
 	private AudioManager audioManager;
 	private Ringer ringer;
+	
 
 	//Locks
 	private WifiLock wifiLock;
 	private WakeLock screenLock;
-	private WakeLock cpuLock;
 	
 	// Media settings to save / resore
 	private boolean isSetAudioMode = false;
 	
-
-	
-
 	//By default we assume user want bluetooth.
 	//If bluetooth is not available connection will never be done and then
 	//UI will not show bluetooth is activated
-	private boolean userWantBluetooth = true;
+	private boolean userWantBluetooth = false;
 	private boolean userWantSpeaker = false;
 	private boolean userWantMicrophoneMute = false;
 
+	private boolean restartAudioWhenRoutingChange = true;
 	private Intent mediaStateChangedIntent;
 	
 	//Bluetooth related
@@ -81,10 +85,13 @@ public class MediaManager {
 	
 
 	private SharedPreferences prefs;
-	private boolean USE_SGS_WRK_AROUND = false;
-	private boolean USE_WEBRTC_IMPL = false;
-	private boolean DO_FOCUS_AUDIO = true;
-	private static int MODE_SIP_IN_CALL = AudioManager.MODE_NORMAL;
+	private boolean useSgsWrkAround = false;
+	private boolean useWebRTCImpl = false;
+	private boolean doFocusAudio = true;
+
+
+    private boolean startBeforeInit;
+	private static int modeSipInCall = AudioManager.MODE_NORMAL;
 	
 
 
@@ -107,69 +114,77 @@ public class MediaManager {
 	
 	public void startService() {
 		if(bluetoothWrapper == null) {
-			bluetoothWrapper = BluetoothWrapper.getInstance();
-			bluetoothWrapper.init(service, this);
+			bluetoothWrapper = BluetoothWrapper.getInstance(service);
+			bluetoothWrapper.setBluetoothChangeListener(this);
+			bluetoothWrapper.register();
 		}
 		if(audioFocusWrapper == null) {
 			audioFocusWrapper = AudioFocusWrapper.getInstance();
 			audioFocusWrapper.init(service, audioManager);
 		}
-		MODE_SIP_IN_CALL = service.getPrefs().getInCallMode();
-		USE_SGS_WRK_AROUND = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.USE_SGS_CALL_HACK);
-		USE_WEBRTC_IMPL = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.USE_WEBRTC_HACK);
-		DO_FOCUS_AUDIO = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.DO_FOCUS_AUDIO);
+		modeSipInCall = service.getPrefs().getInCallMode();
+		useSgsWrkAround = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.USE_SGS_CALL_HACK);
+		useWebRTCImpl = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.USE_WEBRTC_HACK);
+		doFocusAudio = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.DO_FOCUS_AUDIO);
+		userWantBluetooth = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.AUTO_CONNECT_BLUETOOTH);
+		userWantSpeaker = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.AUTO_CONNECT_SPEAKER);
+		restartAudioWhenRoutingChange = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.RESTART_AUDIO_ON_ROUTING_CHANGES);
+		startBeforeInit = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.SETUP_AUDIO_BEFORE_INIT);
 	}
 	
 	public void stopService() {
 		Log.i(THIS_FILE, "Remove media manager....");
 		if(bluetoothWrapper != null) {
 			bluetoothWrapper.unregister();
+			bluetoothWrapper.setBluetoothChangeListener(null);
+			bluetoothWrapper = null;
 		}
 	}
 	
 	private int getAudioTargetMode() {
-		int targetMode = MODE_SIP_IN_CALL;
+		int targetMode = modeSipInCall;
 		
-		if(service.getPrefs().getUseModeApi()) {
-			Log.d(THIS_FILE, "User want speaker now..."+userWantSpeaker);
+		if(service.getPrefs().useModeApi()) {
+            Log.d(THIS_FILE, "User want speaker now..." + userWantSpeaker);
 			if(!service.getPrefs().generateForSetCall()) {
 				return userWantSpeaker ? AudioManager.MODE_NORMAL : AudioManager.MODE_IN_CALL;
 			}else {
 				return userWantSpeaker ? AudioManager.MODE_IN_CALL: AudioManager.MODE_NORMAL ;
 			}
 		}
+		if(userWantBluetooth) {
+		    targetMode = AudioManager.MODE_NORMAL;
+		}
 
 		Log.d(THIS_FILE, "Target mode... : " + targetMode);
 		return targetMode;
 	}
 	
+	public int validateAudioClockRate(int clockRate) {
+	    if(bluetoothWrapper != null && clockRate != 8000) {
+            if(userWantBluetooth && bluetoothWrapper.canBluetooth()) {
+                return -1;
+            }
+        }
+	    return 0;
+	}
 	
-	public int setAudioInCall(int clockRate) {
-		if(bluetoothWrapper != null && clockRate != 8000) {
-			if(userWantBluetooth && bluetoothWrapper.canBluetooth()) {
-				return -1;
-			}
-		}
-		
-		actualSetAudioInCall();
-		
-		return 0;
+	public void setAudioInCall(boolean beforeInit) {
+	    if(!beforeInit || (beforeInit && startBeforeInit) ) {
+	        actualSetAudioInCall();
+	    }
 	}
 	
 	public void unsetAudioInCall() {
-	//	Thread t = new Thread() {
-	//		public void run() {
-				actualUnsetAudioInCall();
-	//		};
-	//	};
-	//	t.start();
+	    actualUnsetAudioInCall();
 	}
 	
 	
 	/**
 	 * Set the audio mode as in call
 	 */
-	private synchronized void actualSetAudioInCall() {
+	@SuppressWarnings("deprecation")
+    private synchronized void actualSetAudioInCall() {
 		//Ensure not already set
 		if(isSetAudioMode) {
 			return;
@@ -177,10 +192,16 @@ public class MediaManager {
 		stopRing();
 		saveAudioState();
 		
-		//Set the rest of the phone in a better state to not interferate with current call
-		audioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, AudioManager.VIBRATE_SETTING_ON);
-		audioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_OFF);
-		audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+		// Set the rest of the phone in a better state to not interferate with current call
+		// Do that only if we were not already in silent mode
+		/*
+		 * Not needed anymore with on flight gsm call capture
+		if(audioManager.getRingerMode() != AudioManager.RINGER_MODE_SILENT) {
+    		audioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, AudioManager.VIBRATE_SETTING_ON);
+    		audioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_OFF);
+    		audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+		}
+		*/
 		
 		//LOCKS
 		
@@ -193,7 +214,7 @@ public class MediaManager {
 		WifiManager wman = (WifiManager) service.getSystemService(Context.WIFI_SERVICE);
 		if(wifiLock == null) {
 			wifiLock = wman.createWifiLock( 
-							(Compatibility.isCompatible(9)) ? 3 : WifiManager.WIFI_MODE_FULL, 
+							(Compatibility.isCompatible(9)) ? WifiManager.WIFI_MODE_FULL_HIGH_PERF : WifiManager.WIFI_MODE_FULL, 
 							"net.voxcorp.InCallLock");
 			wifiLock.setReferenceCounted(false);
 		}
@@ -222,32 +243,30 @@ public class MediaManager {
 				
 			}
 		}
-		
-		if(cpuLock == null) {
-			PowerManager pm = (PowerManager) service.getSystemService(Context.POWER_SERVICE);
-			cpuLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "net.voxcorp.onIncomingCall.CPU");
-			cpuLock.setReferenceCounted(false);
-		}
-		if(!cpuLock.isHeld()) {
-			cpuLock.acquire();
-		}
-		
 
 		
-		if(!USE_WEBRTC_IMPL) {
+		if(!useWebRTCImpl) {
 			//Audio routing
 			int targetMode = getAudioTargetMode();
 			Log.d(THIS_FILE, "Set mode audio in call to "+targetMode);
 			
 			if(service.getPrefs().generateForSetCall()) {
+			    boolean needOutOfSilent = (audioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT);
+			    if(needOutOfSilent) {
+			        audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+			    }
 				ToneGenerator toneGenerator = new ToneGenerator( AudioManager.STREAM_VOICE_CALL, 1);
 				toneGenerator.startTone(41 /*ToneGenerator.TONE_CDMA_CONFIRM*/);
 				toneGenerator.stopTone();
 				toneGenerator.release();
+				// Restore silent mode
+				if(needOutOfSilent) {
+                    audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+                }
 			}
 			
 			//Set mode
-			if(targetMode != AudioManager.MODE_IN_CALL && USE_SGS_WRK_AROUND) {
+			if(targetMode != AudioManager.MODE_IN_CALL && useSgsWrkAround) {
 				//For galaxy S we need to set in call mode before to reset stack
 				audioManager.setMode(AudioManager.MODE_IN_CALL);
 			}
@@ -256,7 +275,7 @@ public class MediaManager {
 			audioManager.setMode(targetMode);
 			
 			//Routing
-			if(service.getPrefs().getUseRoutingApi()) {
+			if(service.getPrefs().useRoutingApi()) {
 				audioManager.setRouting(targetMode, userWantSpeaker?AudioManager.ROUTE_SPEAKER:AudioManager.ROUTE_EARPIECE, AudioManager.ROUTE_ALL);
 			}else {
 				audioManager.setSpeakerphoneOn(userWantSpeaker ? true : false);
@@ -323,12 +342,12 @@ public class MediaManager {
 		
 		//Set stream solo/volume/focus
 
-		int inCallStream = Compatibility.getInCallStream();
-		if(DO_FOCUS_AUDIO) {
+		int inCallStream = Compatibility.getInCallStream(userWantBluetooth);
+		if(doFocusAudio) {
 			if(!accessibilityManager.isEnabled()) {
 				audioManager.setStreamSolo(inCallStream, true);
 			}
-			audioFocusWrapper.focus();
+			audioFocusWrapper.focus(userWantBluetooth);
 		}
 		Log.d(THIS_FILE, "Initial volume level : " + service.getPrefs().getInitialVolumeLevel());
 		setStreamVolume(inCallStream,  
@@ -344,6 +363,7 @@ public class MediaManager {
 	/**
 	 * Save current audio mode in order to be able to restore it once done
 	 */
+    @SuppressWarnings("deprecation")
 	private synchronized void saveAudioState() {
 		if( prefs.getBoolean("isSavedAudioState", false) ) {
 			//If we have already set, do not set it again !!! 
@@ -352,16 +372,16 @@ public class MediaManager {
 		ContentResolver ctntResolver = service.getContentResolver();
 		
 		Editor ed = prefs.edit();
-		ed.putInt("savedVibrateRing", audioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER));
-		ed.putInt("savedVibradeNotif", audioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION));
-		ed.putInt("savedRingerMode", audioManager.getRingerMode());
+//		ed.putInt("savedVibrateRing", audioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER));
+//		ed.putInt("savedVibradeNotif", audioManager.getVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION));
+//		ed.putInt("savedRingerMode", audioManager.getRingerMode());
 		ed.putInt("savedWifiPolicy" , android.provider.Settings.System.getInt(ctntResolver, android.provider.Settings.System.WIFI_SLEEP_POLICY, Settings.System.WIFI_SLEEP_POLICY_DEFAULT));
 		
-		int inCallStream = Compatibility.getInCallStream();
+		int inCallStream = Compatibility.getInCallStream(userWantBluetooth);
 		ed.putInt("savedVolume", audioManager.getStreamVolume(inCallStream));
 		
 		int targetMode = getAudioTargetMode();
-		if(service.getPrefs().getUseRoutingApi()) {
+		if(service.getPrefs().useRoutingApi()) {
 			ed.putInt("savedRoute", audioManager.getRouting(targetMode));
 		}else {
 			ed.putBoolean("savedSpeakerPhone", audioManager.isSpeakerphoneOn());
@@ -371,8 +391,11 @@ public class MediaManager {
 		ed.putBoolean("isSavedAudioState", true);
 		ed.commit();
 	}
-	
-	private synchronized void restoreAudioState() {
+    /**
+     * Restore the state of the audio
+     */
+    @SuppressWarnings("deprecation")
+	private final synchronized void restoreAudioState() {
 		if( !prefs.getBoolean("isSavedAudioState", false) ) {
 			//If we have NEVER set, do not try to reset !
 			return;
@@ -381,15 +404,15 @@ public class MediaManager {
 		ContentResolver ctntResolver = service.getContentResolver();
 
 		Settings.System.putInt(ctntResolver, Settings.System.WIFI_SLEEP_POLICY, prefs.getInt("savedWifiPolicy", Settings.System.WIFI_SLEEP_POLICY_DEFAULT));
-		audioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, prefs.getInt("savedVibrateRing", AudioManager.VIBRATE_SETTING_ONLY_SILENT));
-		audioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, prefs.getInt("savedVibradeNotif", AudioManager.VIBRATE_SETTING_OFF));
-		audioManager.setRingerMode(prefs.getInt("savedRingerMode", AudioManager.RINGER_MODE_NORMAL));
+//		audioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_RINGER, prefs.getInt("savedVibrateRing", AudioManager.VIBRATE_SETTING_ONLY_SILENT));
+//		audioManager.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, prefs.getInt("savedVibradeNotif", AudioManager.VIBRATE_SETTING_OFF));
+//		audioManager.setRingerMode(prefs.getInt("savedRingerMode", AudioManager.RINGER_MODE_NORMAL));
 		
-		int inCallStream = Compatibility.getInCallStream();
+		int inCallStream = Compatibility.getInCallStream(userWantBluetooth);
 		setStreamVolume(inCallStream, prefs.getInt("savedVolume", (int)(audioManager.getStreamMaxVolume(inCallStream)*0.8) ), 0);
 		
 		int targetMode = getAudioTargetMode();
-		if(service.getPrefs().getUseRoutingApi()) {
+		if(service.getPrefs().useRoutingApi()) {
 			audioManager.setRouting(targetMode, prefs.getInt("savedRoute", AudioManager.ROUTE_SPEAKER), AudioManager.ROUTE_ALL);
 		}else {
 			audioManager.setSpeakerphoneOn(prefs.getBoolean("savedSpeakerPhone", false));
@@ -413,7 +436,7 @@ public class MediaManager {
 
 		Log.d(THIS_FILE, "Unset Audio In call");
 
-		int inCallStream = Compatibility.getInCallStream();
+		int inCallStream = Compatibility.getInCallStream(userWantBluetooth);
 		if(bluetoothWrapper != null) {
 			//This fixes the BT activation but... but... seems to introduce a lot of other issues
 			//bluetoothWrapper.setBluetoothOn(true);
@@ -421,7 +444,7 @@ public class MediaManager {
 			bluetoothWrapper.setBluetoothOn(false);
 		}
 		audioManager.setMicrophoneMute(false);
-		if(DO_FOCUS_AUDIO) {
+		if(doFocusAudio) {
 			audioManager.setStreamSolo(inCallStream, false);
 			audioFocusWrapper.unFocus();
 		}
@@ -434,18 +457,18 @@ public class MediaManager {
 			Log.d(THIS_FILE, "Release screen lock");
 			screenLock.release();
 		}
-		if(cpuLock != null && cpuLock.isHeld()) {
-			cpuLock.release();
-		}
 		
 		
 		isSetAudioMode = false;
 	}
 	
-	
-	public void startRing(String remoteContact) {
+	/**
+	 * Start ringing announce for a given contact.
+	 * It will also focus audio for us.
+	 * @param remoteContact the contact to ring for. May resolve the contact ringtone if any.
+	 */
+	synchronized public void startRing(String remoteContact) {
 		saveAudioState();
-		audioFocusWrapper.focus();
 		
 		if(!ringer.isRinging()) {
 			ringer.ring(remoteContact, service.getPrefs().getRingtone());
@@ -455,21 +478,28 @@ public class MediaManager {
 		
 	}
 	
-	public void stopRing() {
+	/**
+	 * Stop all ringing. <br/>
+	 * Warning, this will not unfocus audio.
+	 */
+	synchronized public void stopRing() {
 		if(ringer.isRinging()) {
 			ringer.stopRing();
 		}
 	}
 	
-	public void stopAnnoucing() {
+	/**
+	 * Stop call announcement.
+	 */
+	public void stopRingAndUnfocus() {
 		stopRing();
 		audioFocusWrapper.unFocus();
 	}
 	
 	public void resetSettings() {
-		userWantBluetooth = true;
+		userWantBluetooth = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.AUTO_CONNECT_BLUETOOTH);
+		userWantSpeaker = service.getPrefs().getPreferenceBooleanValue(SipConfigManager.AUTO_CONNECT_SPEAKER);
 		userWantMicrophoneMute = false;
-		userWantSpeaker = false;
 	}
 
 
@@ -486,20 +516,26 @@ public class MediaManager {
 	}
 	
 	public void setSpeakerphoneOn(boolean on) throws SameThreadException {
-		if(service != null) {
+		if(service != null && restartAudioWhenRoutingChange && !ringer.isRinging()) {
 			service.setNoSnd();
 			userWantSpeaker = on;
 			service.setSnd();
+		}else {
+            userWantSpeaker = on;
+		    audioManager.setSpeakerphoneOn(on);
 		}
 		broadcastMediaChanged();
 	}
 	
 	public void setBluetoothOn(boolean on) throws SameThreadException {
 		Log.d(THIS_FILE, "Set BT "+on);
-		if(service != null) {
-			service.setNoSnd();
+		if(service != null && restartAudioWhenRoutingChange && !ringer.isRinging()) {
+		    service.setNoSnd();
 			userWantBluetooth = on;
 			service.setSnd();
+		}else {
+            userWantBluetooth = on;
+		    bluetoothWrapper.setBluetoothOn(on);
 		}
 		broadcastMediaChanged();
 	}
@@ -564,7 +600,7 @@ public class MediaManager {
 	
 	
 	public void broadcastMediaChanged() {
-		service.sendBroadcast(mediaStateChangedIntent);
+		service.sendBroadcast(mediaStateChangedIntent, SipManager.PERMISSION_USE_SIP);
 	}
 	
 	private static final String ACTION_AUDIO_VOLUME_UPDATE = "org.openintents.audio.action_volume_update";
@@ -595,7 +631,7 @@ public class MediaManager {
         	ringer.updateRingerMode();
         }
         
-        int inCallStream = Compatibility.getInCallStream();
+        int inCallStream = Compatibility.getInCallStream(userWantBluetooth);
         if(streamType == inCallStream) {
         	int maxLevel = audioManager.getStreamMaxVolume(inCallStream);
         	float modifiedLevel = (audioManager.getStreamVolume(inCallStream)/(float) maxLevel)*10.0f;
@@ -606,7 +642,145 @@ public class MediaManager {
 	}
 	
 	// Public accessor
-	public boolean isUserWantMicrophoneMute() {
+	public boolean doesUserWantMicrophoneMute() {
 		return userWantMicrophoneMute;
 	}
+
+    public boolean doesUserWantBluetooth() {
+        return userWantBluetooth;
+    }
+
+    // The possible tones we can play.
+    public static final int TONE_NONE = 0;
+    public static final int TONE_CALL_WAITING = 1;
+    public static final int TONE_BUSY = 2;
+    public static final int TONE_CONGESTION = 3;
+    public static final int TONE_BATTERY_LOW = 4;
+    public static final int TONE_CALL_ENDED = 5;
+    
+    /**
+     * Play a tone in band
+     * @param toneId the id of the tone to play.
+     */
+	public void playInCallTone(int toneId) {
+	    (new InCallTonePlayer(toneId)).start();
+	}
+
+    /**
+    * Helper class to play tones through the earpiece (or speaker / BT)
+    * during a call, using the ToneGenerator.
+    *
+    * To use, just instantiate a new InCallTonePlayer
+    * (passing in the TONE_* constant for the tone you want)
+    * and start() it.
+    *
+    * When we're done playing the tone, if the phone is idle at that
+    * point, we'll reset the audio routing and speaker state.
+    * (That means that for tones that get played *after* a call
+    * disconnects, like "busy" or "congestion" or "call ended", you
+    * should NOT call resetAudioStateAfterDisconnect() yourself.
+    * Instead, just start the InCallTonePlayer, which will automatically
+    * defer the resetAudioStateAfterDisconnect() call until the tone
+    * finishes playing.)
+    */
+    private class InCallTonePlayer extends Thread {
+        private int mToneId;
+
+
+        // The tone volume relative to other sounds in the stream
+        private static final int TONE_RELATIVE_VOLUME_HIPRI = 80;
+        private static final int TONE_RELATIVE_VOLUME_LOPRI = 50;
+
+        InCallTonePlayer(int toneId) {
+            super();
+            mToneId = toneId;
+        }
+
+        @Override
+        public void run() {
+            Log.d(THIS_FILE, "InCallTonePlayer.run(toneId = " + mToneId + ")...");
+
+            int toneType; // passed to ToneGenerator.startTone()
+            int toneVolume; // passed to the ToneGenerator constructor
+            int toneLengthMillis;
+            switch (mToneId) {
+                case TONE_CALL_WAITING:
+                    toneType = ToneGenerator.TONE_SUP_CALL_WAITING;
+                    toneVolume = TONE_RELATIVE_VOLUME_HIPRI;
+                    toneLengthMillis = 5000;
+                    break;
+                case TONE_BUSY:
+                    toneType = ToneGenerator.TONE_SUP_BUSY;
+                    toneVolume = TONE_RELATIVE_VOLUME_HIPRI;
+                    toneLengthMillis = 4000;
+                    break;
+                case TONE_CONGESTION:
+                    toneType = ToneGenerator.TONE_SUP_CONGESTION;
+                    toneVolume = TONE_RELATIVE_VOLUME_HIPRI;
+                    toneLengthMillis = 4000;
+                    break;
+                case TONE_BATTERY_LOW:
+                    // For now, use ToneGenerator.TONE_PROP_ACK (two quick
+                    // beeps). TODO: is there some other ToneGenerator
+                    // tone that would be more appropriate here? Or
+                    // should we consider adding a new custom tone?
+                    toneType = ToneGenerator.TONE_PROP_ACK;
+                    toneVolume = TONE_RELATIVE_VOLUME_HIPRI;
+                    toneLengthMillis = 1000;
+                    break;
+                case TONE_CALL_ENDED:
+                    toneType = ToneGenerator.TONE_PROP_PROMPT;
+                    toneVolume = TONE_RELATIVE_VOLUME_LOPRI;
+                    toneLengthMillis = 2000;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Bad toneId: " + mToneId);
+            }
+
+            // If the mToneGenerator creation fails, just continue without it. It is
+            // a local audio signal, and is not as important.
+            ToneGenerator toneGenerator;
+            try {
+                toneGenerator = new ToneGenerator(AudioManager.STREAM_VOICE_CALL, toneVolume);
+                // if (DBG) log("- created toneGenerator: " + toneGenerator);
+            } catch (RuntimeException e) {
+                Log.w(THIS_FILE, "InCallTonePlayer: Exception caught while creating ToneGenerator: " + e);
+                toneGenerator = null;
+            }
+
+            // Using the ToneGenerator (with the CALL_WAITING / BUSY /
+            // CONGESTION tones at least), the ToneGenerator itself knows
+            // the right pattern of tones to play; we do NOT need to
+            // manually start/stop each individual tone, or manually
+            // insert the correct delay between tones. (We just start it
+            // and let it run for however long we want the tone pattern to
+            // continue.)
+            //
+            // TODO: When we stop the ToneGenerator in the middle of a
+            // "tone pattern", it sounds bad if we cut if off while the
+            // tone is actually playing. Consider adding API to the
+            // ToneGenerator to say "stop at the next silent part of the
+            // pattern", or simply "play the pattern N times and then
+            // stop."
+
+            if (toneGenerator != null) {
+                toneGenerator.startTone(toneType);
+                SystemClock.sleep(toneLengthMillis);
+                toneGenerator.stopTone();
+
+                Log.v(THIS_FILE, "- InCallTonePlayer: done playing.");
+                toneGenerator.release();
+            }
+        }
+    }
+
+    @Override
+    public void onBluetoothStateChanged(int status) {
+        setSoftwareVolume();
+        broadcastMediaChanged();
+    }
+
+
+
+
 }

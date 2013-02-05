@@ -1,6 +1,5 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="app_name">VoX Mobile</string>
+<?xml version='1.0' encoding='UTF-8'?>
+<resources>
   <string name="next">下一步</string>
   <string name="init">正在初始化……</string>
   <string name="unable_to_download_file">无法下载文件</string>
@@ -17,7 +16,6 @@
   <string name="choose_wizard">选择向导</string>
   <string name="use">使用：</string>
   <string name="use_pstn">使用手机</string>
-  <string name="use_skype">使用Skype</string>
   <string name="ongoing_call">正在通话</string>
   <string name="missed_call">未接来电</string>
   <string name="recentCalls_empty">无通话记录</string>
@@ -51,9 +49,7 @@
   <string name="misc">其他</string>
   <string name="warning">警告</string>
   <string name="disconnect_and_incoming_explaination">你已设置在此网络中可用!!!点击OK确认直到下次程序重启前你不想使用此网络</string>
-  <string name="disconnect_and_will_restart">"当 : "<xliff:g id="networks" example="3G">%s</xliff:g>可用时将自动重启(更改设置如果你不想这样)</string>
   <string name="gadget_title">SIP 账号切换</string>
-  <string name="search_in_contacts">在联系人中搜索</string>
   <string name="pickup_sip_uri">选择SIP联系人</string>
   <string name="display_icon_in_status_bar_desc">当注册成功在状态栏显示图标</string>
   <string name="display_icon_in_status_bar">在状态栏显示图标</string>
@@ -63,4 +59,5 @@
   <string name="show_password">显示密码</string>
   <string name="this_codec_is_not_free">**此编解码器不是免费!!!**\n请确认某人 (不管是你的网络电话提供商或您本人) 已购买使用许可, 您才可以使用这个编解码器! 我们 (软件提供者) 不对您非法使用这个编解码器负任何責任.\n再次提醒您确认您拥有这个编解码器的使用权.\n购买链接 :</string>
   <string name="voice_mail">语音邮件</string>
+  <!--Presence stuff-->
 </resources>

@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,11 +19,10 @@
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
 /**
- * The following code was written by Matthew Wiggins 
- * and is released under the APACHE 2.0 license 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ * This file contains relicensed code from Apache copyright of 
+ * Copyright (C) 2010 Matthew Wiggins 
  */
+
 package net.voxcorp.widgets;
 
 import net.voxcorp.utils.Log;
@@ -35,25 +37,28 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 public class SeekBarPreference extends DialogPreference implements SeekBar.OnSeekBarChangeListener {
-	private static final String androidns = "http://schemas.android.com/apk/res/android";
+	private static final String ANDROID_NS = "http://schemas.android.com/apk/res/android";
 
 	private static final String THIS_FILE = "SeekBarPrefs";
 
 	private SeekBar seekBar;
-	private TextView splashText, valueText;
-	private Context context;
-
-	private String dialogMessage, suffix;
-	private float value, max, defaultValue = (float) 0.0;
+	private TextView valueText;
+	private final Context context;
+	private final float defaultValue, max;
+	private final String dialogMessage, suffix;
+	
+	private float value = 0.0f;
+	private static final String DB_SUFFIX = "dB";
+    private double subdivision = 5;
 
 	public SeekBarPreference(Context aContext, AttributeSet attrs) {
 		super(aContext, attrs);
 		context = aContext;
 
-		dialogMessage = attrs.getAttributeValue(androidns, "dialogMessage");
-		suffix = attrs.getAttributeValue(androidns, "text");
-		defaultValue = attrs.getAttributeFloatValue(androidns, "defaultValue", (float) 0.0);
-		max = attrs.getAttributeIntValue(androidns, "max", 10);
+		dialogMessage = attrs.getAttributeValue(ANDROID_NS, "dialogMessage");
+		suffix = attrs.getAttributeValue(ANDROID_NS, "text");
+		defaultValue = attrs.getAttributeFloatValue(ANDROID_NS, "defaultValue", 0.0f);
+		max = attrs.getAttributeIntValue(ANDROID_NS, "max", 10);
 
 	}
 
@@ -64,7 +69,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		layout.setOrientation(LinearLayout.VERTICAL);
 		layout.setPadding(6, 6, 6, 6);
 
-		splashText = new TextView(context);
+		TextView splashText = new TextView(context);
 		if (dialogMessage != null) {
 			splashText.setText(dialogMessage);
 		}
@@ -73,28 +78,63 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		valueText = new TextView(context);
 		valueText.setGravity(Gravity.CENTER_HORIZONTAL);
 		valueText.setTextSize(32);
-		params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+		params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 		layout.addView(valueText, params);
 
 		seekBar = new SeekBar(context);
 		seekBar.setOnSeekBarChangeListener(this);
-		layout.addView(seekBar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+		layout.addView(seekBar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
 		if (shouldPersist()) {
 			value = getPersistedFloat(defaultValue);
 		}
 		
-		seekBar.setMax( (int)(max*10) );
-		seekBar.setProgress( (int)(10*value) );
+		applySeekBarValues();
 		
 		return layout;
 	}
+	
+	
+	private void applySeekBarValues() {
+        if(DB_SUFFIX.equals(suffix)) {
+            seekBar.setMax( (int) (2 *  max  * subdivision) );
+        }else {
+            seekBar.setMax(valueToProgressUnit(max));
+	    }
+        seekBar.setProgress(valueToProgressUnit(value));
+	}
 
+	
+	private int valueToProgressUnit(float val) {
+	    if(DB_SUFFIX.equals(suffix)) {
+	        Log.d(THIS_FILE, "Value is " + val);
+	        double dB = (10.0f * Math.log10(val));
+	        return (int) ( (dB + max) * subdivision);
+	    }
+	    return (int)(val * subdivision);
+	}
+	
+	private float progressUnitToValue(int pVal) {
+        if(DB_SUFFIX.equals(suffix)) {
+            Log.d(THIS_FILE, "Progress is " + pVal);
+            double dB = pVal / subdivision - max;
+            return (float) Math.pow(10, dB / 10.0f);
+        }
+	    
+	    return (float) (pVal / subdivision);
+	}
+	
+	private String progressUnitToDisplay(int pVal) {
+        if(DB_SUFFIX.equals(suffix)) {
+            return Float.toString((float) (pVal / subdivision - max));
+        }
+        return Float.toString((float) (pVal / subdivision));
+	}
+	
 	@Override
 	protected void onBindDialogView(View v) {
 		super.onBindDialogView(v);
-		seekBar.setMax( (int) (10*max) );
-		seekBar.setProgress( (int) (10 * value) );
+		applySeekBarValues();
 	}
 
 	@Override
@@ -118,34 +158,21 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 	}
 
 	public void onProgressChanged(SeekBar seek, int aValue, boolean fromTouch) {
-		String t = String.valueOf(aValue/10.0);
+		String t = progressUnitToDisplay(aValue);
 		valueText.setText(suffix == null ? t : t.concat(suffix));
-		value = (float) (aValue / 10.0);
-		callChangeListener(new Float(value));
-	}
-
-	public void onStartTrackingTouch(SeekBar seek) {
-	}
-
-	public void onStopTrackingTouch(SeekBar seek) {
-	}
-
-	public void setMax(float aMax) {
-		max = aMax;
-	}
-
-	public float getMax() {
-		return max;
-	}
-
-	public void setProgress(float progress) {
-		value = progress;
-		if (seekBar != null) {
-			seekBar.setProgress( (int) (progress*10.0));
+		if(fromTouch) {
+    		value = progressUnitToValue(aValue);
+    		Log.d(THIS_FILE, "Set ratio value " + value);
+    		callChangeListener(Float.valueOf(value));
 		}
 	}
 
-	public double getProgress() {
-		return value;
+	public void onStartTrackingTouch(SeekBar seek) {
+		// Interface unused implementation
 	}
+
+	public void onStopTrackingTouch(SeekBar seek) {
+		// Interface unused implementation
+	}
+	
 }

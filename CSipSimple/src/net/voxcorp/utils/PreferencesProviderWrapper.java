@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,20 +18,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.voxcorp.utils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
+package net.voxcorp.utils;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.database.Cursor;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -38,7 +35,13 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
 import net.voxcorp.api.SipConfigManager;
-import net.voxcorp.service.PreferenceProvider;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PreferencesProviderWrapper {
 
@@ -46,6 +49,7 @@ public class PreferencesProviderWrapper {
 	private static final String THIS_FILE = "Prefs";
 	private ContentResolver resolver;
 	private ConnectivityManager connectivityManager;
+	private Context context;
 	
 
 	public static final String LIB_CAP_TLS = PreferencesWrapper.LIB_CAP_TLS;
@@ -54,138 +58,97 @@ public class PreferencesProviderWrapper {
 	public static final String HAS_ALREADY_SETUP_SERVICE = PreferencesWrapper.HAS_ALREADY_SETUP_SERVICE;
 
 	public PreferencesProviderWrapper(Context aContext) {
+	    context = aContext;
 		resolver = aContext.getContentResolver();
 		connectivityManager = (ConnectivityManager) aContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 	}
 	
-	private Uri getPrefUriForKey(String key) {
-		return Uri.withAppendedPath(PreferenceProvider.PREF_ID_URI_BASE, key);
-	}
-
-	public String getPreferenceStringValue(String key) {
-		return getPreferenceStringValue(key, null);
-	}
-	
-	public String getPreferenceStringValue(String key, String defaultValue) {
-		String value = defaultValue;
-		Uri uri = getPrefUriForKey(key);
-		Cursor c = resolver.query(uri, null, String.class.getName(), null, null);
-		if(c!=null) {
-			c.moveToFirst();
-			value = c.getString(PreferenceProvider.COL_INDEX_VALUE);
-			c.close();
-		}
-		return value;
-	}
-
-	public Boolean getPreferenceBooleanValue(String key) {
-		return getPreferenceBooleanValue(key, null);
-	}
-	
-	public Boolean getPreferenceBooleanValue(String key, Boolean defaultValue) {
-		Boolean value = defaultValue;
-		Uri uri = getPrefUriForKey(key);
-		Cursor c = resolver.query(uri, null, Boolean.class.getName(), null, null);
-		if(c!=null) {
-			c.moveToFirst();
-			value = (c.getInt(PreferenceProvider.COL_INDEX_VALUE) == 1);
-			c.close();
-		}
-		return value;
-	}
-
-	public float getPreferenceFloatValue(String key) {
-		return getPreferenceFloatValue(key, null);
-	}
-	
-	public float getPreferenceFloatValue(String key,  Float defaultValue) {
-		Float value = defaultValue;
-		Uri uri = getPrefUriForKey(key);
-		Cursor c = resolver.query(uri, null, Float.class.getName(), null, null);
-		if(c!=null) {
-			c.moveToFirst();
-			value = c.getFloat(PreferenceProvider.COL_INDEX_VALUE);
-			c.close();
-		}
-		return value;
-	}
-	
-	/**
-	 * Get integer preference value
-	 * @param key the key preference to retrieve
-	 * @return the value
-	 */
-	public int getPreferenceIntegerValue(String key) {
-		try {
-			return Integer.parseInt(getPreferenceStringValue(key));
-		}catch(NumberFormatException e) {
-			Log.e(THIS_FILE, "Invalid " + key + " format : expect a int");
-		}catch(NullPointerException e) {
-			Log.e(THIS_FILE, "Invalid " + key + " format : expect a int");
-		}
-		return Integer.parseInt(PreferencesWrapper.STRING_PREFS.get(key));
-	}
-
-	
-	public void setPreferenceStringValue(String key, String value) {
-		Uri uri = getPrefUriForKey(key);
-		ContentValues values = new ContentValues();
-		values.put(PreferenceProvider.FIELD_VALUE, value);
-		resolver.update(uri, values, String.class.getName(), null);
-	}
-	
-	public void setPreferenceBooleanValue(String key, boolean value) {
-		Uri uri = getPrefUriForKey(key);
-		ContentValues values = new ContentValues();
-		values.put(PreferenceProvider.FIELD_VALUE, value);
-		resolver.update(uri, values, Boolean.class.getName(), null);
-	}
-	
-	public void setPreferenceFloatValue(String key, Float value) {
-		Uri uri = getPrefUriForKey(key);
-		ContentValues values = new ContentValues();
-		values.put(PreferenceProvider.FIELD_VALUE, value);
-		resolver.update(uri, values, Float.class.getName(), null);
-	}
 
 	/**
 	 * Set all values to default
 	 */
 	public void resetAllDefaultValues() {
-		Uri uri = PreferenceProvider.RAZ_URI;
+		Uri uri = SipConfigManager.RAZ_URI;
 		resolver.update(uri, new ContentValues(), null, null);
 	}
 	
+	// Api compat part
+	public boolean getPreferenceBooleanValue(String string, boolean b) {
+        return SipConfigManager.getPreferenceBooleanValue(context, string, b);
+    }
+
+    public boolean getPreferenceBooleanValue(String string) {
+        return SipConfigManager.getPreferenceBooleanValue(context, string);
+    }
+    
+    public String getPreferenceStringValue(String key) {
+        return SipConfigManager.getPreferenceStringValue(context, key);
+    }
+    public String getPreferenceStringValue(String key, String defaultVal) {
+        return SipConfigManager.getPreferenceStringValue(context, key, defaultVal);
+    }
+
+
+    public int getPreferenceIntegerValue(String key) {
+        return SipConfigManager.getPreferenceIntegerValue(context, key);
+    }
+
+    public float getPreferenceFloatValue(String key) {
+        return SipConfigManager.getPreferenceFloatValue(context, key);
+    }
+    
+    public float getPreferenceFloatValue(String key, float f) {
+        return SipConfigManager.getPreferenceFloatValue(context, key, f);
+    }
+    
+    public void setPreferenceStringValue(String key, String newValue) {
+        SipConfigManager.setPreferenceStringValue(context, key, newValue);
+    }
+
+    public void setPreferenceBooleanValue(String key, boolean newValue) {
+        SipConfigManager.setPreferenceBooleanValue(context, key, newValue);
+    }
+    
+    public void setPreferenceFloatValue(String key, float newValue) {
+        SipConfigManager.setPreferenceFloatValue(context, key, newValue);
+    }
 	
 	// Network part
 	
 	// Check for wifi
 	private boolean isValidWifiConnectionFor(NetworkInfo ni, String suffix) {
 		
-		boolean valid_for_wifi = getPreferenceBooleanValue("use_wifi_" + suffix);
-		if (valid_for_wifi && 
-			ni != null && ni.getType() == ConnectivityManager.TYPE_WIFI) {
-			
-			// Wifi connected
-			if (ni.getState() == NetworkInfo.State.CONNECTED) {
-				return true;
-			}
-		}
-		return false;
+        boolean valid_for_wifi = getPreferenceBooleanValue("use_wifi_" + suffix, true);
+        // We consider ethernet as wifi
+        if (valid_for_wifi && ni != null) {
+            int type = ni.getType();
+            // Wifi connected
+            if (ni.isConnected() &&
+                    // 9 = ConnectivityManager.TYPE_ETHERNET
+                    (type == ConnectivityManager.TYPE_WIFI || type == 9 )) {
+                return true;
+            }
+        }
+        return false;
 	}
 	
-	// Check for acceptable mobile data network connection
+
+
+    // Check for acceptable mobile data network connection
 	private boolean isValidMobileConnectionFor(NetworkInfo ni, String suffix) {
 
-		boolean valid_for_3g = getPreferenceBooleanValue("use_3g_" + suffix);
-		boolean valid_for_edge = getPreferenceBooleanValue("use_edge_" + suffix);
-		boolean valid_for_gprs = getPreferenceBooleanValue("use_gprs_" + suffix);
+		boolean valid_for_3g = getPreferenceBooleanValue("use_3g_" + suffix, true);
+		boolean valid_for_edge = getPreferenceBooleanValue("use_edge_" + suffix, true);
+		boolean valid_for_gprs = getPreferenceBooleanValue("use_gprs_" + suffix, true);
 		
 		if ((valid_for_3g || valid_for_edge || valid_for_gprs) &&
-			 ni != null && ni.getType() == ConnectivityManager.TYPE_MOBILE) {
-
+			 ni != null) {
+		    int type = ni.getType();
+		    
 			// Any mobile network connected
-			if (ni.getState() == NetworkInfo.State.CONNECTED) {
+			if (ni.isConnected() && 
+			        // Type 3,4,5 are other mobile data ways
+			        (type == ConnectivityManager.TYPE_MOBILE || (type <= 5 && type >= 3))) {
 				int subType = ni.getSubtype();
 				
 				// 3G (or better)
@@ -213,17 +176,19 @@ public class PreferencesProviderWrapper {
 	// Check for other (wimax for example)
 	private boolean isValidOtherConnectionFor(NetworkInfo ni, String suffix) {
 		
-		boolean valid_for_other = getPreferenceBooleanValue("use_other_" + suffix);
+		boolean valid_for_other = getPreferenceBooleanValue("use_other_" + suffix, true);
 		//boolean valid_for_other = true;
 		if (valid_for_other && 
 			ni != null && 
 			ni.getType() != ConnectivityManager.TYPE_MOBILE && ni.getType() != ConnectivityManager.TYPE_WIFI) {
-			
-			if (ni.getState() == NetworkInfo.State.CONNECTED) {
-				return true;
-			}
+			return ni.isConnected();
 		}
 		return false;
+	}
+	
+	private boolean isValidAnywayConnectionFor(NetworkInfo ni, String suffix) {
+	    return getPreferenceBooleanValue("use_anyway_" + suffix, false);
+        
 	}
 	
 	// Generic function for both incoming and outgoing
@@ -240,6 +205,10 @@ public class PreferencesProviderWrapper {
 			Log.d(THIS_FILE, "We are valid for OTHER");
 			return true;
 		}
+		if(isValidAnywayConnectionFor(ni, suffix)) {
+		    Log.d(THIS_FILE, "We are valid ANYWAY");
+            return true;
+		}
 		return false;
 	}
 	
@@ -248,6 +217,10 @@ public class PreferencesProviderWrapper {
 	 * @return true if connection is valid
 	 */
 	public boolean isValidConnectionForOutgoing() {
+	    if(getPreferenceBooleanValue(PreferencesWrapper.HAS_BEEN_QUIT, false)) {
+	        // Don't go further, we have been explicitly stopped
+	        return false;
+	    }
 		NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
 		return isValidConnectionFor(ni, "out");
 	}
@@ -261,15 +234,28 @@ public class PreferencesProviderWrapper {
 		return isValidConnectionFor(ni, "in");
 	}
 
-	public int getLogLevel() {
-		int prefsValue = getPreferenceIntegerValue(SipConfigManager.LOG_LEVEL);
+    public ArrayList<String> getAllIncomingNetworks(){
+        ArrayList<String> incomingNetworks = new ArrayList<String>();
+        String[] availableNetworks = {"3g", "edge", "gprs", "wifi", "other"};
+        for(String network:availableNetworks) {
+            if(getPreferenceBooleanValue("use_"+network+"_in")) {
+                incomingNetworks.add(network);
+            }
+        }
+        
+        return incomingNetworks;
+    }
+	
+
+    public int getLogLevel() {
+		int prefsValue = SipConfigManager.getPreferenceIntegerValue(context, SipConfigManager.LOG_LEVEL, 1);
 		if(prefsValue <= 6 && prefsValue >= 1) {
 			return prefsValue;
 		}
 		return 1;
 	}
 
-	/**
+    /**
 	 * Get the audio codec quality setting
 	 * @return the audio quality
 	 */
@@ -284,7 +270,9 @@ public class PreferencesProviderWrapper {
 		return AudioManager.MODE_NORMAL;
 	}
 	
-	/**
+
+
+    /**
 	 * Get current clock rate
 	 * @return clock rate in Hz
 	 */
@@ -299,11 +287,11 @@ public class PreferencesProviderWrapper {
 	}
 	
 	
-	public boolean getUseRoutingApi() {
+	public boolean useRoutingApi() {
 		return getPreferenceBooleanValue(SipConfigManager.USE_ROUTING_API);
 	}
 	
-	public boolean getUseModeApi() {
+	public boolean useModeApi() {
 		return getPreferenceBooleanValue(SipConfigManager.USE_MODE_API);
 	}
 	
@@ -317,10 +305,9 @@ public class PreferencesProviderWrapper {
 	public float getInitialVolumeLevel() {
 		return (float) (getPreferenceFloatValue(SipConfigManager.SND_STREAM_LEVEL, 8.0f) / 10.0f);
 	}
-	
 
 
-	/**
+    /**
 	 * Get sip ringtone
 	 * @return string uri
 	 */
@@ -328,7 +315,7 @@ public class PreferencesProviderWrapper {
 		String ringtone = getPreferenceStringValue(SipConfigManager.RINGTONE, 
 				Settings.System.DEFAULT_RINGTONE_URI.toString());
 		
-		if(ringtone == null || TextUtils.isEmpty(ringtone)) {
+		if(TextUtils.isEmpty(ringtone)) {
 			ringtone = Settings.System.DEFAULT_RINGTONE_URI.toString();
 		}
 		return ringtone;
@@ -338,7 +325,7 @@ public class PreferencesProviderWrapper {
 	
 	/// ---- PURE SIP SETTINGS -----
 
-	public boolean isTCPEnabled() {
+    public boolean isTCPEnabled() {
 		return getPreferenceBooleanValue(SipConfigManager.ENABLE_TCP);
 	}
 	
@@ -374,13 +361,38 @@ public class PreferencesProviderWrapper {
 		return getPrefPort(SipConfigManager.TLS_TRANSPORT_PORT);
 	}
 	
-	public int getKeepAliveInterval() {
-		NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
-		if(ni != null && ni.getType() == ConnectivityManager.TYPE_WIFI) {
-			return getPreferenceIntegerValue(SipConfigManager.KEEP_ALIVE_INTERVAL_WIFI);
-		}
-		return getPreferenceIntegerValue(SipConfigManager.KEEP_ALIVE_INTERVAL_MOBILE);
+	
+	private int getKeepAliveInterval(String wifi_key, String mobile_key) {
+        NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
+        if(ni != null && ni.getType() == ConnectivityManager.TYPE_WIFI) {
+            return getPreferenceIntegerValue(wifi_key);
+        }
+        return getPreferenceIntegerValue(mobile_key);
+    }
+	
+	/**
+	 * Retrieve UDP keep alive interval for the current connection
+	 * @return KA Interval in second 
+	 */
+	public int getUdpKeepAliveInterval() {
+		return getKeepAliveInterval(SipConfigManager.KEEP_ALIVE_INTERVAL_WIFI, SipConfigManager.KEEP_ALIVE_INTERVAL_MOBILE);
 	}
+
+    /**
+     * Retrieve TCP keep alive interval for the current connection
+     * @return KA Interval in second 
+     */
+    public int getTcpKeepAliveInterval() {
+        return getKeepAliveInterval(SipConfigManager.TCP_KEEP_ALIVE_INTERVAL_WIFI, SipConfigManager.TCP_KEEP_ALIVE_INTERVAL_MOBILE);
+    }
+
+    /**
+     * Retrieve TLS keep alive interval for the current connection
+     * @return KA Interval in second 
+     */
+    public int getTlsKeepAliveInterval() {
+        return getKeepAliveInterval(SipConfigManager.TLS_KEEP_ALIVE_INTERVAL_WIFI, SipConfigManager.TLS_KEEP_ALIVE_INTERVAL_MOBILE);
+    }
 	
 	public int getRTPPort() {
 		return getPrefPort(SipConfigManager.RTP_PORT);
@@ -401,14 +413,14 @@ public class PreferencesProviderWrapper {
 	
 
 	public String getUserAgent(Context ctx) {
-		String userAgent = getPreferenceStringValue(SipConfigManager.USER_AGENT);
-		//if(userAgent.equalsIgnoreCase(CustomDistribution.getUserAgent())) {
+		String userAgent = CustomDistribution.getUserAgent();
+		if(userAgent.equalsIgnoreCase(CustomDistribution.getUserAgent())) {
 			//If that's the official -not custom- user agent, send the release, the device and the api level
 			PackageInfo pinfo = getCurrentPackageInfos(ctx);
 			if(pinfo != null) {
-				userAgent +=  " r" + pinfo.versionCode+" / "+android.os.Build.DEVICE+"-"+Compatibility.getApiLevel();
+				userAgent +=  "/" + android.os.Build.DEVICE + "/API" + Compatibility.getApiLevel()+"/r"+pinfo.versionCode;
 			}
-		//}
+		}
 		return userAgent;
 	}
 	
@@ -458,9 +470,6 @@ public class PreferencesProviderWrapper {
 	
 
 
-	public final static int HEADSET_ACTION_CLEAR_CALL = 0;
-	public final static int HEADSET_ACTION_MUTE = 1;
-	public final static int HEADSET_ACTION_HOLD = 2;
 	/**
 	 * Action do do when headset is pressed
 	 * @return
@@ -471,7 +480,7 @@ public class PreferencesProviderWrapper {
 		}catch(NumberFormatException e) {
 			Log.e(THIS_FILE, "Headset action option not well formated");
 		}
-		return HEADSET_ACTION_CLEAR_CALL;
+		return SipConfigManager.HEADSET_ACTION_CLEAR_CALL;
 	}
 	
 	
@@ -523,14 +532,6 @@ public class PreferencesProviderWrapper {
 		return 4;
 	}
 	
-	public int getBitsPerSample() {
-		try {
-			return Integer.parseInt(getPreferenceStringValue(SipConfigManager.BITS_PER_SAMPLE));
-		}catch(NumberFormatException e) {
-			Log.e(THIS_FILE, "Bits per sample not well formated");
-		}
-		return Integer.parseInt(PreferencesWrapper.STRING_PREFS.get(SipConfigManager.BITS_PER_SAMPLE));
-	}
 	
 	/**
 	 * Get whether ice is enabled
@@ -564,45 +565,57 @@ public class PreferencesProviderWrapper {
 		return getPreferenceStringValue(SipConfigManager.TURN_SERVER);
 	}
 	
-	public void setCodecList(ArrayList<String> codecs) {
+	/**
+	 * Setup codecs list
+	 * Should be only done by the service that get infos from the sip stack(s)
+	 * @param codecs the list of codecs
+	 */
+	public void setCodecList(List<String> codecs) {
 		if(codecs != null) {
 			setPreferenceStringValue(PreferencesWrapper.CODECS_LIST, TextUtils.join(PreferencesWrapper.CODECS_SEPARATOR, codecs));
 		}
 	}
 	
+    public void setVideoCodecList(List<String> codecs) {
+        if(codecs != null) {
+            setPreferenceStringValue(PreferencesWrapper.CODECS_VIDEO_LIST, TextUtils.join(PreferencesWrapper.CODECS_SEPARATOR, codecs));
+        }
+    }
+	
 	public void setLibCapability(String cap, boolean canDo) {
 		setPreferenceBooleanValue(PreferencesWrapper.BACKUP_PREFIX + cap, canDo);
 	}
 
-	// DTMF
-	public static final String DTMF_MODE_AUTO = "0";
-	public static final String DTMF_MODE_RTP = "1";
-	public static final String DTMF_MODE_INBAND = "2";
-	public static final String DTMF_MODE_INFO = "3";
+
+
+    // DTMF
 	
 	public boolean useSipInfoDtmf() {
-		return getPreferenceStringValue(SipConfigManager.DTMF_MODE).equalsIgnoreCase(DTMF_MODE_INFO);
+		return (getPreferenceIntegerValue(SipConfigManager.DTMF_MODE) == SipConfigManager.DTMF_MODE_INFO);
 	}
 	
 	public boolean forceDtmfInBand() {
-		return getPreferenceStringValue(SipConfigManager.DTMF_MODE).equalsIgnoreCase(DTMF_MODE_INBAND);
+		return (getPreferenceIntegerValue(SipConfigManager.DTMF_MODE) == SipConfigManager.DTMF_MODE_INBAND);
 	}
 
 	public boolean forceDtmfRTP() {
-		return getPreferenceStringValue(SipConfigManager.DTMF_MODE).equalsIgnoreCase(DTMF_MODE_RTP);
+		return (getPreferenceIntegerValue(SipConfigManager.DTMF_MODE) == SipConfigManager.DTMF_MODE_RTP);
 	}
 	
 	
 	// Codecs
 	
 
-	/**
-	 * Get the codec priority
-	 * @param codecName codec name formated in the pjsip format (the corresponding pref is codec_{{lower(codecName)}}_{{codecFreq}})
-	 * @param defaultValue the default value if the pref is not found MUST be casteable as Integer/short
-	 * @return the priority of the codec as defined in preferences
-	 */
-	
+    /**
+     * Get the codec priority
+     * 
+     * @param codecName codec name formated in the pjsip format (the
+     *            corresponding pref is
+     *            codec_{{lower(codecName)}}_{{codecFreq}})
+     * @param defaultValue the default value if the pref is not found MUST be
+     *            casteable as Integer/short
+     * @return the priority of the codec as defined in preferences
+     */
 	public short getCodecPriority(String codecName, String type, String defaultValue) {
 		String key = SipConfigManager.getCodecKey(codecName, type); 
 		if(key != null) {
@@ -618,6 +631,16 @@ public class PreferencesProviderWrapper {
 		return (short) Integer.parseInt(defaultValue);
 	}
 	
+    /**
+     * Set the priority for the codec for a given bandwidth type
+     * 
+     * @param codecName the name of the codec as announced by codec
+     * @param type bandwidth type <br/>
+     *            For now, valid constants are :
+     *            {@link SipConfigManager#CODEC_NB} and
+     *            {@link SipConfigManager#CODEC_WB}
+     * @param newValue Short value for preference as a string.
+     */
 	public void setCodecPriority(String codecName, String type, String newValue) {
 		String key = SipConfigManager.getCodecKey(codecName, type); 
 		if(key != null) {
@@ -626,26 +649,6 @@ public class PreferencesProviderWrapper {
 		//TODO : else raise error
 	}
 	
-	
-	public boolean hasCodecPriority(String codecName) {
-		NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
-		String[] codecParts = codecName.split("/");
-		if(codecParts.length >=2 ) {
-			if(ni != null) {
-				String currentBandType = getPreferenceStringValue(SipConfigManager.getBandTypeKey(ni.getType(), ni.getSubtype()), 
-						SipConfigManager.CODEC_WB);
-				String key = SipConfigManager.getCodecKey(codecName, currentBandType); 
-				
-				String val = getPreferenceStringValue(key, null);
-				return (val != null);
-			}else {
-				String key = SipConfigManager.getCodecKey(codecName, SipConfigManager.CODEC_WB); 
-				String val = getPreferenceStringValue(key, null);
-				return (val != null);
-			}
-		}
-		return false;
-	}
 
 	public static File getRecordsFolder(Context ctxt) {
 		return PreferencesWrapper.getRecordsFolder(ctxt);

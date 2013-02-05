@@ -34,12 +34,12 @@
 #include <pj/string.h>
 #include <pj/os.h>
 #include <pj/math.h>
-
+#include <pjmedia-codec/amr_sdp_match.h>
 
 #if defined(PJMEDIA_HAS_AMR_STAGEFRIGHT_CODEC) && (PJMEDIA_HAS_AMR_STAGEFRIGHT_CODEC!=0)
 
 #include <pjmedia-codec/amr_helper.h>
-#include <pjmedia-codec/opencore_amrnb.h>
+#include <pjmedia-codec/opencore_amr.h>
 #include <dlfcn.h>
 
 #define THIS_FILE       "amr_stagefright_dyn.c"
@@ -300,6 +300,12 @@ pj_status_t dlsym_stagefright(struct amr_data* amr_data){
 	pj_status_t status;
 	amr_data->libEncode = NULL;
 	amr_data->libDecode = NULL;
+
+	status = dlsym_stagefright_40(amr_data);
+	if(status == PJ_SUCCESS){
+		return status;
+	}
+
 	status = dlsym_stagefright_23(amr_data);
 	if(status == PJ_SUCCESS){
 		return status;
@@ -316,6 +322,29 @@ on_error :
 	dlclose_stagefright(amr_data);
 	return PJ_EINVAL;
 }
+
+
+pj_status_t dlsym_stagefright_40(struct amr_data* amr_data){
+	amr_data->libEncode = dlopen("libstagefright.so", RTLD_LAZY);
+	if(amr_data->libEncode != NULL){
+		amr_data->AMREncodeInit = dlsym(amr_data->libEncode, "AMREncodeInit");
+		amr_data->AMREncodeReset = dlsym(amr_data->libEncode, "AMREncodeReset");
+		amr_data->AMREncodeExit = dlsym(amr_data->libEncode, "AMREncodeExit");
+		amr_data->AMREncode = dlsym(amr_data->libEncode, "AMREncode");
+
+		amr_data->libDecode = dlopen("libstagefright_soft_amrdec.so", RTLD_LAZY);
+		if(amr_data->libDecode != NULL){
+			amr_data->GSMInitDecode = dlsym(amr_data->libDecode, "GSMInitDecode");
+			amr_data->AMRDecode = dlsym(amr_data->libDecode, "AMRDecode");
+			amr_data->Speech_Decode_Frame_reset = dlsym(amr_data->libDecode, "Speech_Decode_Frame_reset");
+			amr_data->GSMDecodeFrameExit = dlsym(amr_data->libDecode, "GSMDecodeFrameExit");
+		}
+
+	    return dlcheck_sym(amr_data);
+	}
+	return PJ_EINVAL;
+}
+
 
 pj_status_t dlsym_stagefright_23(struct amr_data* amr_data){
 	amr_data->libEncode = dlopen("libstagefright.so", RTLD_LAZY);
@@ -436,6 +465,7 @@ PJ_DEF(pj_status_t) pjmedia_codec_opencore_amrnb_init( pjmedia_endpt *endpt )
 {
     pjmedia_codec_mgr *codec_mgr;
     pj_status_t status;
+    pj_str_t codec_name;
 
     if (amr_codec_factory.pool != NULL)
 	return PJ_SUCCESS;
@@ -456,7 +486,13 @@ PJ_DEF(pj_status_t) pjmedia_codec_opencore_amrnb_init( pjmedia_endpt *endpt )
 	status = PJ_EINVALIDOP;
 	goto on_error;
     }
-
+    /* Register format match callback. */
+    pj_cstr(&codec_name, "AMR");
+    status = pjmedia_sdp_neg_register_fmt_match_cb( &codec_name,
+    		&pjmedia_codec_amr_match_sdp);
+    if (status != PJ_SUCCESS){
+    	goto on_error;
+    }
     /* Register codec factory to endpoint. */
     status = pjmedia_codec_mgr_register_factory(codec_mgr,
 						&amr_codec_factory.base);
@@ -540,12 +576,23 @@ static pj_status_t amr_test_alloc( pjmedia_codec_factory *factory,
 				   const pjmedia_codec_info *info )
 {
     PJ_UNUSED_ARG(factory);
+    const pj_str_t amr_tag = {"AMR", 3};
 
-    /* Check payload type. */
-    if (info->pt != PJMEDIA_RTP_PT_AMR)
-	return PJMEDIA_CODEC_EUNSUP;
 
-    /* Ignore the rest, since it's static payload type. */
+    /* Type MUST be audio. */
+    if (info->type != PJMEDIA_TYPE_AUDIO)
+    return PJMEDIA_CODEC_EUNSUP;
+
+    /* Check encoding name. */
+    if (pj_stricmp(&info->encoding_name, &amr_tag) != 0)
+    return PJMEDIA_CODEC_EUNSUP;
+
+    /* Channel count must be one */
+    if (info->channel_cnt != 1)
+    return PJMEDIA_CODEC_EUNSUP;
+
+    if(info->clock_rate != 8000)
+    return PJMEDIA_CODEC_EUNSUP;
 
     return PJ_SUCCESS;
 }

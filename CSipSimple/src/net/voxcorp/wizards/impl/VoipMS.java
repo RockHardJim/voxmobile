@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,6 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.wizards.impl;
 
 import java.util.SortedMap;
@@ -35,22 +39,22 @@ public class VoipMS extends SimpleImplementation {
 	}
 	
 	ListPreference sipServer; 
-	static SortedMap<String, String[]> providers = new TreeMap<String, String[]>(){
+	static SortedMap<String, String> providers = new TreeMap<String, String>(){
 		private static final long serialVersionUID = -2561302247222706262L;
 	{
-		put("Atlanta, GA", new String[] {"atlanta.voip.ms"});
-		put("Chicago, IL", new String[] {"chicago.voip.ms"});
-		put("Dallas, TX", new String[] {"dallas.voip.ms"});
-		put("Houston, TX", new String[] {"houston.voip.ms"});
-		put("Los Angeles, CA", new String[] {"losangeles.voip.ms"});
-		put("New York, NY", new String[] {"newyork.voip.ms"});
-		put("Seattle, WA", new String[] {"seattle.voip.ms"});
-		put("Tampa, FL", new String[] {"tampa.voip.ms"});
-		put("Montreal 2,QC", new String[] {"montreal2.voip.ms"});
-		put("Toronto 2, ON", new String[] {"toronto2.voip.ms"});
-		put("Montreal,QC", new String[] {"montreal.voip.ms"});
-		put("Toronto, ON", new String[] {"toronto.voip.ms"});
-		put("London, UK", new String[] {"london.voip.ms"});
+		put("Atlanta, GA", "atlanta.voip.ms");
+		put("Chicago, IL", "chicago.voip.ms");
+		put("Dallas, TX", "dallas.voip.ms");
+		put("Houston, TX", "houston.voip.ms");
+		put("Los Angeles, CA", "losangeles.voip.ms");
+		put("New York, NY", "newyork.voip.ms");
+		put("Seattle, WA", "seattle.voip.ms");
+		put("Tampa, FL", "tampa.voip.ms");
+		put("Montreal 2,QC", "montreal2.voip.ms");
+		put("Toronto 2, ON", "toronto2.voip.ms");
+		put("Montreal,QC", "montreal.voip.ms");
+		put("Toronto, ON", "toronto.voip.ms");
+		put("London, UK", "london.voip.ms");
 	}
 	};
 
@@ -62,7 +66,7 @@ public class VoipMS extends SimpleImplementation {
 		
 		
 		boolean recycle = true;
-		sipServer = (ListPreference) parent.findPreference(PROVIDER_LIST_KEY);
+		sipServer = (ListPreference) findPreference(PROVIDER_LIST_KEY);
 		if(sipServer == null) {
 			sipServer = new ListPreference(parent);
 			sipServer.setKey(PROVIDER_LIST_KEY);
@@ -74,7 +78,7 @@ public class VoipMS extends SimpleImplementation {
         int i = 0;
         for(String pv : providers.keySet()) {
         	e[i] = pv;
-        	v[i] = ((String[]) providers.get(pv))[0];
+        	v[i] = providers.get(pv);
         	i++;
         }
 		
@@ -82,22 +86,23 @@ public class VoipMS extends SimpleImplementation {
 		sipServer.setEntryValues(v);
 		sipServer.setDialogTitle(R.string.w_common_server);
 		sipServer.setTitle(R.string.w_common_server);
-		sipServer.setDefaultValue("atlanta.voip.ms");
+        sipServer.setDefaultValue("atlanta.voip.ms");
+        
+        if(!recycle) {
+            addPreference(sipServer);
+        }
 		
         String domain = account.reg_uri;
         if( domain != null ) {
-	        for(CharSequence state : v) {
-	        	String currentComp = "sip:"+state;
+            for(CharSequence state : v) {
+                String currentComp = "sip:" + state;
 	        	if( currentComp.equalsIgnoreCase(domain) ) {
-	        		sipServer.setValue((String) state);
+	        		sipServer.setValue(state.toString());
 	        		break;
 	        	}
 	        }
         }
         
-        if(!recycle) {
-            parent.getPreferenceScreen().addPreference(sipServer);
-    	}
    }
 
 
