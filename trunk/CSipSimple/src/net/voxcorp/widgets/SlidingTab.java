@@ -1,13 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
- * Copyright (C) 2008 The Android Open Source Project
- * 
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,21 +18,11 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
-/*
- * Copyright (C) 2009 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/**
+ * This file contains relicensed code from Apache copyright of 
+ * Copyright (C) 2008-2009 The Android Open Source Project
  */
+
 package net.voxcorp.widgets;
 
 import android.content.Context;
@@ -47,8 +38,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ImageView.ScaleType;
 
+import com.actionbarsherlock.internal.utils.UtilityWrapper;
 import net.voxcorp.R;
 import net.voxcorp.utils.Log;
+import net.voxcorp.widgets.IOnLeftRightChoice.IOnLeftRightProvider;
 
 /**
  * A special widget containing two Sliders and a threshold for each. Moving
@@ -59,13 +52,13 @@ import net.voxcorp.utils.Log;
  * Deeply inspired from android SlidingTab internal widget but simplified for our use
  * 
  */
-public class SlidingTab extends ViewGroup {
+public class SlidingTab extends ViewGroup implements IOnLeftRightProvider {
 
 	private static final float TARGET_ZONE = 2.0f / 3.0f;
 	private static final long VIBRATE_SHORT = 30;
 	private static final long VIBRATE_LONG = 40;
 
-	private OnTriggerListener onTriggerListener;
+	private IOnLeftRightChoice onTriggerListener;
 	private boolean triggered = false;
 	private Vibrator mVibrator;
 	// used to scale dimensions for bitmaps.
@@ -77,35 +70,7 @@ public class SlidingTab extends ViewGroup {
 	private float targetZone;
 	private static final String THIS_FILE = "SlidingTab";
 
-	/**
-	 * Interface definition for a callback to be invoked when a tab is triggered
-	 * by moving it beyond a target zone.
-	 */
-	public interface OnTriggerListener {
 
-		/**
-		 * The interface was triggered because the user grabbed the left handle
-		 * and moved it past the target zone.
-		 */
-		public static final int LEFT_HANDLE = 0;
-
-		/**
-		 * The interface was triggered because the user grabbed the right handle
-		 * and moved it past the target zone.
-		 */
-		public static final int RIGHT_HANDLE = 1;
-
-		/**
-		 * Called when the user moves a handle beyond the target zone.
-		 * 
-		 * @param v
-		 *            The view that was triggered.
-		 * @param whichHandle
-		 *            Which "dial handle" the user grabbed, either
-		 *            {@link #LEFT_HANDLE}, {@link #RIGHT_HANDLE}.
-		 */
-		void onTrigger(View v, int whichHandle);
-	}
 
 	/**
 	 * Simple container class for all things pertinent to a slider. A slider
@@ -157,10 +122,12 @@ public class SlidingTab extends ViewGroup {
 
 			// Create hint TextView
 			text = new TextView(parent.getContext());
-			text.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.FILL_PARENT));
+			text.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
 			text.setBackgroundResource(barId);
-			text.setTextAppearance(parent.getContext(), R.style.TextAppearance_SlidingTabNormal);
-
+			if(!parent.isInEditMode()) {
+			    text.setTextAppearance(parent.getContext(), R.style.TextAppearance_SlidingTabNormal);
+			}
+			
 			// Create target
 			target = new ImageView(parent.getContext());
 			target.setImageResource(targetId);
@@ -175,22 +142,22 @@ public class SlidingTab extends ViewGroup {
 			parent.addView(text);
 		}
 		
-		void setResources(int iconId, int targetId, int barId, int tabId) {
+		private void setResources(int iconId, int targetId, int barId, int tabId) {
 			tab.setImageResource(iconId);
 			tab.setBackgroundResource(tabId);
 			text.setBackgroundResource(barId);
 			target.setImageResource(targetId);
 		}
 		
-		void setDrawables(Drawable iconD, Drawable targetD, Drawable barD, Drawable tabD) {
+		private void setDrawables(Drawable iconD, Drawable targetD, Drawable barD, Drawable tabD) {
 			if(iconD != null) {
 				tab.setImageDrawable(iconD);
 			}
 			if(tabD != null) {
-				tab.setBackgroundDrawable(tabD);
+			    UtilityWrapper.getInstance().setBackgroundDrawable(tab, tabD);
 			}
 			if(barD != null) {
-				text.setBackgroundDrawable(barD);
+			    UtilityWrapper.getInstance().setBackgroundDrawable(text, barD);
 			}
 			if(tabD != null) {
 				target.setImageDrawable(targetD);
@@ -198,17 +165,17 @@ public class SlidingTab extends ViewGroup {
 		}
 		
 
-		void setHintText(int resId) {
+		private void setHintText(int resId) {
 			text.setText(resId);
 		}
 
-		void hide() {
+		private void hide() {
 			text.setVisibility(View.INVISIBLE);
 			tab.setVisibility(View.INVISIBLE);
 			target.setVisibility(View.INVISIBLE);
 		}
 
-		void setState(int state) {
+		private void setState(int state) {
 			text.setPressed(state == STATE_PRESSED);
 			tab.setPressed(state == STATE_PRESSED);
 			if (state == STATE_ACTIVE) {
@@ -225,11 +192,11 @@ public class SlidingTab extends ViewGroup {
 			}
 		}
 
-		void showTarget() {
+		private void showTarget() {
 			target.setVisibility(View.VISIBLE);
 		}
 
-		void reset() {
+		private void reset() {
 			setState(STATE_NORMAL);
 			text.setVisibility(View.VISIBLE);
 			text.setTextAppearance(text.getContext(), R.style.TextAppearance_SlidingTabNormal);
@@ -252,7 +219,7 @@ public class SlidingTab extends ViewGroup {
 		 * @param alignment
 		 *            which side to align the widget to
 		 */
-		void layout(int l, int t, int r, int b, int alignment) {
+		private void layout(int l, int t, int r, int b, int alignment) {
 			final int handleWidth = tab.getBackground().getIntrinsicWidth();
 			final int handleHeight = tab.getBackground().getIntrinsicHeight();
 			final int targetWidth = target.getDrawable().getIntrinsicWidth();
@@ -280,10 +247,11 @@ public class SlidingTab extends ViewGroup {
 			}
 			
 		}
-
+		/*
 		public int getTabWidth() {
 			return tab.getBackground().getIntrinsicWidth();
 		}
+		*/
 
 		public int getTabHeight() {
 			return tab.getBackground().getIntrinsicHeight();
@@ -316,19 +284,17 @@ public class SlidingTab extends ViewGroup {
 		if (widthSpecMode == MeasureSpec.UNSPECIFIED || heightSpecMode == MeasureSpec.UNSPECIFIED) {
 			throw new RuntimeException("Sliding tab cannot have UNSPECIFIED dimensions");
 		}
-		*/
 
 		final int leftTabWidth = (int) (density * leftSlider.getTabWidth() + 0.5f);
 		final int rightTabWidth = (int) (density * rightSlider.getTabWidth() + 0.5f);
+		
+        */
 		final int leftTabHeight = (int) (density * leftSlider.getTabHeight() + 0.5f);
 		final int rightTabHeight = (int) (density * rightSlider.getTabHeight() + 0.5f);
-		final int width;
-		final int height;
+		/*final int width = Math.min(widthSpecSize, leftTabWidth + rightTabWidth);*/
+		final int height = Math.max(leftTabHeight, rightTabHeight);
 
-		width = Math.max(widthSpecSize, leftTabWidth + rightTabWidth);
-		height = Math.max(leftTabHeight, rightTabHeight);
-		Log.d(THIS_FILE, "Heights are : "+leftTabHeight+" and "+rightTabHeight+" density "+density);
-		setMeasuredDimension(width, height);
+		setMeasuredDimension(widthSpecSize, height);
 	}
 
 	@Override
@@ -350,8 +316,7 @@ public class SlidingTab extends ViewGroup {
 			return false;
 		}
 
-		switch (action) {
-		case MotionEvent.ACTION_DOWN: {
+		if (action == MotionEvent.ACTION_DOWN) {
 			tracking = true;
 			triggered = false;
 			vibrate(VIBRATE_SHORT);
@@ -366,8 +331,6 @@ public class SlidingTab extends ViewGroup {
 			}
 			currentSlider.setState(Slider.STATE_PRESSED);
 			currentSlider.showTarget();
-			break;
-		}
 		}
 
 		return true;
@@ -386,13 +349,13 @@ public class SlidingTab extends ViewGroup {
 				moveHandle(x, y);
 				float position = x;
 				float target = targetZone * getWidth();
-				boolean targetZoneReached = (currentSlider == leftSlider ? position > target : position < target);
+				boolean targetZoneReached = (currentSlider.equals(leftSlider) ? position > target : position < target);
 
 				if (!triggered && targetZoneReached) {
 					triggered = true;
 					tracking = false;
 					currentSlider.setState(Slider.STATE_ACTIVE);
-					dispatchTriggerEvent(currentSlider == leftSlider ? OnTriggerListener.LEFT_HANDLE : OnTriggerListener.RIGHT_HANDLE);
+					dispatchTriggerEvent(currentSlider.equals(leftSlider) ? IOnLeftRightChoice.LEFT_HANDLE : IOnLeftRightChoice.RIGHT_HANDLE);
 				}
 
 				if (y <= handle.getBottom() && y >= handle.getTop()) {
@@ -405,6 +368,8 @@ public class SlidingTab extends ViewGroup {
 				triggered = false;
 				resetView();
 				break;
+			default:
+				break;
 			}
 		}
 
@@ -416,7 +381,7 @@ public class SlidingTab extends ViewGroup {
 	public void resetView() {
 		leftSlider.reset();
 		rightSlider.reset();
-		onLayout(true, getLeft(), getTop(), getLeft() + getWidth(), getTop() + getHeight());
+		onLayout(true, getLeft(), getTop(), getRight(), getBottom());
 	}
 
 	@Override
@@ -424,11 +389,9 @@ public class SlidingTab extends ViewGroup {
 		if (!changed) {
 			return;
 		}
-
 		// Center the widgets in the view
 		leftSlider.layout(l, t, r, b, Slider.ALIGN_LEFT);
 		rightSlider.layout(l, t, r, b, Slider.ALIGN_RIGHT);
-
 		invalidate();
 	}
 
@@ -516,15 +479,7 @@ public class SlidingTab extends ViewGroup {
 		mVibrator.vibrate(duration);
 	}
 
-	/**
-	 * Registers a callback to be invoked when the user triggers an event.
-	 * 
-	 * @param listener
-	 *            the OnDialTriggerListener to attach to this view
-	 */
-	public void setOnTriggerListener(OnTriggerListener listener) {
-		onTriggerListener = listener;
-	}
+	
 
 	/**
 	 * Dispatches a trigger event to listener. Ignored if a listener is not set.
@@ -537,9 +492,20 @@ public class SlidingTab extends ViewGroup {
 		Log.d(THIS_FILE, "We take the call....");
 		if (onTriggerListener != null) {
 			Log.d(THIS_FILE, "We transmit to the parent....");
-			onTriggerListener.onTrigger(this, whichHandle);
+			onTriggerListener.onLeftRightChoice(whichHandle);
 		}
 	}
+
+	/**
+     * Registers a callback to be invoked when the user triggers an event.
+     * 
+     * @param listener
+     *            the OnDialTriggerListener to attach to this view
+     */
+    @Override
+    public void setOnLeftRightListener(IOnLeftRightChoice l) {
+        onTriggerListener = l;
+    }
 
 
 }

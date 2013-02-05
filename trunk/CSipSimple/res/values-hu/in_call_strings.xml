@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <resources>
   <string name="take_call">Válasz</string>
   <string name="decline_call">Mellőz</string>
@@ -19,5 +19,4 @@
   <string name="unlock">Felold</string>
   <string name="record">Felvétel</string>
   <string name="stop_recording">Felvétel megállítás</string>
-  <string name="xfer">Átvitel</string>
 </resources>

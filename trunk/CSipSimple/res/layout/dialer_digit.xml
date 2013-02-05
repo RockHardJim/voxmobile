@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 
+<!--
 	Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr) 
 	Copyright (C) 2008 The Android Open Source Project
 	
@@ -8,6 +8,9 @@
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+	If you own a pjsip commercial license you can also redistribute it
+	and/or modify it under the terms of the GNU Lesser General Public License
+	as an android library.
 
     CSipSimple is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,64 +19,69 @@
 
     You should have received a copy of the GNU General Public License
     along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
- -->
- 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/top_digit_dialer" android:orientation="vertical" android:layout_width="fill_parent"
-	android:layout_height="fill_parent">
-		
-	<LinearLayout android:id="@+id/topField" android:layout_weight="2.5"
-		android:layout_width="fill_parent" android:layout_height="fill_parent" 
-		android:background="@drawable/btn_dial_textfield"
-		android:padding="0dip"
-		android:layout_marginBottom="10dip" 
-		android:orientation="horizontal">
-		<ImageButton android:id="@+id/switchTextView" 
-			android:layout_width="wrap_content" android:layout_height="fill_parent"
-			android:background="@drawable/btn_dial_textbadge" 
-			android:src="@drawable/ic_tab_unselected_contacts" />
-		<EditText android:id="@+id/digitsText" android:layout_width="fill_parent"
-			android:layout_height="fill_parent"
-			android:layout_weight="1" android:maxLines="1" android:scrollHorizontally="true"
-			android:textSize="28sp" android:freezesText="true" android:background="@android:color/transparent"
-			android:layout_marginTop="0dip" android:layout_marginBottom="0dip"
-			android:layout_marginRight="5dip" android:layout_marginLeft="5dip"
-			android:contentDescription="@string/description_digits_edittext"
-			android:focusableInTouchMode="true" android:editable="true" android:cursorVisible="false" />
-		<net.voxcorp.widgets.AccountChooserButton android:layout_width="wrap_content"
-			android:layout_weight="0" android:id="@+id/accountChooserButton"
-			android:layout_height="fill_parent" />
-	</LinearLayout>
+-->
 
-	<LinearLayout android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
-		android:layout_weight="1">
-		<net.voxcorp.widgets.Dialpad android:id="@+id/dialPad" 
-			android:layout_width="fill_parent"
-			android:layout_height="fill_parent"
-			android:layout_below="@id/digitsText" />
-	</LinearLayout>
-	<LinearLayout android:id="@+id/dial_actions" 
-		android:layout_weight="2.4"
-		android:layout_width="fill_parent"
-		android:layout_centerHorizontal="true" android:layout_height="fill_parent"
-		android:layout_marginTop="2dip" android:layout_marginLeft="1dip" android:layout_marginRight="1dip"
-		android:orientation="horizontal" android:gravity="center"
-		android:padding="10dp">
+<net.voxcorp.ui.dialpad.DialerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/top_digit_dialer"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:baselineAligned="false"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/right_panel_margin_vertical"
+    android:paddingTop="@dimen/right_panel_margin_vertical" >
 
-		<ImageButton android:id="@+id/vmButton" android:layout_width="87dip"
-			android:layout_height="fill_parent" android:layout_gravity="center" android:state_enabled="false"
-			android:background="@drawable/btn_dial_domain" android:src="@drawable/ic_dial_action_voice_mail" />
+    <RelativeLayout
+        android:id="@+id/topField"
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_marginBottom="0dip"
+        android:layout_weight="@integer/dialpad_layout_weight_digits"
+        android:background="@drawable/dialpad_background"
+        android:orientation="horizontal"
+        android:padding="0dip" >
 
-		<ImageButton android:layout_height="fill_parent" android:layout_gravity="center"
-			android:contentDescription="@string/description_dial_button"
-			android:layout_weight="1" android:state_enabled="false" android:background="@drawable/btn_dial_action"
-			android:src="@drawable/ic_dial_action_call" android:layout_width="fill_parent" android:scaleType="center"
-			android:id="@+id/dialButton" />
+        <!-- Dummy item to prevent DigitsEditText from receiving focus -->
 
-		<ImageButton android:id="@+id/deleteButton" android:layout_width="87dip"
-			android:contentDescription="@string/description_delete_button"
-			android:layout_height="fill_parent" android:layout_gravity="center" android:state_enabled="false"
-			android:src="@drawable/ic_dial_action_delete" android:background="@drawable/btn_dial_delete" />
-	</LinearLayout>
-</LinearLayout>
+        <View
+            android:layout_width="0px"
+            android:layout_height="0px"
+            android:focusable="true"
+            android:focusableInTouchMode="true" />
+
+        <net.voxcorp.ui.dialpad.DigitsEditText
+            android:id="@+id/digitsText"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@+id/accountChooserButton"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/description_digits_edittext"
+            android:gravity="center"
+            android:imeActionLabel="@string/call"
+            android:imeOptions="actionGo"
+            android:nextFocusRight="@+id/accountChooserButton"
+            android:textAppearance="@style/DialtactsDigitsTextAppearance"
+            android:textColor="@android:color/white" />
+
+        <net.voxcorp.widgets.AccountChooserButton
+            android:id="@+id/accountChooserButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true" />
+    </RelativeLayout>
+    <!-- Autocomplete -->
+
+    <ListView
+        android:id="@+id/autoCompleteList"
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="@integer/dialpad_layout_weight_autocomplete_list"
+        android:visibility="gone" />
+
+    <!-- Keypad section -->
+
+    <include layout="@layout/dialpad_compose" />
+
+</net.voxcorp.ui.dialpad.DialerLayout>

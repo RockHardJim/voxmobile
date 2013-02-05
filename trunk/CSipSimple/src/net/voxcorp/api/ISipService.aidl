@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,8 +17,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
- *
- *  This file and this file only is released under dual Apache license
+ *  
+ *  This file and this file only is also released under Apache license as an API file
  */
 package net.voxcorp.api;
 import net.voxcorp.api.SipProfileState;
@@ -75,11 +78,53 @@ interface ISipService{
 	SipProfileState getSipProfileState(int accountId);
 	
 	//Call configuration control
+	/**
+	 * Switch next incoming request to auto answer
+	 */
 	void switchToAutoAnswer();
+	/**
+	 * Ignore next outgoing call request from tel handler processing
+	 */
+	void ignoreNextOutgoingCallFor(String number);
 	
 	//Call control
+	/**
+	 * Place a call.
+	 * 
+	 * @param callee The sip uri to call. 
+	 * It can also be a simple number, in which case the app will autocomplete.
+	 * If you add the scheme, take care to fill completely else it could be considered as a call
+	 * to a sip IP/domain
+	 * @param accountId The id of the account to use for this call. 
+	 */
 	void makeCall(in String callee, int accountId);
+	
+	
+	/**
+	 * Place a call.
+	 * 
+	 * @param callee The sip uri to call. 
+	 * It can also be a simple number, in which case the app will autocomplete.
+	 * If you add the scheme, take care to fill completely else it could be considered as a call
+	 * to a sip IP/domain
+	 * @param accountId The id of the account to use for this call. 
+	 * @param options The options you'd like to apply for this calls {@link SipCallSession#OPT_CALL_VIDEO}, {@link SipCallSession#OPT_CALL_EXTRA_HEADERS}
+	 */
+	void makeCallWithOptions(in String callee, int accountId, in Bundle options);
+	
+	/**
+	 * Answer a call.
+	 * 
+	 * @param callId The id of the call to answer.
+	 * @param status The sip status code you'd like to answer with. 200 to take the call.  400 <= status < 500 if refusing.
+	 */
 	int answer(int callId, int status);
+	/**
+	 * Hangup a call.
+	 *
+	 * @param callId The id of the call to hangup.
+	 * @param status The sip status code you'd like to hangup with.
+	 */
 	int hangup(int callId, int status);
 	int sendDtmf(int callId, int keyCode);
 	int hold(int callId);
@@ -96,6 +141,13 @@ interface ISipService{
 	void setBluetoothOn(boolean on);
 	void confAdjustTxLevel(int port, float value);
 	void confAdjustRxLevel(int port, float value);
+	/**
+	 * Get Rx and Tx sound level for a given port.
+	 *
+	 * @param port Port id we'd like to have the level
+	 * @return The RX and TX (0-255) level encoded as RX << 8 | TX
+	 */
+	long confGetRxTxLevel(int port);
 	void setEchoCancellation(boolean on);
 	void adjustVolume(in SipCallSession callInfo, int direction, int flags);
 	MediaState getCurrentMediaState();
@@ -103,25 +155,63 @@ interface ISipService{
 	int stopLoopbackTest();
 	
 	// Record calls
-	void startRecording(int callId);
-	void stopRecording();
-	int getRecordedCall();
+	/**
+	 * Start recording of a call to a file.
+	 * 
+	 * @param callId the call id to start recording of.
+     * @param way the way the recording takes
+     *  {@link SipManager#BITMASK_IN} => record remote party (what goes out speaker/earpiece)
+     *  {@link SipManager#BITMASK_OUT} =>  record self (what comes from micro), 
+     * If 0 will record all ways.
+	 */
+	void startRecording(int callId, int way);
+	/**
+	 * Stop recording of a call.
+	 * 
+	 * @param callId the call id to stop recording (of all recording ways)
+	 */
+	void stopRecording(int callId);
+	/**
+	 * Is the call being recorded (for at least one way) ?
+	 * 
+	 * @param callId the call id to get recording status of.
+	 * @return true if the call is currently being recorded
+	 */
+	boolean isRecording(int callId);
+	/**
+	 * Can the call be recorded ?
+	 * 
+	 * @param callId the call id to get record capability of.
+	 * @return true if it's possible to record the call. 
+	 */
 	boolean canRecord(int callId);
 	
 	// Play files to stream
 	/**
-	* @param String filePath the file to play in stream
-	* @param int callId the call to play to
-	* @param int way the way the file should be played 
-	*  (way & (1<<0)) => send to remote party (micro), 
-	*  (way & (1<<1) ) => send to user (speaker/earpiece)
+	* @param filePath filePath the file to play in stream
+	* @param callId the call to play to
+	* @param way the way the file should be played 
+	* {@link SipManager#BITMASK_IN} =>  send to user (speaker/earpiece)
+	*  {@link SipManager#BITMASK_OUT}  => send to remote party (micro), 
 	* example : way = 3 : will play sound both ways
 	*/
 	void playWaveFile(String filePath, int callId, int way);
 	
-	//SMS
-	void sendMessage(String msg, String toNumber, int accountId);
+	// SMS
+	void sendMessage(String msg, String toNumber, long accountId);
+	
+	// Presence
+	void setPresence(int presence, String statusText, long accountId);
+	int getPresence(long accountId);
+	String getPresenceStatus(long accountId);
 	
 	//Secure
-	void zrtpSASVerified(int dataPtr);
+	void zrtpSASVerified(int callId);
+	
+	// Video
+	void updateCallOptions(int callId, in Bundle options);
+	/**
+	 * Revoke a ZRTP SAS
+	 */ 
+	void zrtpSASRevoke(int callId);
 }

@@ -1,25 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:orientation="vertical"
-  android:layout_width="wrap_content"
-  android:layout_height="wrap_content">
-  <include layout="@layout/white_title"></include>
-	<net.voxcorp.widgets.EditSipUri
-		android:id="@+id/sip_uri" 
-		android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_weight="1"
-		android:gravity="center_horizontal" />
+<!--
+	Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr) 
 
-	<LinearLayout
-		android:orientation="horizontal" style="@android:style/ButtonBar"
-		android:layout_height="wrap_content" android:layout_width="fill_parent"
-		android:layout_weight="0">
-		<Button android:layout_height="wrap_content" android:text="@string/ok"
-			android:layout_weight="0.5"
-			android:layout_width="fill_parent" android:id="@+id/ok"></Button>
-		<Button android:layout_height="wrap_content" android:text="@string/cancel"
-			android:layout_weight="0.5"
-			android:layout_width="fill_parent" android:id="@+id/cancel"></Button>
-	</LinearLayout>
-	
+	This file is part of CSipSimple.
+    CSipSimple is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+	If you own a pjsip commercial license you can also redistribute it
+	and/or modify it under the terms of the GNU Lesser General Public License
+	as an android library.
+
+    CSipSimple is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <net.voxcorp.widgets.EditSipUri
+        android:id="@+id/sip_uri"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"
+        android:gravity="center_horizontal" />
+
+    <LinearLayout
+        style="@style/ButtonBar.AlertDialog"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/cancel"
+            style="@style/ButtonBarButton"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:text="@string/cancel" />
+
+        <Button
+            android:id="@+id/ok"
+            style="@style/ButtonBarButton"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:text="@string/ok" />
+    </LinearLayout>
+
 </LinearLayout>

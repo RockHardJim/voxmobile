@@ -1,3 +1,28 @@
+/**
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * This file is part of CSipSimple.
+ *
+ *  CSipSimple is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
+ *
+ *  CSipSimple is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/**
+ * This file contains relicensed code from public domain copyright of 
+ * http://iharder.net/base64
+ */
+
 package net.voxcorp.utils;
 
 /**
@@ -398,6 +423,8 @@ public class Base64
         -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9         // Decimal 244 - 255 
     };
 
+	private static final String THIS_FILE = "Base64";
+
 	
 /* ********  D E T E R M I N E   W H I C H   A L H A B E T  ******** */
 
@@ -680,6 +707,7 @@ public class Base64
         catch( java.io.IOException e ) {
             // Catch it and then throw it immediately so that
             // the finally{} block is called for cleanup.
+        	Log.e(THIS_FILE, "IO Exception", e);
             throw e;
         }   // end catch
         finally {

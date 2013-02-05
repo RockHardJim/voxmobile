@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -31,6 +34,7 @@ import net.voxcorp.utils.PreferencesProviderWrapper;
 
 public class NativeLibManager {
 	private static final String THIS_FILE = "NativeLibMgr";
+    public static final String STD_LIB_NAME = "stlport_shared";
 	public static final String STACK_NAME = "pjsipjni";
 	
 	public static File getBundledStackLibFile(Context ctx, String libName) {
@@ -46,13 +50,13 @@ public class NativeLibManager {
 	}
 	
 	public static File getLibFileFromPackage(ApplicationInfo appInfo, String libName, boolean allowFallback) {
-		Log.d(THIS_FILE, "Dir "+appInfo.dataDir);
+		Log.v(THIS_FILE, "Dir "+appInfo.dataDir);
 		if(Compatibility.isCompatible(9)) {
 			try {
 				Field f = ApplicationInfo.class.getField("nativeLibraryDir");
 				File nativeFile = new File((String) f.get(appInfo), libName);
 				if(nativeFile.exists()) {
-					Log.d(THIS_FILE, "Found native lib using clean way");
+					Log.v(THIS_FILE, "Found native lib using clean way");
 					return nativeFile;
 				}
 			} catch (Exception e) {

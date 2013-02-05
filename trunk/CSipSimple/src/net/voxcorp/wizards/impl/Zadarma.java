@@ -6,6 +6,9 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,228 +18,219 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.wizards.impl;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-
-import android.os.Handler;
-import android.os.Message;
 import android.text.InputType;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import net.voxcorp.R;
 import net.voxcorp.api.SipProfile;
 import net.voxcorp.utils.Log;
 import net.voxcorp.utils.MD5;
+import net.voxcorp.wizards.utils.AccountCreationFirstView;
+import net.voxcorp.wizards.utils.AccountCreationFirstView.OnAccountCreationFirstViewListener;
+import net.voxcorp.wizards.utils.AccountCreationWebview;
+import net.voxcorp.wizards.utils.AccountCreationWebview.OnAccountCreationDoneListener;
 
-public class Zadarma extends SimpleImplementation {
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpRequestBase;
+
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+
+public class Zadarma extends SimpleImplementation implements OnAccountCreationDoneListener, OnAccountCreationFirstViewListener {
+
+    protected static final String THIS_FILE = "ZadarmaW";
+
+    private static final String webCreationPage = "https://ss.zadarma.com/android/registration/";
+
+    private LinearLayout customWizard;
+    private TextView customWizardText;
+    private AccountCreationWebview extAccCreator;
+
+    private AccountCreationFirstView firstView;
+
+    private ViewGroup validationBar;
+
+    private ViewGroup settingsContainer;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getDomain() {
+        return "Zadarma.com";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getDefaultName() {
+        return "Zadarma";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void fillLayout(final SipProfile account) {
+        super.fillLayout(account);
+        accountUsername.getEditText().setInputType(InputType.TYPE_CLASS_TEXT);
+
+        // Get wizard specific row
+        customWizardText = (TextView) parent.findViewById(R.id.custom_wizard_text);
+        customWizard = (LinearLayout) parent.findViewById(R.id.custom_wizard_row);
+
+        settingsContainer = (ViewGroup) parent.findViewById(R.id.settings_container);
+        validationBar = (ViewGroup) parent.findViewById(R.id.validation_bar);
+        
+        updateAccountInfos(account);
+
+        extAccCreator = new AccountCreationWebview(parent, webCreationPage, this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean needRestart() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SipProfile buildAccount(SipProfile account) {
+        account = super.buildAccount(account);
+        return account;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void onAccountCreationDone(String username, String password) {
+        setUsername(username);
+        setPassword(password);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean saveAndQuit() {
+        if (canSave()) {
+            parent.saveAndFinish();
+            return true;
+        }
+        return false;
+    }
+
+    private void setFirstViewVisibility(boolean visible) {
+        if(firstView != null) {
+            firstView.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+        validationBar.setVisibility(visible ? View.GONE : View.VISIBLE);
+        settingsContainer.setVisibility(visible ? View.GONE : View.VISIBLE);
+    }
+    // Balance consult
+
+    private void updateAccountInfos(final SipProfile acc) {
+        if (acc != null && acc.id != SipProfile.INVALID_ID) {
+            setFirstViewVisibility(false);
+            customWizard.setVisibility(View.GONE);
+            accountBalanceHelper.launchRequest(acc);
+        } else {
+            if(firstView == null) {
+                firstView = new AccountCreationFirstView(parent);
+                ViewGroup globalContainer = (ViewGroup) settingsContainer.getParent();
+                firstView.setOnAccountCreationFirstViewListener(this);
+                globalContainer.addView(firstView);
+            }
+            setFirstViewVisibility(true);
+        }
+    }
+
+    private AccountBalanceHelper accountBalanceHelper = new AccountBalance(this);
+    
+    private static class AccountBalance extends AccountBalanceHelper {
+        
+        WeakReference<Zadarma> w;
+        
+        AccountBalance(Zadarma wizard){
+            w = new WeakReference<Zadarma>(wizard);
+        }
 
 
-	protected static final String THIS_FILE = "ZadarmaW";
-	protected static final int DID_SUCCEED = 0;
-	protected static final int DID_ERROR = 1;
-	
-	private static final String webCreationPage = "https://ss.zadarma.com/android/registration/";
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public HttpRequestBase getRequest(SipProfile acc) throws IOException {
 
-	private LinearLayout customWizard;
-	private TextView customWizardText;
-	private WebView webView;
-	private LinearLayout settingsContainer;
-	private LinearLayout validationBar;
-	
-	@Override
-	protected String getDomain() {
-		return "Zadarma.com";
-	}
-	
-	@Override
-	protected String getDefaultName() {
-		return "Zadarma";
-	}
-	
-	
-	//Customization
-	@Override
-	public void fillLayout(final SipProfile account) {
-		super.fillLayout(account);
-		accountUsername.getEditText().setInputType(InputType.TYPE_CLASS_TEXT);
+            String requestURL = "https://ss.zadarma.com/android/getbalance/?"
+                    + "login=" + acc.username
+                    + "&code=" + MD5.MD5Hash(acc.data);
 
-		//Get wizard specific row
-		customWizardText = (TextView) parent.findViewById(R.id.custom_wizard_text);
-		customWizard = (LinearLayout) parent.findViewById(R.id.custom_wizard_row);
-		
-		validationBar = (LinearLayout) parent.findViewById(R.id.validation_bar);
-		
-		updateAccountInfos(account);
-		
-		// add webview
-		initWebView();
-	}
-	
+            return new HttpGet(requestURL);
+        }
 
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String parseResponseLine(String line) {
+            try {
+                float value = Float.parseFloat(line.trim());
+                if (value >= 0) {
+                    return "Balance : " + Math.round(value * 100.0) / 100.0 + " USD";
+                }
+            } catch (NumberFormatException e) {
+                Log.e(THIS_FILE, "Can't get value for line");
+            }
+            return null;
+        }
 
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void applyResultError() {
+            Zadarma wizard = w.get();
+            if(wizard != null) {
+                wizard.customWizard.setVisibility(View.GONE);
+            }
+        }
 
-	private Handler creditHandler = new Handler() {
-		public void handleMessage(Message message) {
-			switch (message.what) {
-			case DID_SUCCEED: {
-				//Here we get the credit info, now add a row in the interface
-				String response = (String) message.obj;
-				try{
-					float value = Float.parseFloat(response.trim());
-					if(value >= 0) {
-						customWizardText.setText("Balance : " + Math.round(value * 100.0)/100.0 + " USD");
-						customWizard.setVisibility(View.VISIBLE);
-					}
-				}catch(NumberFormatException e) {
-					Log.e(THIS_FILE, "Impossible to parse result", e);
-				}catch (NullPointerException e) {
-					Log.e(THIS_FILE, "Null result");
-				}
-				
-				break;
-			}
-			case DID_ERROR: {
-				Exception e = (Exception) message.obj;
-				e.printStackTrace();
-				break;
-			
-			}
-			}
-		}
-	};
-	private ProgressBar loadingProgressBar;
-	
-	private void updateAccountInfos(final SipProfile acc) {
-		if (acc != null && acc.id != SipProfile.INVALID_ID) {
-			customWizard.setVisibility(View.GONE);
-			Thread t = new Thread() {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void applyResultSuccess(String balanceText) {
+            Zadarma wizard = w.get();
+            if(wizard != null) {
+                wizard.customWizardText.setText(balanceText);
+                wizard.customWizard.setVisibility(View.VISIBLE);
+            }
+        }
 
-				public void run() {
-					try {
-						HttpClient httpClient = new DefaultHttpClient();
-						
-						String requestURL = "https://ss.zadarma.com/android/getbalance/?"
-							+ "login=" + acc.username
-							+ "&code=" + MD5.MD5Hash(acc.data);
-						
-						HttpGet httpGet = new HttpGet(requestURL);
+    };
+    
 
-						// Create a response handler
-						HttpResponse httpResponse = httpClient.execute(httpGet);
-						if(httpResponse.getStatusLine().getStatusCode() == 200) {
-							InputStreamReader isr = new InputStreamReader(httpResponse.getEntity().getContent());
-							BufferedReader br = new BufferedReader(isr);
-							String line = br.readLine();
-							creditHandler.sendMessage(creditHandler.obtainMessage(DID_SUCCEED, line));
-						}else {
-							creditHandler.sendMessage(creditHandler.obtainMessage(DID_ERROR));
-						}
-					} catch (Exception e) {
-						creditHandler.sendMessage(creditHandler.obtainMessage(DID_ERROR));
-					}
-				}
-			};
-			t.start();
-		} else {
-			// add a row to link 
-			customWizardText.setText("Create account");
-			customWizard.setVisibility(View.VISIBLE);
-			customWizard.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					settingsContainer.setVisibility(View.GONE);
-					validationBar.setVisibility(View.GONE);
-					webView.setVisibility(View.VISIBLE);
-					webView.loadUrl(webCreationPage);
-					webView.requestFocus(View.FOCUS_DOWN);
-				}
-			});
-		}
-	}
-	
-	
-	
-	@Override
-	public boolean needRestart() {
-		return true;
-	}
-	
-	public SipProfile buildAccount(SipProfile account) {
-		account = super.buildAccount(account);
-		return account;
-	}
-	
+    @Override
+    public void onCreateAccountRequested() {
+        setFirstViewVisibility(false);
+        extAccCreator.show();
+    }
 
-	private void initWebView() {
-
-		webView = new WebView(parent);
-		settingsContainer = (LinearLayout) parent.findViewById(R.id.settings_container);
-		LinearLayout globalContainer = (LinearLayout) settingsContainer.getParent();
-		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
-		lp.weight = 1;
-		webView.setVisibility(View.GONE);
-		globalContainer.addView(webView, 0, lp);
-		
-		loadingProgressBar = new ProgressBar(parent, null, android.R.attr.progressBarStyleHorizontal);
-		lp = new LinearLayout.LayoutParams(LayoutParams.FILL_PARENT, 30);
-		lp.gravity = 1;
-		loadingProgressBar.setVisibility(View.GONE);
-		loadingProgressBar.setIndeterminate(false);
-		loadingProgressBar.setMax(100);
-		globalContainer.addView(loadingProgressBar, 0, lp);
-		
-		
-		// Setup webview 
-		webView.setScrollBarStyle(WebView.SCROLLBARS_INSIDE_OVERLAY);
-		
-		WebSettings webSettings = webView.getSettings();
-		webSettings.setSavePassword(false);
-		webSettings.setSaveFormData(false);
-		webSettings.setJavaScriptEnabled(true);
-		webSettings.setSupportZoom(false);
-		webSettings.setCacheMode(WebSettings.LOAD_NORMAL);
-		webSettings.setNeedInitialFocus(true);
-		webView.addJavascriptInterface(new JSInterface(), "CSipSimpleWizard");
-		
-		// Adds Progress bar Support
-		webView.setWebChromeClient(new WebChromeClient() {
-			public void onProgressChanged(WebView view, int progress) {
-				Log.d(THIS_FILE, "Progress changed to " + progress);
-				if(progress < 100) {
-					loadingProgressBar.setVisibility(View.VISIBLE);
-					loadingProgressBar.setProgress(progress); 
-				}else {
-					loadingProgressBar.setVisibility(View.GONE);
-				}
-			}
-		});
-	}
-
-	public class JSInterface {
-		public void finishAccountCreation(boolean success, String userName, String password) {
-			webView.setVisibility(View.GONE);
-			settingsContainer.setVisibility(View.VISIBLE);
-			validationBar.setVisibility(View.VISIBLE);
-			if(success) {
-				setUsername(userName);
-				setPassword(password);
-				parent.updateValidation();
-			}
-		}
-	}
+    @Override
+    public void onEditAccountRequested() {
+        setFirstViewVisibility(false);
+    }
 }

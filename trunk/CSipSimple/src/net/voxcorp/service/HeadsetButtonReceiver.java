@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,6 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.service;
 
 import net.voxcorp.pjsip.UAStateReceiver;
@@ -31,7 +35,7 @@ public class HeadsetButtonReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		Log.d(THIS_FILE, "onReceive");
-		if(UAReceiver == null) {
+		if(uaReceiver == null) {
 			return;
 		}
 		//	abortBroadcast();
@@ -48,7 +52,7 @@ public class HeadsetButtonReceiver extends BroadcastReceiver {
 						event.getAction() == KeyEvent.ACTION_DOWN && 
 						event.getKeyCode() == KeyEvent.KEYCODE_HEADSETHOOK) {
 					
-		        	if (UAReceiver.handleHeadsetButton()) {
+		        	if (uaReceiver.handleHeadsetButton()) {
 			        	//
 						// After processing the event we will prevent other applications
 						// from receiving the button press since we have handled it ourself
@@ -68,9 +72,9 @@ public class HeadsetButtonReceiver extends BroadcastReceiver {
 
 	}
 	
-	private static UAStateReceiver UAReceiver = null;
+	private static UAStateReceiver uaReceiver = null;
 	public static void setService(UAStateReceiver aUAReceiver) {
-		UAReceiver = aUAReceiver;
+		uaReceiver = aUAReceiver;
 	}
 
 }

@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,57 +18,52 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.ui.prefs;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 
+import com.actionbarsherlock.view.MenuItem;
 import net.voxcorp.api.SipProfile;
-import net.voxcorp.ui.AccountFilters;
-import net.voxcorp.ui.AccountsChooserListActivity;
-import net.voxcorp.utils.Log;
+import net.voxcorp.ui.account.AccountsChooserListActivity;
+import net.voxcorp.ui.filters.AccountFilters;
+import net.voxcorp.utils.Compatibility;
 
 
-public class PrefsFilters  extends AccountsChooserListActivity implements OnItemClickListener, OnClickListener {
+public class PrefsFilters extends AccountsChooserListActivity {
 	
-
-	private static final String THIS_FILE = "PrefsFilters";
-
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		
-	}
-	@Override
-	public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-		SipProfile account = getAdapter().getItem(position);
-		
-		if(account.id != SipProfile.INVALID_ID){
-			Intent it = new Intent(this, AccountFilters.class);
-			it.putExtra(Intent.EXTRA_UID,  (int) account.id);
-			startActivity(it);
-		}
-	}
-	
-	@Override
-	public void onClick(View v) {
-		Integer acc_id = (Integer) v.getTag();
-		if(acc_id != null) {
-			Intent it = new Intent(this, AccountFilters.class);
-			it.putExtra(Intent.EXTRA_UID,  acc_id);
-			startActivity(it);
-		}else {
-			Log.w(THIS_FILE, "Hey something is wrong here...");
-		}
-	}
-	
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        getSherlock().getActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+    
 	@Override
 	protected boolean showInternalAccounts() {
 		return true;
 	}
+
+    @Override
+    public void onAccountClicked(long id, String displayName, String wizard) {
+        if(id != SipProfile.INVALID_ID){
+            Intent it = new Intent(this, AccountFilters.class);
+            it.putExtra(SipProfile.FIELD_ID,  id);
+            it.putExtra(SipProfile.FIELD_DISPLAY_NAME, displayName);
+            it.putExtra(SipProfile.FIELD_WIZARD, wizard);
+            startActivity(it);
+        }
+    }
+    
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == Compatibility.getHomeMenuId()) {
+            finish();
+            return true;
+        }
+        return false;
+    }
 }

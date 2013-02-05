@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,12 +20,8 @@
  */
 package net.voxcorp.plugins.telephony;
 
-import java.lang.reflect.Field;
-import java.util.List;
-
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -36,8 +35,11 @@ import android.os.Bundle;
 
 import net.voxcorp.R;
 import net.voxcorp.api.SipManager;
-import net.voxcorp.utils.Compatibility;
+import net.voxcorp.utils.CallHandlerPlugin;
 import net.voxcorp.utils.Log;
+import net.voxcorp.utils.PhoneCapabilityTester;
+
+import java.util.List;
 
 public class CallHandler extends BroadcastReceiver {
 
@@ -45,6 +47,9 @@ public class CallHandler extends BroadcastReceiver {
 
 	private static final String THIS_FILE = "CallHandlerTelephony";
 
+	private static Bitmap sPhoneAppBmp = null;
+	private static boolean sPhoneAppInfoLoaded = false;
+	
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if(SipManager.ACTION_GET_PHONE_HANDLERS.equals(intent.getAction())) {
@@ -53,58 +58,44 @@ public class CallHandler extends BroadcastReceiver {
 			String number = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER);
 			// We must handle that clean way cause when call just to 
 			// get the row in account list expect this to reply correctly
-			if(number != null && Compatibility.canMakeGSMCall(context)) {
+			if(number != null && PhoneCapabilityTester.isPhone(context)) {
 				// Build pending intent
 				Intent i = new Intent(Intent.ACTION_CALL);
 				i.setData(Uri.fromParts("tel", number, null));
 				pendingIntent = PendingIntent.getActivity(context, 0, i, 0);
 			}
 			
-			// Build icon
-			Bitmap bmp = null;
-			List<ResolveInfo> callers = Compatibility.getIntentsForCall(context);
-			if(callers != null) {
-				for(final ResolveInfo caller : callers) {
-					if(caller.activityInfo.packageName.startsWith("com.android")) {
-						PackageManager pm = context.getPackageManager();
-						
-						Resources remoteRes;
-						try {
-							ComponentName cmp = new ComponentName(caller.activityInfo.packageName, caller.activityInfo.name);
-							// To be sure, also try to resolve resovePackage for android api-4 and upper
-							if(Compatibility.isCompatible(4)) {
-								try {
-									Field f = ResolveInfo.class.getDeclaredField("resolvePackageName");
-									String resPackage = (String) f.get(caller);
-									Log.d(THIS_FILE, "Load from " + resPackage);
-									if(resPackage != null) {
-										cmp = new ComponentName(resPackage, caller.activityInfo.name);
-									}
-								} catch (Exception e) {
-									Log.e(THIS_FILE, "Impossible to use 4 api ", e);
-								}
-								
-							}
-							remoteRes = pm.getResourcesForApplication(caller.activityInfo.applicationInfo);
-							//remoteRes = pm.getResourcesForActivity(cmp);
-							bmp = BitmapFactory.decodeResource(remoteRes, caller.getIconResource());
-						} catch (NameNotFoundException e) {
-							Log.e(THIS_FILE, "Impossible to load ", e);
-						}
-						
-					}
-				}
+			// Retrieve and cache infos from the phone app 
+			if(!sPhoneAppInfoLoaded) {
+    			List<ResolveInfo> callers = PhoneCapabilityTester.resolveActivitiesForPriviledgedCall(context);
+    			if(callers != null) {
+    				for(final ResolveInfo caller : callers) {
+    					if(caller.activityInfo.packageName.startsWith("com.android")) {
+    						PackageManager pm = context.getPackageManager();
+    						Resources remoteRes;
+    						try {
+    							// We load the resource in the context of the remote app to have a bitmap to return.
+    						    remoteRes = pm.getResourcesForApplication(caller.activityInfo.applicationInfo);
+    						    sPhoneAppBmp = BitmapFactory.decodeResource(remoteRes, caller.getIconResource());
+    						} catch (NameNotFoundException e) {
+    							Log.e(THIS_FILE, "Impossible to load ", e);
+    						}
+    						break;
+    					}
+    				}
+    			}
+    			sPhoneAppInfoLoaded = true;
 			}
 			
 			
 			//Build the result for the row (label, icon, pending intent, and excluded phone number)
 			Bundle results = getResultExtras(true);
 			if(pendingIntent != null) {
-				results.putParcelable(net.voxcorp.utils.CallHandler.EXTRA_REMOTE_INTENT_TOKEN, pendingIntent);
+				results.putParcelable(CallHandlerPlugin.EXTRA_REMOTE_INTENT_TOKEN, pendingIntent);
 			}
 			results.putString(Intent.EXTRA_TITLE, context.getResources().getString(R.string.use_pstn));
-			if(bmp != null) {
-				results.putParcelable(Intent.EXTRA_SHORTCUT_ICON, bmp);
+			if(sPhoneAppBmp != null) {
+				results.putParcelable(Intent.EXTRA_SHORTCUT_ICON, sPhoneAppBmp);
 			}
 			
 			// This will exclude next time tel:xxx is raised from csipsimple treatment which is wanted

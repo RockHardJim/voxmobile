@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<?xml version='1.0' encoding='UTF-8'?>
+<resources>
   <string name="unknown">Невідомий</string>
   <string name="type_incoming">Вхідні</string>
   <string name="type_outgoing">Вихідні</string>
@@ -7,5 +7,7 @@
   <string name="callBack">Зворотній виклик</string>
   <string name="callAgain">Подзвонити ще раз</string>
   <string name="returnCall">Повернення виклику</string>
-  <string name="callDetailsDurationFormat"><xliff:g id="minutes" example="42">%s</xliff:g>" хв "<xliff:g id="seconds" example="28">%s</xliff:g>" сек"</string>
+  <string name="call">Виклик</string>
+  <string name="sip_call">SIP виклик</string>
+  <string name="no_call_history">Не збегати історію дзвінків</string>
 </resources>

@@ -1,17 +1,26 @@
-/*
+/**
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * This file is part of CSipSimple.
+ *
+ *  CSipSimple is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
+ *
+ *  CSipSimple is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/**
+ * This file contains relicensed code from Apache copyright of 
  * Copyright (C) 2009 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package net.voxcorp.utils;
@@ -23,6 +32,7 @@ import android.text.style.ImageSpan;
 
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,7 +53,7 @@ public class SmileyParser {
     private final Context mContext;
     private final String[] mSmileyTexts;
     private final Pattern mPattern;
-    private final HashMap<String, Integer> mSmileyToRes;
+    private final Map<String, Integer> mSmileyToRes;
 
     private SmileyParser(Context context) {
         mContext = context;
@@ -73,23 +83,23 @@ public class SmileyParser {
             R.drawable.emo_im_wtf
         };
 
-        public static int HAPPY = 0;
-        public static int SAD = 1;
-        public static int WINKING = 2;
-        public static int TONGUE_STICKING_OUT = 3;
-        public static int SURPRISED = 4;
-        public static int KISSING = 5;
-        public static int YELLING = 6;
-        public static int COOL = 7;
-        public static int MONEY_MOUTH = 8;
-        public static int FOOT_IN_MOUTH = 9;
-        public static int EMBARRASSED = 10;
-        public static int ANGEL = 11;
-        public static int UNDECIDED = 12;
-        public static int CRYING = 13;
-        public static int LIPS_ARE_SEALED = 14;
-        public static int LAUGHING = 15;
-        public static int WTF = 16;
+        public final static int HAPPY = 0;
+        public final static int SAD = 1;
+        public final static int WINKING = 2;
+        public final static int TONGUE_STICKING_OUT = 3;
+        public final static int SURPRISED = 4;
+        public final static int KISSING = 5;
+        public final static int YELLING = 6;
+        public final static int COOL = 7;
+        public final static int MONEY_MOUTH = 8;
+        public final static int FOOT_IN_MOUTH = 9;
+        public final static int EMBARRASSED = 10;
+        public final static int ANGEL = 11;
+        public final static int UNDECIDED = 12;
+        public final static int CRYING = 13;
+        public final static int LIPS_ARE_SEALED = 14;
+        public final static int LAUGHING = 15;
+        public final static int WTF = 16;
 
         public static int getSmileyResource(int which) {
             return sIconIds[which];
@@ -125,7 +135,7 @@ public class SmileyParser {
      * Builds the hashtable we use for mapping the string version
      * of a smiley (e.g. ":-)") to a resource ID for the icon version.
      */
-    private HashMap<String, Integer> buildSmileyToRes() {
+    private Map<String, Integer> buildSmileyToRes() {
         if (DEFAULT_SMILEY_RES_IDS.length != mSmileyTexts.length) {
             // Throw an exception if someone updated DEFAULT_SMILEY_RES_IDS
             // and failed to update arrays.xml

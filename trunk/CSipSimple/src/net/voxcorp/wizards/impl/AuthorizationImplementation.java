@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,16 +18,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.wizards.impl;
 
-import java.util.HashMap;
-
-import android.net.Uri;
 import android.preference.EditTextPreference;
 import android.text.TextUtils;
 
 import net.voxcorp.R;
 import net.voxcorp.api.SipProfile;
+import net.voxcorp.api.SipUri;
+
+import java.util.HashMap;
 
 public abstract class AuthorizationImplementation extends BaseImplementation {
 	protected EditTextPreference accountDisplayName;
@@ -40,28 +44,34 @@ public abstract class AuthorizationImplementation extends BaseImplementation {
 	protected static String SERVER = "server";
 
 	private void bindFields() {
-		accountDisplayName = (EditTextPreference) parent.findPreference(DISPLAY_NAME);
-		accountUsername = (EditTextPreference) parent.findPreference(USER_NAME);
-		accountAuthorization = (EditTextPreference) parent.findPreference(AUTH_NAME);
-		accountPassword = (EditTextPreference) parent.findPreference(PASSWORD);
-		accountServer = (EditTextPreference) parent.findPreference(SERVER);
+		accountDisplayName = (EditTextPreference) findPreference(DISPLAY_NAME);
+		accountUsername = (EditTextPreference) findPreference(USER_NAME);
+		accountAuthorization = (EditTextPreference) findPreference(AUTH_NAME);
+		accountPassword = (EditTextPreference) findPreference(PASSWORD);
+		accountServer = (EditTextPreference) findPreference(SERVER);
 	}
 	
 	
 	
 	public void fillLayout(final SipProfile account) {
 		bindFields();
-		if(!TextUtils.isEmpty(account.getDisplayName())) {
-			accountDisplayName.setText(account.getDisplayName());
+		if(!TextUtils.isEmpty(account.display_name)) {
+			accountDisplayName.setText(account.display_name);
 		}else {
 			accountDisplayName.setText(getDefaultName());
 		}
 		
-		accountUsername.setText(account.getSipUserName());
-		accountServer.setText(account.getSipDomain());
+		if(accountUsername != null) {
+		    accountUsername.setText(account.getSipUserName());
+		}
+		if(accountServer != null) {
+		    accountServer.setText(account.getSipDomain());
+		}
 		
 		accountPassword.setText(account.data);
-		accountAuthorization.setText(account.username);
+		if(accountAuthorization != null) {
+		    accountAuthorization.setText(account.username);
+		}
 	}
 
 	public void updateDescriptions() {
@@ -109,7 +119,7 @@ public abstract class AuthorizationImplementation extends BaseImplementation {
 
 	public SipProfile buildAccount(SipProfile account) {
 		account.display_name = accountDisplayName.getText();
-		account.acc_id = "<sip:" + Uri.encode(accountUsername.getText().trim()) + "@" + getDomain() + ">";
+		account.acc_id = "<sip:" + SipUri.encodeUser(accountUsername.getText().trim()) + "@" + getDomain() + ">";
 		
 		String regUri = "sip:" + getDomain();
 		account.reg_uri = regUri;

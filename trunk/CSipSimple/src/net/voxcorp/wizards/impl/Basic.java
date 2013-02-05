@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,11 +18,9 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.wizards.impl;
 
-import java.util.HashMap;
-
-import android.net.Uri;
 import android.preference.EditTextPreference;
 
 import net.voxcorp.R;
@@ -27,6 +28,8 @@ import net.voxcorp.api.SipProfile;
 import net.voxcorp.api.SipUri;
 import net.voxcorp.api.SipUri.ParsedSipContactInfos;
 import net.voxcorp.utils.Log;
+
+import java.util.HashMap;
 
 public class Basic extends BaseImplementation {
 	protected static final String THIS_FILE = "Basic W";
@@ -37,10 +40,10 @@ public class Basic extends BaseImplementation {
 	private EditTextPreference accountPassword;
 
 	private void bindFields() {
-		accountDisplayName = (EditTextPreference) parent.findPreference("display_name");
-		accountUserName = (EditTextPreference) parent.findPreference("username");
-		accountServer = (EditTextPreference) parent.findPreference("server");
-		accountPassword = (EditTextPreference) parent.findPreference("password");
+		accountDisplayName = (EditTextPreference) findPreference("display_name");
+		accountUserName = (EditTextPreference) findPreference("username");
+		accountServer = (EditTextPreference) findPreference("server");
+		accountPassword = (EditTextPreference) findPreference("password");
 	}
 	
 	public void fillLayout(final SipProfile account) {
@@ -106,7 +109,7 @@ public class Basic extends BaseImplementation {
 		account.display_name = accountDisplayName.getText().trim();
 		
 		String[] serverParts = accountServer.getText().split(":");
-		account.acc_id = "<sip:" + Uri.encode(accountUserName.getText()).trim() + "@"+serverParts[0].trim()+">";
+		account.acc_id = "<sip:" + SipUri.encodeUser(accountUserName.getText().trim()) + "@"+serverParts[0].trim()+">";
 		
 		String regUri = "sip:" + accountServer.getText();
 		account.reg_uri = regUri;

@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,11 +18,9 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.wizards.impl;
 
-import java.util.HashMap;
-
-import android.net.Uri;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.text.TextUtils;
@@ -28,6 +29,8 @@ import net.voxcorp.R;
 import net.voxcorp.api.SipProfile;
 import net.voxcorp.api.SipUri;
 import net.voxcorp.api.SipUri.ParsedSipContactInfos;
+
+import java.util.HashMap;
 
 public abstract class SimpleImplementation extends BaseImplementation {
 	//private static final String THIS_FILE = "SimplePrefsWizard";
@@ -42,17 +45,20 @@ public abstract class SimpleImplementation extends BaseImplementation {
 	protected static String USE_TCP = "use_tcp";
 
 	protected void bindFields() {
-		accountDisplayName = (EditTextPreference) parent.findPreference(DISPLAY_NAME);
-		accountUsername = (EditTextPreference) parent.findPreference(USER_NAME);
-		accountPassword = (EditTextPreference) parent.findPreference(PASSWORD);
-		accountUseTcp = (CheckBoxPreference) parent.findPreference(USE_TCP);
+		accountDisplayName = (EditTextPreference) findPreference(DISPLAY_NAME);
+		accountUsername = (EditTextPreference) findPreference(USER_NAME);
+		accountPassword = (EditTextPreference) findPreference(PASSWORD);
+		accountUseTcp = (CheckBoxPreference) findPreference(USE_TCP);
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	public void fillLayout(final SipProfile account) {
 		bindFields();
 		
 		String display_name = account.display_name;
-		if(display_name.equalsIgnoreCase("")) {
+		if(TextUtils.isEmpty(display_name)) {
 			display_name = getDefaultName();
 		}
 		accountDisplayName.setText(display_name);
@@ -68,6 +74,11 @@ public abstract class SimpleImplementation extends BaseImplementation {
 		}
 	}
 
+	/**
+	 * Set descriptions for fields managed by the simple implementation.
+	 * 
+	 * {@inheritDoc}
+	 */
 	public void updateDescriptions() {
 		setStringFieldSummary(DISPLAY_NAME);
 		setStringFieldSummary(USER_NAME);
@@ -85,6 +96,9 @@ public abstract class SimpleImplementation extends BaseImplementation {
 		put(PASSWORD, R.string.w_common_password_desc);
 	}};
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getDefaultFieldSummary(String fieldName) {
 		Integer res = SUMMARIES.get(fieldName);
@@ -104,11 +118,16 @@ public abstract class SimpleImplementation extends BaseImplementation {
 		return isValid;
 	}
 
+	/**
+     * Basic implementation of the account building based on simple implementation fields.
+     * A specification of this class could extend and add its own post processing here.
+     * 
+     * {@inheritDoc}
+	 */
 	public SipProfile buildAccount(SipProfile account) {
 		account.display_name = accountDisplayName.getText().trim();
-		// TODO add an user display name
 		account.acc_id = "<sip:"
-				+ Uri.encode(accountUsername.getText().trim()) + "@"+getDomain()+">";
+				+ SipUri.encodeUser(accountUsername.getText().trim()) + "@"+getDomain()+">";
 		
 		String regUri = "sip:"+getDomain();
 		account.reg_uri = regUri;
@@ -131,20 +150,41 @@ public abstract class SimpleImplementation extends BaseImplementation {
 		
 		return account;
 	}
-
+	
+	/**
+	 * Get the server domain to use by default for registrar, proxy and user domain. 
+	 * @return The server name / ip of the sip domain
+	 */
 	protected abstract String getDomain();
+
+    /**
+     * Get the default display name for this account.
+     * 
+     * @return The display name to use by default for this account
+     */
 	protected abstract String getDefaultName();
 	
-	//This method may be overriden by a implementation
+    /**
+     * Does the sip provider allows TCP connection. And support it correctly. If
+     * so the application will propose a checkbox to use TCP transportation.
+     * This method may be overriden by a implementation.
+     * @return True if TCP is available.
+     */
 	protected boolean canTcp() {
 		return false;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getBasePreferenceResource() {
 		return R.xml.w_simple_preferences;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public boolean needRestart() {
 		return false;
 	}

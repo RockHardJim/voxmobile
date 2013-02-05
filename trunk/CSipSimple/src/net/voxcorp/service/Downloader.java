@@ -1,11 +1,14 @@
 /**
- * Copyright (C) 2010 Regis Montoya (aka r3gis - www.r3gis.fr)
+ * Copyright (C) 2010-2012 Regis Montoya (aka r3gis - www.r3gis.fr)
  * This file is part of CSipSimple.
  *
  *  CSipSimple is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
+ *  If you own a pjsip commercial license you can also redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public License
+ *  as an android library.
  *
  *  CSipSimple is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,6 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with CSipSimple.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package net.voxcorp.service;
 
 import java.io.BufferedReader;
@@ -37,8 +41,9 @@ import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.PendingIntent.CanceledException;
 import android.content.Intent;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat.Builder;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -90,19 +95,25 @@ public class Downloader extends IntentService {
 		int icon = intent.getIntExtra(EXTRA_ICON, 0);
 		String title = intent.getStringExtra(EXTRA_TITLE);
 		boolean showNotif = (icon > 0 && !TextUtils.isEmpty(title));
+
+		// Build notification
+	    Builder nb = new NotificationCompat.Builder(this);
+		nb.setWhen(System.currentTimeMillis());
+		nb.setContentTitle(title);
+		nb.setSmallIcon(android.R.drawable.stat_sys_download);
+		nb.setOngoing(true);
+        Intent i = new Intent(this, SipHome.class);
+		nb.setContentIntent(PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT));
 		
-		final Notification notification = showNotif ? new Notification(android.R.drawable.stat_sys_download, title, System.currentTimeMillis()) : null;
-		if(notification != null) {
-			notification.flags = notification.flags | Notification.FLAG_ONGOING_EVENT;
-			Intent i = new Intent(this, SipHome.class);
-			notification.contentIntent = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-	        notification.contentView = new RemoteViews(getApplicationContext().getPackageName(), R.layout.download_notif);
-	        notification.contentView.setImageViewResource(R.id.status_icon, icon);
-	        notification.contentView.setTextViewText(R.id.status_text, getResources().getString(R.string.downloading_text));
-	        notification.contentView.setProgressBar(R.id.status_progress, 50, 0, false);
-	        notification.contentView.setViewVisibility(R.id.status_progress_wrapper, View.VISIBLE);
-		}
-		
+        RemoteViews contentView = new RemoteViews(getApplicationContext().getPackageName(), R.layout.download_notif);
+        contentView.setImageViewResource(R.id.status_icon, icon);
+        contentView.setTextViewText(R.id.status_text, getResources().getString(R.string.downloading_text));
+        contentView.setProgressBar(R.id.status_progress, 50, 0, false);
+        contentView.setViewVisibility(R.id.status_progress_wrapper, View.VISIBLE);
+        nb.setContent(contentView);
+	    
+        final Notification notification = showNotif ? nb.build() : null;
+		notification.contentView = contentView;
 		if(!TextUtils.isEmpty(outPath)) {
 			try {
 				File output = new File(outPath);
