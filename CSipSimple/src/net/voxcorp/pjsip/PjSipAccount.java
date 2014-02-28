@@ -20,11 +20,23 @@
  */
 package net.voxcorp.pjsip;
 
+import android.content.Context;
+import android.text.TextUtils;
+
+import net.voxcorp.api.SipConfigManager;
+import net.voxcorp.api.SipProfile;
+import net.voxcorp.api.SipUri;
+import net.voxcorp.api.SipUri.ParsedSipContactInfos;
+import net.voxcorp.utils.Log;
+import net.voxcorp.utils.PreferencesProviderWrapper;
+
+import org.pjsip.pjsua.SWIGTYPE_p_pj_stun_auth_cred;
 import org.pjsip.pjsua.csipsimple_acc_config;
 import org.pjsip.pjsua.pj_qos_params;
 import org.pjsip.pjsua.pj_qos_type;
 import org.pjsip.pjsua.pj_str_t;
 import org.pjsip.pjsua.pjmedia_srtp_use;
+import org.pjsip.pjsua.pjsip_auth_clt_pref;
 import org.pjsip.pjsua.pjsip_cred_info;
 import org.pjsip.pjsua.pjsua;
 import org.pjsip.pjsua.pjsuaConstants;
@@ -36,16 +48,6 @@ import org.pjsip.pjsua.pjsua_stun_use;
 import org.pjsip.pjsua.pjsua_transport_config;
 import org.pjsip.pjsua.pjsua_turn_config;
 import org.pjsip.pjsua.pjsua_turn_config_use;
-
-import android.content.Context;
-import android.text.TextUtils;
-
-import net.voxcorp.api.SipConfigManager;
-import net.voxcorp.api.SipProfile;
-import net.voxcorp.api.SipUri;
-import net.voxcorp.api.SipUri.ParsedSipContactInfos;
-import net.voxcorp.utils.Log;
-import net.voxcorp.utils.PreferencesProviderWrapper;
 
 public class PjSipAccount {
 	
@@ -124,6 +126,7 @@ public class PjSipAccount {
 		cfg.setAllow_contact_rewrite(profile.allow_contact_rewrite ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
 		cfg.setContact_rewrite_method(profile.contact_rewrite_method);
         cfg.setAllow_via_rewrite(profile.allow_via_rewrite ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
+        cfg.setAllow_sdp_nat_rewrite(profile.allow_sdp_nat_rewrite ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
 		
 		
 		if(profile.use_srtp != -1) {
@@ -168,6 +171,16 @@ public class PjSipAccount {
 			}
 		}else {
 			cfg.setCred_count(0);
+		}
+		
+		// Auth prefs
+		{
+		     pjsip_auth_clt_pref authPref = cfg.getAuth_pref();
+    		 authPref.setInitial_auth(profile.initial_auth ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
+    		 if(!TextUtils.isEmpty(profile.auth_algo)) {
+    		     authPref.setAlgorithm(pjsua.pj_str_copy(profile.auth_algo));
+    		 }
+    		 cfg.setAuth_pref(authPref);
 		}
 		
         cfg.setMwi_enabled(profile.mwi_enabled ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
@@ -217,13 +230,16 @@ public class PjSipAccount {
         if(profile.turn_cfg_use == 1) {
             cfg.setTurn_cfg_use(pjsua_turn_config_use.PJSUA_TURN_CONFIG_USE_CUSTOM);
             pjsua_turn_config turnCfg = cfg.getTurn_cfg();
+            SWIGTYPE_p_pj_stun_auth_cred creds = turnCfg.getTurn_auth_cred();
             turnCfg.setEnable_turn( (profile.turn_cfg_enable == 1) ? pjsuaConstants.PJ_TRUE : pjsuaConstants.PJ_FALSE);
             turnCfg.setTurn_server( pjsua.pj_str_copy(profile.turn_cfg_server) );
             pjsua.set_turn_credentials(
                     pjsua.pj_str_copy(profile.turn_cfg_user),
                     pjsua.pj_str_copy(profile.turn_cfg_password), 
                     pjsua.pj_str_copy("*"), 
-                    turnCfg.getTurn_auth_cred());
+                    creds);
+            // Normally this step is useless as manipulating a pointer in C memory at this point, but in case this changes reassign
+            turnCfg.setTurn_auth_cred(creds);
         }else {
             cfg.setTurn_cfg_use(pjsua_turn_config_use.PJSUA_TURN_CONFIG_USE_DEFAULT);
         }
@@ -322,8 +338,8 @@ public class PjSipAccount {
             // TODO - video?
             rtpCfg.setQos_type(pj_qos_type.PJ_QOS_TYPE_VOICE);
             pj_qos_params qosParam = rtpCfg.getQos_params();
-            
-            short dscpVal = (short) prefs.getDSCPVal();
+            // Default for RTP layer is different than default for SIP layer.
+            short dscpVal = (short) prefs.getPreferenceIntegerValue(SipConfigManager.DSCP_RTP_VAL);
             if(profile_qos_dscp >= 0) {
                 // If not set, we don't need to change dscp value
                 dscpVal = (short) profile_qos_dscp;
@@ -331,9 +347,7 @@ public class PjSipAccount {
                 qosParam.setFlags((short) 1); // DSCP
             }
         }
-        
 	}
-	
 	
 	/**
 	 * @return the displayName

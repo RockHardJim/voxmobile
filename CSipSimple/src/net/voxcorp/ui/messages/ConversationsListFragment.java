@@ -51,7 +51,7 @@ import net.voxcorp.R;
 import net.voxcorp.api.SipMessage;
 import net.voxcorp.service.SipNotifications;
 import net.voxcorp.ui.SipHome.ViewPagerVisibilityListener;
-import net.voxcorp.ui.messages.ConverstationsAdapter.ConversationListItemViews;
+import net.voxcorp.ui.messages.ConversationsAdapter.ConversationListItemViews;
 import net.voxcorp.widgets.CSSListFragment;
 
 /**
@@ -70,7 +70,7 @@ public class ConversationsListFragment extends CSSListFragment implements ViewPa
 	
     private boolean mDualPane;
 
-    private ConverstationsAdapter mAdapter;
+    private ConversationsAdapter mAdapter;
     private View mHeaderView;
 
 
@@ -91,7 +91,7 @@ public class ConversationsListFragment extends CSSListFragment implements ViewPa
         // Header view add
         if(mAdapter == null) {
             // Adapter
-            mAdapter = new ConverstationsAdapter(getActivity(), null);
+            mAdapter = new ConversationsAdapter(getActivity(), null);
             setListAdapter(mAdapter);
         }
         

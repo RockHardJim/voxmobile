@@ -32,8 +32,8 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.TableLayout;
 
 import net.voxcorp.R;
 import net.voxcorp.utils.Log;
@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class Dialpad extends TableLayout implements OnClickListener {
+public class Dialpad extends FrameLayout implements OnClickListener {
 
 	private OnDialKeyListener onDialKeyListener;
 	
@@ -99,10 +99,19 @@ public class Dialpad extends TableLayout implements OnClickListener {
 		void onTrigger(int keyCode, int dialTone);
 	}
 	
+	public Dialpad(Context context) {
+        super(context);
+        initLayout(context);
+    }
+	
 	public Dialpad(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		LayoutInflater inflater = LayoutInflater.from(context);
-		inflater.inflate(R.layout.dialpad, this, true);
+		initLayout(context);
+	}
+	
+	private void initLayout(Context context) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        inflater.inflate(R.layout.dialpad, this, true);
 	}
 	
 	@Override
@@ -141,7 +150,7 @@ public class Dialpad extends TableLayout implements OnClickListener {
 		dispatchDialKeyEvent(v.getId());
 		
 	}
-	
+	/*
 	boolean mForceWidth = false;
 	public void setForceWidth(boolean forceWidth) {
 	    mForceWidth = forceWidth;
@@ -153,7 +162,7 @@ public class Dialpad extends TableLayout implements OnClickListener {
 	        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), getMeasuredHeight());
 	    }
 	};
-    
+    */
 	
 
 	public void applyTheme(Theme t) {

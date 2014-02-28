@@ -8,9 +8,13 @@
     <item
         android:id="@+id/declineCallButton"
         android:showAsAction="never"
-        android:title="@string/decline_call"/>
+        android:title="@string/reject_call"/>
     <item
-        android:id="@+id/clearCallButton"
+        android:id="@+id/dontTakeCallButton"
+        android:showAsAction="never"
+        android:title="@string/ignore_call"/>
+    <item
+        android:id="@+id/terminateCallButton"
         android:showAsAction="never"
         android:title="@string/clear_call"/>
     <item
@@ -42,7 +46,7 @@
         android:id="@+id/previewButton"
         android:icon="@drawable/ic_voxmobile_preview"
         android:showAsAction="ifRoom"
-        android:title="@string/preview"/>
+        android:title="@string/voxmobile_preview"/>
     <item
         android:id="@+id/videoCallButton"
         android:icon="@drawable/ic_prefs_media_video"

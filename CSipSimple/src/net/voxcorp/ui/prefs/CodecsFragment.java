@@ -88,7 +88,10 @@ public class CodecsFragment extends SherlockListFragment implements OnCheckedCha
     private static final Map<String, String> NON_FREE_CODECS = new HashMap<String, String>();
 
     static {
-        NON_FREE_CODECS.put("G729/8000/1", "http://www.synapseglobal.com/g729_codec_license.html");
+    	/*
+    	 * VoX Mobile :: we bundle G.729 with our app, CSipSimple uses a separate plugin APK
+    	 */
+    	NON_FREE_CODECS.put("G729/8000/1", "http://www.synapseglobal.com/g729_codec_license.html");
     };
 
     @Override
@@ -325,7 +328,7 @@ public class CodecsFragment extends SherlockListFragment implements OnCheckedCha
                 /*
                  * VoX Mobile :: Cancel button does nothing - so remove it
                  */
-                // .setNegativeButton(R.string.cancel, null)
+                //.setNegativeButton(R.string.cancel, null)
                 .show();
         }else {
             setCodecActivated(codec, newPrio);

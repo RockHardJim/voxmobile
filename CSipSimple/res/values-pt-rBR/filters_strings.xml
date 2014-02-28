@@ -9,7 +9,6 @@
   <string name="starts_with">Começa com</string>
   <string name="ends_with">Termina com</string>
   <string name="contains">Contém</string>
-  <string name="all">Todos</string>
   <string name="has_exactly_n_digits">Tem exactamente N dígitos</string>
   <string name="has_more_than_n_digits">Tem mais de N dígitos</string>
   <string name="is_exactly">É exactamente</string>

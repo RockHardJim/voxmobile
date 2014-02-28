@@ -60,12 +60,21 @@ public class SipCallSessionImpl extends SipCallSession {
     public void setAccId(long accId2) {
         accId = accId2;
     }
+    
+    /**
+     * Set the signaling secure transport level.
+     * Value should be one of {@link SipCallSession#TRANSPORT_SECURE_NONE}, {@link SipCallSession#TRANSPORT_SECURE_TO_SERVER}, {@link SipCallSession#TRANSPORT_SECURE_FULL}
+     * @param transportSecure2
+     */
+    public void setSignalisationSecure(int transportSecure2) {
+        transportSecure = transportSecure2;
+    }
 
     /**
      * Set the media security level for this call of this serializable holder
      * 
      * @param mediaSecure2 true if the call has a <b>media</b> encrypted
-     * @see #isSecure()
+     * @see #isMediaSecure()
      */
     public void setMediaSecure(boolean mediaSecure2) {
         mediaSecure = mediaSecure2;
@@ -99,6 +108,15 @@ public class SipCallSessionImpl extends SipCallSession {
      */
     public void setLastStatusComment(String lastStatusComment) {
         this.lastStatusComment = lastStatusComment;
+    }
+    
+    /**
+     * Set the last status comment for this call
+     * 
+     * @param lastReasonCode the lastReasonCode to set
+     */
+    public void setLastReasonCode(int lastReasonCode) {
+        this.lastReasonCode = lastReasonCode;
     }
 
     /**
@@ -204,4 +222,5 @@ public class SipCallSessionImpl extends SipCallSession {
         zrtpSASVerified = false;
         hasZrtp = false;
     }
+
 }

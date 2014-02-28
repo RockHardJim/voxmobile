@@ -8,7 +8,6 @@
   <string name="starts_with">מתחיל עם</string>
   <string name="ends_with">מסתיים עם</string>
   <string name="contains">מכיל</string>
-  <string name="all">הכל</string>
   <string name="has_exactly_n_digits">יש בדיוק n ספרות</string>
   <string name="has_more_than_n_digits">יש יותר מ N ספרות</string>
   <string name="is_exactly">זה בדיוק</string>

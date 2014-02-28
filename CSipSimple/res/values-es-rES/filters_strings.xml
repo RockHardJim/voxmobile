@@ -9,7 +9,6 @@
   <string name="starts_with">Comienza por</string>
   <string name="ends_with">Termina en</string>
   <string name="contains">Contiene</string>
-  <string name="all">Todo</string>
   <string name="has_exactly_n_digits">Tiene exactamente N dígitos</string>
   <string name="has_more_than_n_digits">Tiene más de N dígitos</string>
   <string name="is_exactly">Es exactamente</string>
@@ -18,4 +17,5 @@
   <string name="suffix_with">Tiene como sufijo</string>
   <string name="replace_match_by">Sustituir la palabra que corresponda por</string>
   <string name="replace_all_by">Sustituir todo por</string>
+  <string name="call_info_header">Tiene Call-Info para respuesta inmediata</string>
 </resources>

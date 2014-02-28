@@ -29,18 +29,19 @@
         android:gravity="center_vertical" >
 
         <FrameLayout
-            android:id="@+id/declineCallButton"
+            android:id="@+id/dontTakeCallButton"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?attr/actionBarItemBackground" >
 
             <TextView
+                android:id="@+id/dontTakeCallButtonTxt"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:drawableTop="@drawable/ic_end_call"
                 android:gravity="center"
-                android:text="@string/decline_call" />
+                android:text="@string/ignore_call" />
         </FrameLayout>
     </FrameLayout>
 
@@ -57,6 +58,7 @@
             android:background="?attr/actionBarItemBackground" >
 
             <TextView
+                android:id="@+id/takeCallButtonTxt"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"

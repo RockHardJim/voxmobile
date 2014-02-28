@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
   <string name="take_call">Odbierz</string>
-  <string name="decline_call">Odrzuć</string>
+  <string name="ignore_call">Ignoruj</string>
+  <string name="reject_call">Odrzuć</string>
   <string name="clear_call">Odłóż</string>
   <string name="touch_lock">Dwukrotnie dotknij, aby odblokować</string>
   <string name="dialpad">DTMF</string>
@@ -25,4 +26,8 @@
   <string name="resume_call">Wznów</string>
   <string name="transfer_to_call">Przenieś do połączenia</string>
   <string name="send_dtmf">Wyślij DTMF</string>
+  <string name="zrtp_trust_remote">Zaufaj zdalnemu ZRTP</string>
+  <string name="zrtp_revoke_trusted_remote">Odwołaj zdalnego zaufanego ZRTP</string>
+  <string name="transport_secure_to_server">Transport TLS używany jest dla najbliższego węzła</string>
+  <string name="transport_secure_full">Sygnał powinien być bezpieczny od początku do końca</string>
 </resources>

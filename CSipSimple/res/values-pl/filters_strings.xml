@@ -9,7 +9,6 @@
   <string name="starts_with">Zaczyna się od</string>
   <string name="ends_with">Kończy się na</string>
   <string name="contains">Zawiera</string>
-  <string name="all">Wszystkie</string>
   <string name="has_exactly_n_digits">Ma dokładnie N cyfr</string>
   <string name="has_more_than_n_digits">Ma więcej niż N cyfr</string>
   <string name="is_exactly">Ma dokładnie</string>
@@ -18,4 +17,5 @@
   <string name="suffix_with">Przyrostek z</string>
   <string name="replace_match_by">Wymień pasujące na</string>
   <string name="replace_all_by">Wymień wszystkie na</string>
+  <string name="call_info_header">Zawiera informacje połączenia do natychmiastowej odpowiedzi</string>
 </resources>

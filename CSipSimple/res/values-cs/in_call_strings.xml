@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
   <string name="take_call">Odpověď</string>
-  <string name="decline_call">Ignorovat</string>
+  <string name="ignore_call">Ignorovat</string>
+  <string name="reject_call">Odmítnout</string>
   <string name="clear_call">Ukončit</string>
   <string name="touch_lock">Dvakrát klepněte pro odemknutí</string>
   <string name="dialpad">DTMF</string>
@@ -25,4 +26,8 @@
   <string name="resume_call">Pokračovat</string>
   <string name="transfer_to_call">Převést na volání</string>
   <string name="send_dtmf">Odeslat DTMF</string>
+  <string name="zrtp_trust_remote">Důvěřovat vzdálené ZRTP</string>
+  <string name="zrtp_revoke_trusted_remote">Zrušit důvěru vzdálené ZRTP</string>
+  <string name="transport_secure_to_server">TLS přenos je využíván k okamžitému hopu</string>
+  <string name="transport_secure_full">End-to-end zabezpečení se považuje za bezpečné</string>
 </resources>

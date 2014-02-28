@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.FloatMath;
 import android.view.LayoutInflater;
@@ -49,7 +50,7 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import net.voxcorp.R;
 import net.voxcorp.api.SipCallSession;
-import net.voxcorp.api.SipCallSession.InvState;
+import net.voxcorp.api.SipCallSession.MediaState;
 import net.voxcorp.api.SipConfigManager;
 import net.voxcorp.api.SipManager;
 import net.voxcorp.api.SipProfile;
@@ -66,6 +67,8 @@ import net.voxcorp.utils.PreferencesProviderWrapper;
 
 import org.webrtc.videoengine.ViERenderer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class InCallCard extends FrameLayout implements OnClickListener, Callback {
@@ -312,12 +315,17 @@ public class InCallCard extends FrameLayout implements OnClickListener, Callback
         
         boolean active = callInfo.isBeforeConfirmed() && callInfo.isIncoming();
         btnMenuBuilder.findItem(R.id.takeCallButton).setVisible(active);
-        btnMenuBuilder.findItem(R.id.declineCallButton).setVisible(active);
+        btnMenuBuilder.findItem(R.id.dontTakeCallButton).setVisible(active);
+        /*
+         * VoX Mobile :: we do not use declineCallButton because it will generate
+         * a SIP 603 message and that would trigger the 'trial ended' alert dialog.
+         */
+        btnMenuBuilder.findItem(R.id.declineCallButton).setVisible(false);
         
         active = !callInfo.isAfterEnded()
                 && (!callInfo.isBeforeConfirmed() || (!callInfo.isIncoming() && callInfo
                         .isBeforeConfirmed()));
-        btnMenuBuilder.findItem(R.id.clearCallButton).setVisible(active);
+        btnMenuBuilder.findItem(R.id.terminateCallButton).setVisible(active);
         
         active = (!callInfo.isAfterEnded() && !callInfo.isBeforeConfirmed());
         btnMenuBuilder.findItem(R.id.xferCallButton).setVisible(active);
@@ -327,21 +335,16 @@ public class InCallCard extends FrameLayout implements OnClickListener, Callback
         btnMenuBuilder.findItem(R.id.videoCallButton).setVisible(active && canVideo && !callInfo.mediaHasVideo());
         
 
+        // DTMF
+        active = callInfo.isActive() ;
+        active &= ( (callInfo.getMediaStatus() == MediaState.ACTIVE) || (callInfo.getMediaStatus() == MediaState.REMOTE_HOLD));
+        btnMenuBuilder.findItem(R.id.dtmfCallButton).setVisible(active);
+        
         /*
          * VoXMobile :: video preview button
          */
         active = !callInfo.isAfterEnded();
         btnMenuBuilder.findItem(R.id.previewButton).setVisible(active && canVideo && callInfo.mediaHasVideo());
-
-        // Info
-        active = !callInfo.isAfterEnded();
-        btnMenuBuilder.findItem(R.id.detailedDisplayCallButton).setVisible(active);
-
-        // DTMF
-        active = !callInfo.isAfterEnded()
-                && (callInfo.getCallState() == InvState.EARLY
-                        || callInfo.getCallState() == InvState.CONFIRMED || callInfo.getCallState() == InvState.CONNECTING);
-        btnMenuBuilder.findItem(R.id.dtmfCallButton).setVisible(active);
         
         // Info
         active = !callInfo.isAfterEnded();
@@ -369,8 +372,9 @@ public class InCallCard extends FrameLayout implements OnClickListener, Callback
         btnMenuBuilder.removeGroup(R.id.controls);
         for(DynActivityPlugin callPlugin : incallPlugins.values()) {
             int minState = callPlugin.getMetaDataInt(SipManager.EXTRA_SIP_CALL_MIN_STATE, SipCallSession.InvState.EARLY);
-            int maxState = callPlugin.getMetaDataInt(SipManager.EXTRA_SIP_CALL_MIN_STATE, SipCallSession.InvState.CONFIRMED);
+            int maxState = callPlugin.getMetaDataInt(SipManager.EXTRA_SIP_CALL_MAX_STATE, SipCallSession.InvState.CONFIRMED);
             int way = callPlugin.getMetaDataInt(SipManager.EXTRA_SIP_CALL_CALL_WAY, (1 << 0 | 1 << 1));
+            Log.d(THIS_FILE, "Can add plugin ? " + minState + ", " + maxState + ", "+ way);
             if(callInfo.getCallState() < minState) {
                 continue;
             }
@@ -385,8 +389,8 @@ public class InCallCard extends FrameLayout implements OnClickListener, Callback
             }
             MenuItem pluginMenu = btnMenuBuilder.add(R.id.controls, MenuBuilder.NONE, MenuBuilder.NONE, callPlugin.getName());
             Intent it = callPlugin.getIntent();
-            it.putExtra(SipManager.EXTRA_CALL_INFO, callInfo);
-            pluginMenu.setIntent(callPlugin.getIntent());
+            it.putExtra(SipManager.EXTRA_CALL_INFO, new SipCallSession(callInfo));
+            pluginMenu.setIntent(it);
         }
         
         
@@ -396,11 +400,6 @@ public class InCallCard extends FrameLayout implements OnClickListener, Callback
      * Bind the main visible view with data from call info
      */
     private void updateCallStateBar() {
-        // Useless to process that
-        if (cachedInvState == callInfo.getCallState() &&
-                cachedMediaState == callInfo.getMediaStatus()) {
-            return;
-        }
         
         int stateText = -1; 
         //int stateIcon = R.drawable.ic_incall_ongoing;
@@ -498,8 +497,23 @@ public class InCallCard extends FrameLayout implements OnClickListener, Callback
 
         elapsedTime.setBase(callInfo.getConnectStart());
         
-        setVisibleWithFade(callSecureBar, callInfo.isSecure());
-        callSecureText.setText(callInfo.getMediaSecureInfo());
+        int sigSecureLevel = callInfo.getTransportSecureLevel();
+        boolean isSecure = (callInfo.isMediaSecure() || sigSecureLevel > 0); 
+        setVisibleWithFade(callSecureBar, isSecure);
+        String secureMsg = "";
+        if (isSecure) {
+            List<String> secureTxtList = new ArrayList<String>();
+            if(sigSecureLevel == SipCallSession.TRANSPORT_SECURE_TO_SERVER) {
+                secureTxtList.add(getContext().getString(R.string.transport_secure_to_server));
+            }else if(sigSecureLevel == SipCallSession.TRANSPORT_SECURE_FULL) {
+                secureTxtList.add(getContext().getString(R.string.transport_secure_full));
+            }
+            if(callInfo.isMediaSecure()) {
+                secureTxtList.add(callInfo.getMediaSecureInfo());
+            }
+            secureMsg = TextUtils.join("\r\n", secureTxtList);
+        }
+        callSecureText.setText(secureMsg);
         
         int state = callInfo.getCallState();
         switch (state) {
@@ -619,9 +633,9 @@ public class InCallCard extends FrameLayout implements OnClickListener, Callback
         int id = v.getId();
         if(id == R.id.endButton) {
             if (callInfo.isBeforeConfirmed() && callInfo.isIncoming()) {
-                dispatchTriggerEvent(IOnCallActionTrigger.DECLINE_CALL);
+                dispatchTriggerEvent(IOnCallActionTrigger.REJECT_CALL);
             }else if (!callInfo.isAfterEnded()) {
-                dispatchTriggerEvent(IOnCallActionTrigger.CLEAR_CALL);
+                dispatchTriggerEvent(IOnCallActionTrigger.TERMINATE_CALL);
             }
         }
     }
@@ -632,11 +646,14 @@ public class InCallCard extends FrameLayout implements OnClickListener, Callback
         if(itemId == R.id.takeCallButton) {
             dispatchTriggerEvent(IOnCallActionTrigger.TAKE_CALL);
             return true;
-        }else if(itemId == R.id.clearCallButton) {
-            dispatchTriggerEvent(IOnCallActionTrigger.CLEAR_CALL);
+        }else if(itemId == R.id.terminateCallButton) {
+            dispatchTriggerEvent(IOnCallActionTrigger.TERMINATE_CALL);
+            return true;
+        }else if(itemId ==  R.id.dontTakeCallButton) {
+            dispatchTriggerEvent(IOnCallActionTrigger.DONT_TAKE_CALL);
             return true;
         }else if(itemId ==  R.id.declineCallButton) {
-            dispatchTriggerEvent(IOnCallActionTrigger.DECLINE_CALL);
+            dispatchTriggerEvent(IOnCallActionTrigger.REJECT_CALL);
             return true;
         }else if(itemId == R.id.previewButton) {
             dispatchTriggerEvent(IOnCallActionTrigger.VOX_MOBILE_PREVIEW);

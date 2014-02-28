@@ -55,12 +55,12 @@ public class WizardChooser extends SherlockExpandableListActivity {
 		
 		// Now build the list adapter
 		childDatas = WizardUtils.getWizardsGroupedList();
-
-		/**
+		
+		/*
 		 * VoX Mobile :: remove VoX mobile wizards
 		 */
 		VoXMobileUtils.removeWizards(childDatas);
-
+		
 		WizardsListAdapter adapter = new WizardsListAdapter(
 				this,
 				// Groups
@@ -84,6 +84,12 @@ public class WizardChooser extends SherlockExpandableListActivity {
 			}
 		});
 		
+		if(childDatas.size() >= 1) {
+		    getExpandableListView().expandGroup(0);
+		}
+		if(childDatas.size() >= 2) {
+		    getExpandableListView().expandGroup(1);
+		}
 	}
 	
 	@Override

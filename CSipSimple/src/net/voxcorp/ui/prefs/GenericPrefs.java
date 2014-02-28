@@ -33,7 +33,9 @@ import android.text.TextUtils;
 
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
 import net.voxcorp.R;
+import net.voxcorp.api.SipProfile;
 import net.voxcorp.utils.Log;
+import net.voxcorp.voxmobile.utils.VoXMobileUtils;
 
 @SuppressWarnings("deprecation")
 public abstract class GenericPrefs extends SherlockPreferenceActivity implements
@@ -181,7 +183,15 @@ public abstract class GenericPrefs extends SherlockPreferenceActivity implements
      */
     protected void setPreferenceSummary(Preference pref, CharSequence val) {
         if (pref != null) {
-            pref.setSummary(val);
+        	/*
+        	 *   VoX Mobile :: format 011 numbers
+        	 */
+        	if (SipProfile.FIELD_USERNAME.equalsIgnoreCase(pref.getKey())) {
+        		String did = VoXMobileUtils.formatPhoneNumber(val.toString());
+        		pref.setSummary(did);
+        	} else {
+        		pref.setSummary(val);
+        	}
         }
     }
 

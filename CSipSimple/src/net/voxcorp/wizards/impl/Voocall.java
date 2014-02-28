@@ -21,8 +21,6 @@
 
 package net.voxcorp.wizards.impl;
 
-import android.text.InputType;
-
 import net.voxcorp.api.SipConfigManager;
 import net.voxcorp.api.SipProfile;
 import net.voxcorp.utils.PreferencesWrapper;
@@ -46,7 +44,7 @@ public class Voocall extends SimpleImplementation {
 		super.fillLayout(account);
 		
 		accountUsername.setDialogMessage("Ex : 910xxxxxx");
-		accountUsername.getEditText().setInputType(InputType.TYPE_CLASS_PHONE);
+		//accountUsername.getEditText().setInputType(InputType.TYPE_CLASS_PHONE);
 		
 	}
 	

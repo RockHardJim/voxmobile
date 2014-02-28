@@ -82,6 +82,7 @@ import net.voxcorp.utils.Log;
 import net.voxcorp.utils.PreferencesWrapper;
 import net.voxcorp.utils.Theme;
 import net.voxcorp.utils.contacts.ContactsSearchAdapter;
+import net.voxcorp.voxmobile.utils.VoXMobileUtils;
 import net.voxcorp.widgets.AccountChooserButton;
 import net.voxcorp.widgets.AccountChooserButton.OnAccountChangeListener;
 import net.voxcorp.widgets.DialerCallBar;
@@ -208,6 +209,18 @@ public class DialerFragment extends SherlockFragment implements OnClickListener,
         }
         
         digits.setOnEditorActionListener(keyboardActionListener);
+        
+        /*
+         *   VoX Mobile :: Allow text to be pasted into the phone number EditText
+         */
+        digits.setOnLongClickListener(new OnLongClickListener() {
+			
+			@Override
+			public boolean onLongClick(View v) {
+				digits.setCursorVisible(true);
+				return false;
+			}
+		});
         
         // Layout 
         dialerLayout.setForceNoList(mDualPane);
@@ -558,7 +571,7 @@ public class DialerFragment extends SherlockFragment implements OnClickListener,
         //        : R.drawable.ic_menu_switch_digit);
 
         // Invalidate to ask to require the text button to a digit button
-        getSherlockActivity().invalidateOptionsMenu();
+        getSherlockActivity().supportInvalidateOptionsMenu();
     }
     
     private boolean hasAutocompleteList() {
@@ -694,7 +707,18 @@ public class DialerFragment extends SherlockFragment implements OnClickListener,
             if (!TextUtils.isEmpty(vmAcc.vm_nbr)) {
                 // Account already have a VM number
                 try {
-                    service.makeCall(vmAcc.vm_nbr, (int) acc.id);
+                	/**
+                	 *    VoX Mobile :: handle didww.com lines
+                	 */
+                	if (vmAcc.vm_nbr.startsWith("011")) {
+                		String did = vmAcc.vm_nbr;
+                		did = "+" + did.substring(3);
+                		service.makeCall(did, (int) acc.id);	
+                	}
+                	else
+                	{
+                		service.makeCall(vmAcc.vm_nbr, (int) acc.id);
+                	}
                 } catch (RemoteException e) {
                     Log.e(THIS_FILE, "Service can't be called to make the call");
                 }

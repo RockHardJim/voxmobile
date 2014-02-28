@@ -46,7 +46,7 @@ public class DBAdapter {
 
 	public static class DatabaseHelper extends SQLiteOpenHelper {
 		
-		private static final int DATABASE_VERSION = 36;
+		private static final int DATABASE_VERSION = 40;
 
 		// Creation sql command
 		private static final String TABLE_ACCOUNT_CREATE = "CREATE TABLE IF NOT EXISTS "
@@ -74,6 +74,7 @@ public class DBAdapter {
 				+ SipProfile.FIELD_CONTACT_PARAMS 		+ " TEXT,"
 				+ SipProfile.FIELD_CONTACT_URI_PARAMS	+ " TEXT,"
 				+ SipProfile.FIELD_TRANSPORT	 		+ " INTEGER," 
+		        + SipProfile.FIELD_DEFAULT_URI_SCHEME           + " TEXT," 
 				+ SipProfile.FIELD_USE_SRTP	 			+ " INTEGER," 
 				+ SipProfile.FIELD_USE_ZRTP	 			+ " INTEGER," 
 
@@ -88,6 +89,8 @@ public class DBAdapter {
 				+ SipProfile.FIELD_USERNAME				+ " TEXT," 
 				+ SipProfile.FIELD_DATATYPE 			+ " INTEGER," 
 				+ SipProfile.FIELD_DATA 				+ " TEXT,"
+				+ SipProfile.FIELD_AUTH_INITIAL_AUTH + " INTEGER," 
+		        + SipProfile.FIELD_AUTH_ALGO      + " TEXT,"
 				
 				
 				+ SipProfile.FIELD_SIP_STACK 			+ " INTEGER," 
@@ -110,6 +113,7 @@ public class DBAdapter {
                 + SipProfile.FIELD_RTP_PUBLIC_ADDR           + " TEXT,"
                 + SipProfile.FIELD_ANDROID_GROUP             + " TEXT,"
                 + SipProfile.FIELD_ALLOW_VIA_REWRITE         + " INTEGER DEFAULT 0,"
+                + SipProfile.FIELD_ALLOW_SDP_NAT_REWRITE + " INTEGER  DEFAULT 0,"
                 + SipProfile.FIELD_SIP_STUN_USE              + " INTEGER DEFAULT -1,"
                 + SipProfile.FIELD_MEDIA_STUN_USE            + " INTEGER DEFAULT -1,"
                 + SipProfile.FIELD_ICE_CFG_USE               + " INTEGER DEFAULT -1,"
@@ -119,7 +123,8 @@ public class DBAdapter {
                 + SipProfile.FIELD_TURN_CFG_SERVER           + " TEXT,"
                 + SipProfile.FIELD_TURN_CFG_USER             + " TEXT,"
                 + SipProfile.FIELD_TURN_CFG_PASSWORD         + " TEXT,"
-                + SipProfile.FIELD_IPV6_MEDIA_USE            + " INTEGER DEFAULT 0"
+                + SipProfile.FIELD_IPV6_MEDIA_USE            + " INTEGER DEFAULT 0,"
+                + SipProfile.FIELD_WIZARD_DATA                       + " TEXT"
 				
 			+ ");";
 		
@@ -172,7 +177,10 @@ public class DBAdapter {
 		
 		
 		DatabaseHelper(Context context) {
-			super(context, SipManager.AUTHORITY, null, DATABASE_VERSION);
+			/*
+			 * VoX Mobile :: break up csip simple db string to make refactoring easier
+			 */
+			super(context, "com.csip" + "simple.db", null, DATABASE_VERSION);
 		}
 
 		@Override
@@ -405,6 +413,38 @@ public class DBAdapter {
                     // Enable try to clean register for all but ones that doesn't support contact rewrite normal (legacy)
                     db.execSQL("UPDATE " + SipProfile.ACCOUNTS_TABLE_NAME + " SET " + SipProfile.FIELD_TRY_CLEAN_REGISTERS + "=1 WHERE 1");
                     db.execSQL("UPDATE " + SipProfile.ACCOUNTS_TABLE_NAME + " SET " + SipProfile.FIELD_TRY_CLEAN_REGISTERS + "=0 WHERE "+SipProfile.FIELD_CONTACT_REWRITE_METHOD+"=1");
+                }catch(SQLiteException e) {
+                    Log.e(THIS_FILE, "Upgrade fail... maybe a crappy rom...", e);
+                }
+            }
+            if(oldVersion < 37) {
+                try {
+                    addColumn(db, SipProfile.ACCOUNTS_TABLE_NAME, SipProfile.FIELD_AUTH_INITIAL_AUTH, "INTEGER DEFAULT 0");
+                    addColumn(db, SipProfile.ACCOUNTS_TABLE_NAME, SipProfile.FIELD_AUTH_ALGO, "TEXT");
+                }catch(SQLiteException e) {
+                    Log.e(THIS_FILE, "Upgrade fail... maybe a crappy rom...", e);
+                }
+            }
+            if(oldVersion < 38) {
+                try {
+                    addColumn(db, SipProfile.ACCOUNTS_TABLE_NAME, SipProfile.FIELD_WIZARD_DATA, "TEXT");
+                }catch(SQLiteException e) {
+                    Log.e(THIS_FILE, "Upgrade fail... maybe a crappy rom...", e);
+                }
+            }
+            if(oldVersion < 39) {
+                try {
+                    db.execSQL("ALTER TABLE " + SipProfile.ACCOUNTS_TABLE_NAME + " ADD " + SipProfile.FIELD_DEFAULT_URI_SCHEME + " TEXT");
+                }catch(SQLiteException e) {
+                    Log.e(THIS_FILE, "Upgrade fail... maybe a crappy rom...", e);
+                }
+                
+            }
+            if(oldVersion < 40) {
+                try {
+                    addColumn(db, SipProfile.ACCOUNTS_TABLE_NAME, SipProfile.FIELD_ALLOW_SDP_NAT_REWRITE, "INTEGER DEFAULT 0");
+                    db.execSQL("UPDATE " + SipProfile.ACCOUNTS_TABLE_NAME + " SET " + SipProfile.FIELD_ALLOW_SDP_NAT_REWRITE + "=0");
+                    Log.d(THIS_FILE, "Upgrade done");
                 }catch(SQLiteException e) {
                     Log.e(THIS_FILE, "Upgrade fail... maybe a crappy rom...", e);
                 }

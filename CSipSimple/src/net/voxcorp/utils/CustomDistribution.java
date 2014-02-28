@@ -62,7 +62,7 @@ public final class CustomDistribution {
 	 * @return the default user agent
 	 */
 	public static String getUserAgent() {
-		return "VoXMobile/Android";
+		return "VoXMobile";
 	}
 	
 	/**

@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
   <string name="take_call">ឆ្លើយតប</string>
-  <string name="decline_call">មិន​អើពើ</string>
+  <string name="ignore_call">មិន​អើពើ</string>
+  <string name="reject_call">​បដិសេធ</string>
   <string name="clear_call">បញ្ចប់</string>
   <string name="touch_lock">ប៉ះ​ពីរដង​ដើម្បីដោះសោ</string>
   <string name="dialpad">DTMF</string>
@@ -25,4 +26,8 @@
   <string name="resume_call">បន្ត</string>
   <string name="transfer_to_call">ផ្ទេរ​ទៅ​ការ​ហៅ</string>
   <string name="send_dtmf">ផ្ញើ DTMF</string>
+  <string name="zrtp_trust_remote">ទុកចិត្ត​ ZRTP ពី​ចម្ងាយ</string>
+  <string name="zrtp_revoke_trusted_remote">ដក​ការ​ទុក​ចិត្ត ZRTP ពី​ចម្ងាយ</string>
+  <string name="transport_secure_to_server">TLS transport is used for immediate hop</string>
+  <string name="transport_secure_full">ការ​បង្ហាញ​ពី​ចុង​ទៅ​ចុង​ត្រូវ​បាន​គាំទ្រ​សុវត្ថិភាព</string>
 </resources>

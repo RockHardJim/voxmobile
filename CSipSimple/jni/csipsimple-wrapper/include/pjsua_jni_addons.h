@@ -162,9 +162,11 @@ typedef struct csipsimple_acc_config {
 // methods
 PJ_DECL(pj_status_t) send_dtmf_info(int current_call, pj_str_t digits);
 PJ_DECL(pj_str_t) call_dump(pjsua_call_id call_id, pj_bool_t with_media, const char *indent);
-PJ_DECL(pj_str_t) call_secure_info(pjsua_call_id call_id);
+PJ_DECL(pj_str_t) call_secure_media_info(pjsua_call_id call_id);
+PJ_DECL(int)  call_secure_sig_level(pjsua_call_id call_id);
 PJ_DECL(pj_str_t) get_error_message(int status);
 PJ_DECL(int) get_event_status_code(pjsip_event *e);
+PJ_DECL(int) get_event_reason_code(pjsip_event *e);
 
 PJ_DECL(void) csipsimple_config_default(csipsimple_config *css_cfg);
 PJ_DECL(void) csipsimple_acc_config_default(csipsimple_acc_config* css_acc_cfg);
@@ -175,7 +177,7 @@ PJ_DECL(pj_status_t) csipsimple_init(pjsua_config *ua_cfg,
 				csipsimple_config *css_cfg,
 				jobject context);
 PJ_DECL(pj_status_t) csipsimple_destroy(unsigned flags);
-PJ_DECL(pj_status_t) csipsimple_set_acc_user_data(pjsua_acc_config* acc_cfg, csipsimple_acc_config* css_acc_cfg);
+PJ_DECL(pj_status_t) csipsimple_set_acc_user_data(pjsua_acc_id acc_id, csipsimple_acc_config* css_acc_cfg);
 PJ_DECL(pj_status_t) csipsimple_init_acc_msg_data(pj_pool_t* pool, pjsua_acc_id acc_id, pjsua_msg_data* msg_data);
 PJ_DECL(pj_status_t) csipsimple_msg_data_add_string_hdr(pj_pool_t* pool, pjsua_msg_data* msg_data, pj_str_t* hdr_name, pj_str_t* hdr_value);
 PJ_DECL(pj_status_t) pj_timer_fire(int entry_id);

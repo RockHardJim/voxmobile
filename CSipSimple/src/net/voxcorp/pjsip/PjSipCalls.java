@@ -21,6 +21,7 @@
 
 package net.voxcorp.pjsip;
 
+import android.content.Context;
 import android.os.SystemClock;
 import android.text.TextUtils;
 
@@ -57,7 +58,7 @@ public final class PjSipCalls {
      * @param service PjSipService Sip service to retrieve pjsip accounts infos
      * @throws SameThreadException
      */
-    public static void updateSessionFromPj(SipCallSessionImpl session, pjsip_event e, PjSipService service)
+    public static void updateSessionFromPj(SipCallSessionImpl session, pjsip_event e, Context context)
             throws SameThreadException {
         Log.d(THIS_FILE, "Update call " + session.getCallId());
         pjsua_call_info pjInfo = new pjsua_call_info();
@@ -65,10 +66,11 @@ public final class PjSipCalls {
 
         if (status == pjsua.PJ_SUCCESS) {
             // Transform pjInfo into CallSession object
-            updateSession(session, pjInfo, service);
+            updateSession(session, pjInfo, context);
             
             // Update state here because we have pjsip_event here and can get q.850 state
             if(e != null) {
+                // Status code
                 int status_code = pjsua.get_event_status_code(e);
                 if(status_code == 0) {
                     try {
@@ -82,10 +84,17 @@ public final class PjSipCalls {
                 // TODO - get comment from q.850 state as well
                 String status_text = PjSipService.pjStrToString(pjInfo.getLast_status_text());
                 session.setLastStatusComment(status_text);
+                
+                // Reason code
+                int reason_code = pjsua.get_event_reason_code(e);
+                if (reason_code != 0) {
+                    session.setLastReasonCode(reason_code);
+                }
             }
             
             // And now, about secure information
-            String secureInfo = PjSipService.pjStrToString(pjsua.call_secure_info(session
+            session.setSignalisationSecure(pjsua.call_secure_sig_level(session.getCallId()));
+            String secureInfo = PjSipService.pjStrToString(pjsua.call_secure_media_info(session
                     .getCallId()));
             session.setMediaSecureInfo(secureInfo);
             session.setMediaSecure(!TextUtils.isEmpty(secureInfo));
@@ -116,7 +125,7 @@ public final class PjSipCalls {
      * @param service PjSipService Sip service to retrieve pjsip accounts infos
      */
     private static void updateSession(SipCallSessionImpl session, pjsua_call_info pjCallInfo,
-            PjSipService service) {
+            Context context) {
         // Should be unecessary cause we usually copy infos from a valid
         session.setCallId(pjCallInfo.getId());
 
@@ -129,7 +138,7 @@ public final class PjSipCalls {
 
         // Try to retrieve sip account related to this call
         int pjAccId = pjCallInfo.getAcc_id();
-        session.setAccId(service.getAccountIdForPjsipId(pjAccId));
+        session.setAccId(PjSipService.getAccountIdForPjsipId(context, pjAccId));
 
         pj_time_val duration = pjCallInfo.getConnect_duration();
         session.setConnectStart(SystemClock.elapsedRealtime() - duration.getSec() * 1000
