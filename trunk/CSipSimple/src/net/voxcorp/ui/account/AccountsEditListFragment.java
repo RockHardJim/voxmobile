@@ -56,10 +56,10 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import net.voxcorp.R;
 import net.voxcorp.api.SipProfile;
+import net.voxcorp.backup.SipProfileJson;
 import net.voxcorp.ui.account.AccountsEditListAdapter.AccountRowTag;
 import net.voxcorp.ui.account.AccountsEditListAdapter.OnCheckedRowListener;
 import net.voxcorp.utils.PreferencesWrapper;
-import net.voxcorp.utils.SipProfileJson;
 import net.voxcorp.voxmobile.ui.AccountsListActivity;
 import net.voxcorp.widgets.CSSListFragment;
 import net.voxcorp.widgets.DragnDropListView;
@@ -83,7 +83,7 @@ public class AccountsEditListFragment extends CSSListFragment implements /*OnQui
 	private AccountStatusContentObserver statusObserver = null;
     private View mHeaderView;
     private AccountsEditListAdapter mAdapter;
-	private boolean mVoXMobileVersionSupported;
+    private boolean mVoXMobileVersionSupported;
 	
 	class AccountStatusContentObserver extends ContentObserver {
 		
@@ -172,17 +172,17 @@ public class AccountsEditListFragment extends CSSListFragment implements /*OnQui
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		menu.add(R.string.voxmobile_add_vox_account)
-				.setIcon(android.R.drawable.ic_menu_add)
-				.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-					@Override
-					public boolean onMenuItemClick(MenuItem item) {
-						onClickAddAccount(true);
-						return true;
-					}
-				})
-				.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM );
+        .setIcon(android.R.drawable.ic_menu_add)
+        .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                        onClickAddAccount(true);
+                        return true;
+                }
+        })
+        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM );
 
-        menu.add(R.string.voxmobile_add_other_account)
+		menu.add(R.string.voxmobile_add_other_account)
                 .setIcon(android.R.drawable.ic_menu_add)
                 .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                     @Override
@@ -190,7 +190,7 @@ public class AccountsEditListFragment extends CSSListFragment implements /*OnQui
                         onClickAddAccount(false);
                         return true;
                     }
-                }).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+                }).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER );
 
         menu.add(R.string.reorder).setIcon(android.R.drawable.ic_menu_sort_by_size)
                 .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -450,7 +450,8 @@ public class AccountsEditListFragment extends CSSListFragment implements /*OnQui
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (resultCode == Activity.RESULT_OK && data != null && data.getExtras() != null) {
-			if(requestCode == CHOOSE_WIZARD) {
+		    
+		    if(requestCode == CHOOSE_WIZARD) {
 		        // Wizard has been choosen, now create an account
     			String wizardId = data.getStringExtra(WizardUtils.ID);
     			if (wizardId != null) {
@@ -567,11 +568,11 @@ public class AccountsEditListFragment extends CSSListFragment implements /*OnQui
 	}
 	
 	private void onClickAddAccount(boolean addVoXMobileAccount) {
-		if (!addVoXMobileAccount) {
-			// Adding "other" account
-			startActivityForResult(new Intent(getActivity(), WizardChooser.class), CHOOSE_WIZARD);        	
-		} else if (addVoXMobileAccount && mVoXMobileVersionSupported) {
-        	startActivity(new Intent(getActivity(), AccountsListActivity.class));       	
+        if (!addVoXMobileAccount) {
+        	// Adding "other" account
+        	startActivityForResult(new Intent(getActivity(), WizardChooser.class), CHOOSE_WIZARD);
+        } else if (addVoXMobileAccount && mVoXMobileVersionSupported) {
+        	startActivity(new Intent(getActivity(), AccountsListActivity.class));
         	getActivity().overridePendingTransition(R.anim.voxmobile_slide_in_left, R.anim.voxmobile_slide_out_left);
         } else {
         	new AlertDialog.Builder(getActivity())

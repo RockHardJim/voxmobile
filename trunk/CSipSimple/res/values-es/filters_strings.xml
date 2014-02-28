@@ -8,7 +8,6 @@
   <string name="starts_with">Empieza por</string>
   <string name="ends_with">Termina con</string>
   <string name="contains">Contiene</string>
-  <string name="all">Todo</string>
   <string name="has_exactly_n_digits">Tiene exactamente N dígitos</string>
   <string name="has_more_than_n_digits">Tiene más de N dígitos</string>
   <string name="is_exactly">Es exactamente</string>

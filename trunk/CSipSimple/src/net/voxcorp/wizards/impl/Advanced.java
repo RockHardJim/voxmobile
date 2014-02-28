@@ -29,7 +29,6 @@ import net.voxcorp.R;
 import net.voxcorp.api.SipProfile;
 import net.voxcorp.api.SipUri;
 import net.voxcorp.api.SipUri.ParsedSipContactInfos;
-import net.voxcorp.utils.Log;
 
 import java.util.HashMap;
 
@@ -156,15 +155,18 @@ public class Advanced extends BaseImplementation {
 
 		return isValid;
 	}
+	
+	protected String getServer() {
+	    return accountServer.getText();
+	}
 
 	public SipProfile buildAccount(SipProfile account) {
-		Log.d(THIS_FILE, "begin of save ....");
 		account.display_name = accountDisplayName.getText().trim();
-		String[] serverParts = accountServer.getText().split(":");
+		String[] serverParts = getServer().split(":");
 		account.acc_id = accountCallerId.getText().trim() + 
 			" <sip:" + SipUri.encodeUser(accountUserName.getText().trim()) + "@" + serverParts[0].trim() + ">";
 		
-		account.reg_uri = "sip:" + accountServer.getText();
+		account.reg_uri = "sip:" + getServer();
 
 		account.realm = "*";
 		

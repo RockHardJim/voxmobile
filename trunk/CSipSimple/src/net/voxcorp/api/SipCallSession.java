@@ -158,6 +158,7 @@ public class SipCallSession implements Parcelable {
         public static final int METHOD_NOT_ALLOWED = 405;
         public static final int NOT_ACCEPTABLE = 406;
         public static final int INTERVAL_TOO_BRIEF = 423;
+        public static final int BUSY_HERE = 486;
         public static final int INTERNAL_SERVER_ERROR = 500;
         public static final int DECLINE = 603;
         /*
@@ -185,6 +186,20 @@ public class SipCallSession implements Parcelable {
     }
 
     /**
+     * The call signaling is not secure
+     */
+    public static int TRANSPORT_SECURE_NONE = 0;
+    /**
+     * The call signaling is secure until it arrives on server. After, nothing ensures how it goes.
+     */
+    public static int TRANSPORT_SECURE_TO_SERVER = 1;
+    /**
+     * The call signaling is supposed to be secured end to end.
+     */
+    public static int TRANSPORT_SECURE_FULL = 2;
+
+    
+    /**
      * Id of an invalid or not existant call
      */
     public static final int INVALID_CALL_ID = -1;
@@ -206,10 +221,12 @@ public class SipCallSession implements Parcelable {
     protected long accId = SipProfile.INVALID_ID;
     protected int mediaStatus = MediaState.NONE;
     protected boolean mediaSecure = false;
+    protected int transportSecure = 0;
     protected boolean mediaHasVideoStream = false;
     protected long connectStart = 0;
     protected int lastStatusCode = 0;
     protected String lastStatusComment = "";
+    protected int lastReasonCode = 0;
     protected String mediaSecureInfo = "";
     protected boolean canRecord = false;
     protected boolean isRecording = false;
@@ -223,6 +240,33 @@ public class SipCallSession implements Parcelable {
      * @param in parcelable to build from
      */
     private SipCallSession(Parcel in) {
+        initFromParcel(in);
+    }
+
+    /**
+     * Constructor for a sip call session state object <br/>
+     * It will contains default values for all flags This class as no
+     * setter/getter for members flags <br/>
+     * It's aim is to allow to serialize/deserialize easily the state of a sip
+     * call, <n>not to modify it</b>
+     */
+    public SipCallSession() {
+        // Nothing to do in default constructor
+    }
+
+    /**
+     * Constructor by copy
+     * @param callInfo
+     */
+    public SipCallSession(SipCallSession callInfo) {
+         Parcel p = Parcel.obtain();
+         callInfo.writeToParcel(p, 0);
+         p.setDataPosition(0);
+         initFromParcel(p);
+         p.recycle();
+    }
+    
+    private void initFromParcel(Parcel in) {
         primaryKey = in.readInt();
         callId = in.readInt();
         callState = in.readInt();
@@ -241,17 +285,8 @@ public class SipCallSession implements Parcelable {
         isRecording = (in.readInt() == 1);
         hasZrtp = (in.readInt() == 1);
         zrtpSASVerified = (in.readInt() == 1);
-    }
-
-    /**
-     * Constructor for a sip call session state object <br/>
-     * It will contains default values for all flags This class as no
-     * setter/getter for members flags <br/>
-     * It's aim is to allow to serialize/deserialize easily the state of a sip
-     * call, <n>not to modify it</b>
-     */
-    public SipCallSession() {
-        // Nothing to do in default constructor
+        transportSecure = (in.readInt());
+        lastReasonCode = in.readInt();
     }
 
     /**
@@ -261,6 +296,7 @@ public class SipCallSession implements Parcelable {
     public int describeContents() {
         return 0;
     }
+
 
     /**
      * @see Parcelable#writeToParcel(Parcel, int)
@@ -285,6 +321,8 @@ public class SipCallSession implements Parcelable {
         dest.writeInt(isRecording ? 1 : 0);
         dest.writeInt(hasZrtp ? 1 : 0);
         dest.writeInt(zrtpSASVerified ? 1 : 0);
+        dest.writeInt(transportSecure);
+        dest.writeInt(lastReasonCode);
     }
 
     /**
@@ -420,11 +458,20 @@ public class SipCallSession implements Parcelable {
     }
 
     /**
-     * Get the secure level of the call
+     * Get the secure level of the signaling of the call.
+     * 
+     * @return one of {@link #TRANSPORT_SECURE_NONE}, {@link #TRANSPORT_SECURE_TO_SERVER}, {@link #TRANSPORT_SECURE_FULL}
+     */
+    public int getTransportSecureLevel() {
+        return transportSecure;
+    }
+    
+    /**
+     * Get the secure level of the media of the call
      * 
      * @return true if the call has a <b>media</b> encrypted
      */
-    public boolean isSecure() {
+    public boolean isMediaSecure() {
         return mediaSecure;
     }
 
@@ -497,6 +544,16 @@ public class SipCallSession implements Parcelable {
         return lastStatusComment;
     }
 
+    /**
+     * Get the latest SIP reason code if any. 
+     * For now only supports 200 (if SIP reason is set to 200) or 0 in other cases (no SIP reason / sip reason set to something different).
+     * 
+     * @return the status code
+     */
+    public int getLastReasonCode() {
+        return lastReasonCode;
+    }
+    
     /**
      * Get whether the call has a video media stream connected
      * 

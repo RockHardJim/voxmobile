@@ -22,9 +22,6 @@ LOCAL_C_INCLUDES += $(PJ_ANDROID_ROOT_DIR)/pjmedia/include/pjmedia-videodev
 # Include WebRTC 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../webrtc/pj_sources
 
-# Include g729 
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../g729/pj_sources
-
 # Include ZRTP interface 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../zrtp4pj/sources/zsrtp/include $(LOCAL_PATH)/../zrtp4pj/sources/zsrtp/zrtp/zrtp
 
@@ -39,8 +36,10 @@ LOCAL_CFLAGS := $(MY_PJSIP_FLAGS)
 
 JNI_SRC_DIR := src
 
-LOCAL_SRC_FILES := $(JNI_SRC_DIR)/pjsua_jni_addons.c $(JNI_SRC_DIR)/q850_reason_parser.c \
+LOCAL_SRC_FILES := $(JNI_SRC_DIR)/pjsua_jni_addons.c \
+	$(JNI_SRC_DIR)/reason_parser.c \
 	$(JNI_SRC_DIR)/zrtp_android.c $(JNI_SRC_DIR)/zrtp_android_callback.cpp \
+	$(JNI_SRC_DIR)/pjsip_opus_sdp_rewriter.c \
 	$(JNI_SRC_DIR)/ringback_tone.c \
 	$(JNI_SRC_DIR)/android_logger.c $(JNI_SRC_DIR)/audio_codecs.c \
 	$(JNI_SRC_DIR)/csipsimple_codecs_utils.c 
@@ -48,17 +47,18 @@ LOCAL_SRC_FILES := $(JNI_SRC_DIR)/pjsua_jni_addons.c $(JNI_SRC_DIR)/q850_reason_
 
 LOCAL_LDLIBS += -llog -ldl
 
+
 ifeq ($(MY_USE_AMR),1)
-	LOCAL_STATIC_LIBRARIES += pj_amr_stagefright_codec
 	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../amr-stagefright/pj_sources
+	LOCAL_STATIC_LIBRARIES += pj_amr_stagefright_codec
 endif
-
-
 # Pjsip basics
 LOCAL_STATIC_LIBRARIES += swig-glue pjsip pjmedia swig-glue pjnath pjlib-util pjlib resample srtp 
 
 # Pjsip modules
 LOCAL_STATIC_LIBRARIES += pjsip_mod_reghandler
+LOCAL_STATIC_LIBRARIES += pjsip_mod_sipclf
+LOCAL_STATIC_LIBRARIES += pjsip_mod_earlylock
 
 ifeq ($(MY_USE_ILBC),1)
 	LOCAL_STATIC_LIBRARIES += ilbc
@@ -69,8 +69,8 @@ endif
 ifeq ($(MY_USE_SPEEX),1)
 	LOCAL_STATIC_LIBRARIES += speex
 endif
-ifeq ($(MY_USE_G729),1)
-	LOCAL_STATIC_LIBRARIES += pj_g729_codec
+ifeq ($(MY_USE_AMR),1)
+	LOCAL_STATIC_LIBRARIES += android_dyn_opencore
 endif
 ifeq ($(MY_USE_SILK),1)
 	LOCAL_STATIC_LIBRARIES += pj_silk_codec

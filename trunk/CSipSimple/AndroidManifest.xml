@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.voxcorp"
     android:installLocation="auto"
-    android:versionCode="1177"
-    android:versionName="2.0.0" >
+    android:versionCode="1190"
+    android:versionName="2.1.0" >
 
     <supports-screens
         android:anyDensity="true"
@@ -102,8 +102,9 @@
 
     <application
         android:allowBackup="false"
+        android:backupAgent="net.voxcorp.backup.SipBackupAgent"
         android:hardwareAccelerated="true"
-        android:icon="@drawable/ic_launcher_voxmobile"
+        android:icon="@drawable/ic_launcher_voxcorp"
         android:label="@string/app_name" >
         <meta-data
             android:name="app_type"
@@ -111,6 +112,19 @@
         <meta-data
             android:name="app_channel"
             android:value="trunk" />
+        <meta-data
+            android:name="com.google.android.backup.api_key"
+            android:value="AEdPqrEAAAAIL5x8Klvg-Y8nV4j4PNSy2JH6yQZ49yKbrqKJAw" />
+        
+        <!--
+        Samsung multiview support
+        <uses-library
+            android:name="com.sec.android.app.multiwindow"
+            android:required="false" />
+        -->
+        <meta-data
+            android:name="com.sec.android.support.multiwindow"
+            android:value="true" />
 
         <activity
             android:name="net.voxcorp.ui.SipHome"
@@ -122,6 +136,7 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
             </intent-filter>
             <intent-filter android:priority="10" >
                 <action android:name="net.voxcorp.phone.action.DIALER" />
@@ -183,6 +198,7 @@
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="csip" />
                 <data android:scheme="sip" />
@@ -202,7 +218,7 @@
                 <action android:name="net.voxcorp.service.SipConfiguration" />
             </intent-filter>
         </service>
-        <service android:name=".service.Downloader" />
+        <service android:name="net.voxcorp.service.Downloader" />
 
         <receiver
             android:name="net.voxcorp.service.DeviceStateReceiver"
@@ -287,9 +303,14 @@
             android:configChanges="orientation"
             android:label="@string/filters"
             android:theme="@style/DarkTheme" />
+        <!--
+        VoX Mobile :: Make sure the easy config dialog is a single instance only
+        so that multiple instances are not created upon screen orienation changes.
+        -->
         <activity
             android:name="net.voxcorp.ui.prefs.PrefsFast"
             android:configChanges="orientation"
+            android:launchMode="singleTask"
             android:label="@string/prefs_fast"
             android:permission="android.permission.CONFIGURE_SIP"
             android:theme="@style/DarkTheme.Dialog" >
@@ -513,7 +534,7 @@
             android:permission="android.permission.CONFIGURE_SIP" />
         <provider
             android:name="net.voxcorp.db.DBProvider"
-            android:authorities="com.csipsimple.db"
+            android:authorities="net.voxcorp.db"
             android:permission="android.permission.CONFIGURE_SIP"
             android:process=":sipStack" />
 
@@ -528,6 +549,20 @@
 
         <!-- Extra codecs -->
 
+        <receiver
+            android:name="net.voxcorp.plugins.codecs.ReceiverG729"
+            android:exported="false" >
+            <meta-data
+                android:name="lib_name"
+                android:value="libpj_g729_codec.so" />
+            <meta-data
+                android:name="init_factory"
+                android:value="pjmedia_codec_g729_init" />
+
+            <intent-filter>
+                <action android:name="net.voxcorp.codecs.action.REGISTER_CODEC" />
+            </intent-filter>
+        </receiver>
 
         <!-- OPUS? -->
 
@@ -556,6 +591,10 @@
             android:theme="@style/DarkTheme.NoTitle"
             android:launchMode="singleTop" />
         <activity android:name="net.voxcorp.voxmobile.ui.BuyNowDialog"
+            android:configChanges="orientation"
+            android:theme="@style/DarkTheme.NoTitle"
+            android:launchMode="singleTop" />
+        <activity android:name="net.voxcorp.voxmobile.ui.BulkInviterListActivity"
             android:configChanges="orientation"
             android:theme="@style/DarkTheme.NoTitle"
             android:launchMode="singleTop" />
@@ -612,7 +651,7 @@
         <activity android:name=".voxmobile.ui.order.CreditCardInfoActivity"
             android:configChanges="orientation"
             android:theme="@style/DarkTheme" />
-        <activity android:name="net.voxcorp.voxmobile.ui.order.DIDSelectionActivity"
+        <activity android:name="net.voxcorp.voxmobile.ui.order.DIDChooserActivity"
             android:configChanges="orientation"
             android:theme="@style/DarkTheme" />
         <activity android:name="net.voxcorp.voxmobile.ui.order.OrderSummaryActivity"
@@ -665,6 +704,14 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="net.voxcorp.voxmobile.ui.PREPAID_ALERT"/>
+            </intent-filter>
+        </receiver>
+
+        <!-- VoX Mobile :: Google Play Campaign Measurement  -->
+        <service android:name="com.google.analytics.tracking.android.CampaignTrackingService"/>
+        <receiver android:name="com.google.analytics.tracking.android.CampaignTrackingReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.vending.INSTALL_REFERRER" />
             </intent-filter>
         </receiver>
 

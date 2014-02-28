@@ -64,6 +64,16 @@
             android:entryValues="@array/scheme_values"
             android:key="scheme"
             android:title="Scheme" />
+
+        <CheckBoxPreference
+            android:key="initial_auth"
+            android:summary="Send an empty Authorization header in each initial request"
+            android:title="Send empty auth header" />
+
+        <EditTextPreference
+            android:key="auth_algo"
+            android:summary="Algorithm text to use when empty Authorization header"
+            android:title="Auth algo for empty auth header" />
     </PreferenceCategory>
     <PreferenceCategory android:title="Connection" >
         <ListPreference
@@ -73,6 +83,13 @@
             android:key="transport"
             android:summary="@string/transport_desc"
             android:title="@string/transport" />
+        <ListPreference
+            android:defaultValue="sip"
+            android:entries="@array/uri_scheme_choices"
+            android:entryValues="@array/uri_scheme_values"
+            android:key="default_uri_scheme"
+            android:summary="@string/w_expert_default_uri_scheme_desc"
+            android:title="@string/w_expert_default_uri_scheme" />
 
         <CheckBoxPreference
             android:defaultValue="false"
@@ -229,6 +246,11 @@
             android:title="RFC5626 Reg id" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/nat_traversal" >
+        <CheckBoxPreference
+            android:key="allow_sdp_nat_rewrite"
+            android:summary="@string/w_expert_allow_sdp_nat_rewrite_desc"
+            android:title="@string/w_expert_allow_sdp_nat_rewrite" />
+
         <ListPreference
             android:defaultValue="-1"
             android:entries="@array/acc_stun_use_choices"

@@ -5,7 +5,7 @@
   <string name="unable_to_download_file">No se pudo descargar el archivo</string>
   <string name="invalid_sip_uri">SIP no válido para llamar</string>
   <string name="accounts">Cuentas</string>
-  <string name="other_accounts">Otras</string>
+  <string name="other_accounts">Otras cuentas</string>
   <string name="save">Guardar</string>
   <string name="cancel">Cancelar</string>
   <string name="activate_account">Activar cuenta</string>

@@ -253,6 +253,16 @@ public class SipProfile implements Parcelable {
      * @see String
      */
     public static final String FIELD_ACC_ID = "acc_id";
+    
+    /**
+     * Data useful for the wizard internal use.
+     * The format here is specific to the wizard and no assumption is made.
+     * Could be simplestring, json, base64 encoded stuff etc.
+     * 
+     * @see String
+     */
+    public static final String FIELD_WIZARD_DATA = "wizard_data";
+    
     /**
      * This is the URL to be put in the request URI for the registration, and
      * will look something like "sip:serviceprovider".<br/>
@@ -411,6 +421,14 @@ public class SipProfile implements Parcelable {
      */
     public static final String FIELD_TRANSPORT = "transport";
     /**
+     * Default scheme to automatically add for this account when calling without uri scheme.<br/>
+     * 
+     * This is free field but should be one of :
+     * sip, sips, tel
+     * If invalid (or empty) will automatically fallback to sip
+     */
+    public static final String FIELD_DEFAULT_URI_SCHEME = "default_uri_scheme";
+    /**
      * Way the application should use SRTP. <br/>
      * <a target="_blank" href=
      * "http://www.pjsip.org/pjsip/docs/html/structpjsua__acc__config.htm#a34b00edb1851924a99efd8fedab917ba"
@@ -514,6 +532,26 @@ public class SipProfile implements Parcelable {
      * @see String
      */
     public static final String FIELD_DATA = "data";
+    
+    /**
+     * If this flag is set, the authentication client framework will send an empty Authorization header in each initial request. Default is no.
+     *  <a target="_blank" href=
+     * "http://www.pjsip.org/docs/latest/pjsip/docs/html/structpjsip__auth__clt__pref.htm#ac3487e53d8d6b3ea392315b08e2aac4a"
+     * >Pjsip documentation</a>
+     * 
+     * @see Integer
+     */
+    public static final String FIELD_AUTH_INITIAL_AUTH = "initial_auth";
+    
+    /**
+     * If this flag is set, the authentication client framework will send an empty Authorization header in each initial request. Default is no.
+     *  <a target="_blank" href=
+     * "http://www.pjsip.org/docs/latest/pjsip/docs/html/structpjsip__auth__clt__pref.htm#ac3487e53d8d6b3ea392315b08e2aac4a"
+     * >Pjsip documentation</a>
+     * 
+     * @see Integer
+     */
+    public static final String FIELD_AUTH_ALGO = "auth_algo";
 
     // Android stuff
     /**
@@ -644,7 +682,7 @@ public class SipProfile implements Parcelable {
      * the REGISTER request, as long as the request uses the same transport
      * instance as the previous REGISTER request. <br/>
      *
-     * Default: true <br/>
+     * Default: false <br/>
      * <a target="_blank" href=
      * "http://www.pjsip.org/pjsip/docs/html/structpjsua__acc__config.htm"
      * >Pjsip documentation</a>
@@ -653,6 +691,20 @@ public class SipProfile implements Parcelable {
      */
     public static final String FIELD_ALLOW_VIA_REWRITE = "allow_via_rewrite";
 
+    /**
+     * This option controls whether the IP address in SDP should be replaced
+     * with the IP address found in Via header of the REGISTER response, ONLY
+     * when STUN and ICE are not used. If the value is FALSE (the original
+     * behavior), then the local IP address will be used. If TRUE, and when
+     * STUN and ICE are disabled, then the IP address found in registration
+     * response will be used.
+     *
+     * Default:no
+     * 
+     * @see Boolean
+     */
+    public static final String FIELD_ALLOW_SDP_NAT_REWRITE = "allow_sdp_nat_rewrite";
+    
     /**
      * Control the use of STUN for the SIP signaling.
      */
@@ -749,6 +801,10 @@ public class SipProfile implements Parcelable {
      */
     public Integer transport = 0;
     /**
+     * @see #FIELD_DEFAULT_URI_SCHEME
+     */
+    public String default_uri_scheme  = "sip";
+    /**
      * @see #FIELD_ACTIVE
      */
     public boolean active = true;
@@ -798,6 +854,10 @@ public class SipProfile implements Parcelable {
      */
     public boolean allow_via_rewrite = false;
     /**
+     * @see #FIELD_ALLOW_SDP_NAT_REWRITE
+     */
+    public boolean allow_sdp_nat_rewrite = false;
+    /**
      * Exploded array of proxies
      * 
      * @see #FIELD_PROXY
@@ -823,6 +883,14 @@ public class SipProfile implements Parcelable {
      * @see #FIELD_DATA
      */
     public String data = null;
+    /**
+     * @see #FIELD_AUTH_INITIAL_AUTH
+     */
+    public boolean initial_auth = false;
+    /**
+     * @see #FIELD_AUTH_ALGO
+     */
+    public String  auth_algo = ""; 
     /**
      * @see #FIELD_USE_SRTP
      */
@@ -926,7 +994,7 @@ public class SipProfile implements Parcelable {
      */
     public int turn_cfg_use = -1;
     /**
-     * @see #FIELD_ICE_CFG_ENABLE
+     * @see #FIELD_TURN_CFG_ENABLE
      */
     public int turn_cfg_enable = 0;
     /**
@@ -941,11 +1009,14 @@ public class SipProfile implements Parcelable {
      * @see #FIELD_TURN_CFG_PASSWORD
      */
     public String turn_cfg_password = "";
-    
     /**
      * @see #FIELD_IPV6_MEDIA_USE
      */
     public int ipv6_media_use = 0;
+    /**
+     * @see #FIELD_WIZARD_DATA
+     */
+    public String wizard_data = "";
     
     public SipProfile() {
         display_name = "";
@@ -1024,6 +1095,11 @@ public class SipProfile implements Parcelable {
         turn_cfg_user = getReadParcelableString(in.readString());
         turn_cfg_password = getReadParcelableString(in.readString());
         ipv6_media_use = in.readInt();
+        initial_auth = (in.readInt() != 0);
+        auth_algo = getReadParcelableString(in.readString());
+        wizard_data = getReadParcelableString(in.readString());
+        default_uri_scheme = getReadParcelableString(in.readString());
+        allow_sdp_nat_rewrite = (in.readInt() != 0);
     }
 
     /**
@@ -1109,6 +1185,11 @@ public class SipProfile implements Parcelable {
         dest.writeString(getWriteParcelableString(turn_cfg_user));
         dest.writeString(getWriteParcelableString(turn_cfg_password));
         dest.writeInt(ipv6_media_use);
+        dest.writeInt(initial_auth ? 1 : 0);
+        dest.writeString(getWriteParcelableString(auth_algo));
+        dest.writeString(getWriteParcelableString(wizard_data));
+        dest.writeString(getWriteParcelableString(default_uri_scheme));
+        dest.writeInt(allow_sdp_nat_rewrite ? 1 : 0);
     }
 
     // Yes yes that's not clean but well as for now not problem with that.
@@ -1158,6 +1239,10 @@ public class SipProfile implements Parcelable {
         if (tmp_i != null) {
             transport = tmp_i;
         }
+        tmp_s = args.getAsString(FIELD_DEFAULT_URI_SCHEME);
+        if (tmp_s != null) {
+            default_uri_scheme = tmp_s;
+        }
 
         tmp_i = args.getAsInteger(FIELD_ACTIVE);
         if (tmp_i != null) {
@@ -1168,6 +1253,10 @@ public class SipProfile implements Parcelable {
         tmp_s = args.getAsString(FIELD_ANDROID_GROUP);
         if (tmp_s != null) {
             android_group = tmp_s;
+        }
+        tmp_s = args.getAsString(FIELD_WIZARD_DATA);
+        if (tmp_s != null) {
+            wizard_data = tmp_s;
         }
 
         // General account settings
@@ -1220,6 +1309,10 @@ public class SipProfile implements Parcelable {
         if (tmp_i != null) {
             allow_via_rewrite = (tmp_i == 1);
         }
+        tmp_i = args.getAsInteger(FIELD_ALLOW_SDP_NAT_REWRITE);
+        if (tmp_i != null) {
+            allow_sdp_nat_rewrite = (tmp_i == 1);
+        }
 
         tmp_i = args.getAsInteger(FIELD_USE_SRTP);
         if (tmp_i != null && tmp_i >= 0) {
@@ -1261,6 +1354,15 @@ public class SipProfile implements Parcelable {
         if (tmp_s != null) {
             data = tmp_s;
         }
+        tmp_i = args.getAsInteger(FIELD_AUTH_INITIAL_AUTH);
+        if (tmp_i != null) {
+            initial_auth = (tmp_i == 1);
+        }
+        tmp_s = args.getAsString(FIELD_AUTH_ALGO);
+        if (tmp_s != null) {
+            auth_algo = tmp_s;
+        }
+        
 
         tmp_i = args.getAsInteger(FIELD_SIP_STACK);
         if (tmp_i != null && tmp_i >= 0) {
@@ -1346,7 +1448,7 @@ public class SipProfile implements Parcelable {
         if (tmp_i != null && tmp_i >= 0) {
             turn_cfg_use = tmp_i;
         }
-        tmp_i = args.getAsInteger(FIELD_ICE_CFG_ENABLE);
+        tmp_i = args.getAsInteger(FIELD_TURN_CFG_ENABLE);
         if (tmp_i != null && tmp_i >= 0) {
             turn_cfg_enable = tmp_i;
         }
@@ -1366,7 +1468,7 @@ public class SipProfile implements Parcelable {
         if (tmp_i != null && tmp_i >= 0) {
             ipv6_media_use = tmp_i;
         }
-
+        
         /*
          * VoX Mobile :: password decode
          */
@@ -1399,6 +1501,8 @@ public class SipProfile implements Parcelable {
         args.put(FIELD_WIZARD, wizard);
         args.put(FIELD_DISPLAY_NAME, display_name);
         args.put(FIELD_TRANSPORT, transport);
+        args.put(FIELD_DEFAULT_URI_SCHEME, default_uri_scheme);
+        args.put(FIELD_WIZARD_DATA, wizard_data);
 
         args.put(FIELD_PRIORITY, priority);
         args.put(FIELD_ACC_ID, acc_id);
@@ -1411,6 +1515,7 @@ public class SipProfile implements Parcelable {
         args.put(FIELD_FORCE_CONTACT, force_contact);
         args.put(FIELD_ALLOW_CONTACT_REWRITE, allow_contact_rewrite ? 1 : 0);
         args.put(FIELD_ALLOW_VIA_REWRITE, allow_via_rewrite ? 1 : 0);
+        args.put(FIELD_ALLOW_SDP_NAT_REWRITE, allow_sdp_nat_rewrite ? 1 : 0);
         args.put(FIELD_CONTACT_REWRITE_METHOD, contact_rewrite_method);
         args.put(FIELD_USE_SRTP, use_srtp);
         args.put(FIELD_USE_ZRTP, use_zrtp);
@@ -1431,6 +1536,10 @@ public class SipProfile implements Parcelable {
         args.put(FIELD_DATATYPE, datatype);
         if (!TextUtils.isEmpty(data)) {
             args.put(FIELD_DATA, data);
+        }
+        args.put(FIELD_AUTH_INITIAL_AUTH, initial_auth ? 1 : 0);
+        if(!TextUtils.isEmpty(auth_algo)) {
+            args.put(FIELD_AUTH_ALGO, auth_algo);
         }
 
         args.put(FIELD_SIP_STACK, sip_stack);

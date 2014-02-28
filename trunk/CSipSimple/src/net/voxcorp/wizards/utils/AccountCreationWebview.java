@@ -44,6 +44,7 @@ public class AccountCreationWebview {
     
     public interface OnAccountCreationDoneListener {
         public void onAccountCreationDone(String username, String password);
+        public void onAccountCreationDone(String username, String password, String extra);
         public boolean saveAndQuit();
     }
     
@@ -85,8 +86,19 @@ public class AccountCreationWebview {
         });
     }
     
+    /**
+     * Allow untrusted (self signed / invalid domain match / etc) ssl certificates.
+     * Highly discouraged and only works on android 8+
+     */
     public void setUntrustedCertificate() {
         AccountCreationWebviewHelper.getInstance().setSSLNoSecure(webView);
+    }
+    /**
+     * Allow redirects from the loaded webpage.
+     * Highly discouraged and only works on android 8+
+     */
+    public void setAllowRedirects() {
+        AccountCreationWebviewHelper.getInstance().setAllowRedirect(webView);
     }
 
     private class HideWebviewRunnable implements Runnable {
@@ -94,6 +106,7 @@ public class AccountCreationWebview {
             webView.setVisibility(View.GONE);
             settingsContainer.setVisibility(View.VISIBLE);
             validationBar.setVisibility(View.VISIBLE);
+            parent.updateValidation();
         }
     }
     
@@ -106,13 +119,7 @@ public class AccountCreationWebview {
          * @param password the password to use for this user account
          */
         public void finishAccountCreation(boolean success, String userName, String password) {
-            parent.runOnUiThread(new HideWebviewRunnable());
-            if(success) {
-                if(creationListener != null) {
-                    creationListener.onAccountCreationDone(userName, password);
-                }
-                parent.updateValidation();
-            }
+            finishAccountCreationWithExtra(success, userName, password, null);
         }
         
         /**
@@ -134,6 +141,24 @@ public class AccountCreationWebview {
                 
             }
             return false;
+        }
+
+        /**
+         * Allow webview to callback application about the fact account has been fully created.
+         * @param success True if succeeded in account creation. 
+         * If false is passed, username and password will be ignored, and the app will return the standard account wizard
+         * @param userName the username to use for this user account
+         * @param password the password to use for this user account
+         * @param extraData an extra free field to allow custom wizards and the java implem to communicate further.
+         * Here can come any kind of format to pass more than one param. We advise using json if wants more than one values here
+         */
+        public void finishAccountCreationWithExtra(boolean success, String userName, String password, String extraData) {
+            parent.runOnUiThread(new HideWebviewRunnable());
+            if(success) {
+                if(creationListener != null) {
+                    creationListener.onAccountCreationDone(userName, password, extraData);
+                }
+            }
         }
     }
 

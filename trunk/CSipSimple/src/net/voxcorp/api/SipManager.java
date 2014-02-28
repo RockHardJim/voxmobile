@@ -330,7 +330,7 @@ public final class SipManager {
     /**
      * Authority for regular database of the application.
      */
-    public static final String AUTHORITY = "com.csipsimple.db";
+    public static final String AUTHORITY = "net.voxcorp.db";
     /**
      * Base content type for csipsimple objects.
      */

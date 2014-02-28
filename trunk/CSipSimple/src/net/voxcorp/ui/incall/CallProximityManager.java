@@ -34,9 +34,9 @@ import android.os.PowerManager.WakeLock;
 
 import net.voxcorp.api.SipConfigManager;
 import net.voxcorp.ui.incall.AccelerometerListener.OrientationListener;
+import net.voxcorp.ui.incall.locker.ScreenLocker;
 import net.voxcorp.utils.Compatibility;
 import net.voxcorp.utils.Log;
-import net.voxcorp.widgets.ScreenLocker;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

@@ -93,7 +93,7 @@ struct css_data css_var;
 /**
  * Is call using a secure RTP method (SRTP/ZRTP)
  */
-PJ_DECL(pj_str_t) call_secure_info(pjsua_call_id call_id) {
+PJ_DECL(pj_str_t) call_secure_media_info(pjsua_call_id call_id) {
 
 	pjsua_call *call;
 	pj_status_t status;
@@ -161,6 +161,25 @@ PJ_DECL(pj_str_t) call_secure_info(pjsua_call_id call_id) {
 	return result;
 }
 
+/**
+ * Is call using a secure transport method (No (0) / TLS (1) / SIPS (2))
+ */
+PJ_DECL(int) call_secure_sig_level(pjsua_call_id call_id) {
+    int value = 0;
+    pjsua_call *call;
+    PJ_ASSERT_RETURN(call_id>=0 && call_id<(int)pjsua_var.ua_cfg.max_calls,
+            value);
+
+    PJSUA_LOCK();
+    call = &pjsua_var.calls[call_id];
+    value = call->secure_level;
+    PJSUA_UNLOCK();
+
+    return value;
+
+}
+
+
 // ZRTP and other media dispatcher
 pjmedia_transport* on_transport_created_wrapper(pjsua_call_id call_id,
 	unsigned media_idx,
@@ -197,7 +216,9 @@ pjmedia_transport* on_transport_created_wrapper(pjsua_call_id call_id,
 
 // ---- VIDEO STUFF ---- //
 pj_status_t vid_set_stream_window(pjsua_call_media* call_med, pjmedia_dir dir, void* window){
+
 	pj_status_t status = PJ_ENOTFOUND;
+#if PJMEDIA_HAS_VIDEO
 	pjsua_vid_win *w = NULL;
 	pjsua_vid_win_id wid;
 	pjmedia_vid_dev_stream *dev;
@@ -224,12 +245,14 @@ pj_status_t vid_set_stream_window(pjsua_call_media* call_med, pjmedia_dir dir, v
 		}
 	}
 
+#endif
 	return status;
 }
 
 PJ_DECL(pj_status_t) vid_set_android_renderer(pjsua_call_id call_id,
 		jobject window) {
 	pj_status_t status = PJ_ENOTFOUND;
+#if PJMEDIA_HAS_VIDEO
 	pjsua_call *call;
 	int i;
 
@@ -250,6 +273,8 @@ PJ_DECL(pj_status_t) vid_set_android_renderer(pjsua_call_id call_id,
 	}
 
 	PJSUA_UNLOCK();
+#endif
+
 	return status;
 }
 
@@ -400,7 +425,9 @@ PJ_DECL(pj_status_t) csipsimple_init(pjsua_config *ua_cfg,
 	extern pj_bool_t pjmedia_add_rtpmap_for_static_pt;
 	extern pj_bool_t pjmedia_add_bandwidth_tias_in_sdp;
 	extern pj_bool_t pjsua_no_update;
+#if defined(PJMEDIA_HAS_WEBRTC_AEC) && PJMEDIA_HAS_WEBRTC_AEC!=0
 	extern pj_bool_t pjmedia_webrtc_use_ns;
+#endif
 
 	pjsua_no_update = css_cfg->use_no_update ? PJ_TRUE : PJ_FALSE;
 
@@ -415,9 +442,12 @@ PJ_DECL(pj_status_t) csipsimple_init(pjsua_config *ua_cfg,
 	/* Do not enable bandwidth information inclusion in sdp */
 	pjmedia_add_bandwidth_tias_in_sdp =
 			css_cfg->add_bandwidth_tias_in_sdp ? PJ_TRUE : PJ_FALSE;
+
+#if defined(PJMEDIA_HAS_WEBRTC_AEC) && PJMEDIA_HAS_WEBRTC_AEC!=0
 	/* Use noise suppressor ? */
 	pjmedia_webrtc_use_ns =
 			css_cfg->use_noise_suppressor ? PJ_TRUE : PJ_FALSE;
+#endif
 
 	css_tcp_keep_alive_interval = css_cfg->tcp_keep_alive_interval;
 	css_tls_keep_alive_interval = css_cfg->tls_keep_alive_interval;
@@ -592,12 +622,13 @@ PJ_DECL(void) csipsimple_acc_config_default(csipsimple_acc_config* css_acc_cfg){
 	css_acc_cfg->p_preferred_identity.slen = 0;
 }
 
-PJ_DECL(pj_status_t) csipsimple_set_acc_user_data(pjsua_acc_config* acc_cfg, csipsimple_acc_config* css_acc_cfg){
+PJ_DECL(pj_status_t) csipsimple_set_acc_user_data(pjsua_acc_id acc_id, csipsimple_acc_config* css_acc_cfg){
 
 	csipsimple_acc_config *additional_acc_cfg = PJ_POOL_ZALLOC_T(css_var.pool, csipsimple_acc_config);
 	pj_memcpy(additional_acc_cfg, css_acc_cfg, sizeof(csipsimple_acc_config));
 	pj_strdup(css_var.pool, &additional_acc_cfg->p_preferred_identity, &css_acc_cfg->p_preferred_identity);
-	acc_cfg->user_data = additional_acc_cfg;
+
+	pjsua_acc_set_user_data(acc_id, additional_acc_cfg);
 
 	return PJ_SUCCESS;
 }

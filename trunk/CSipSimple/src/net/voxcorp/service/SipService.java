@@ -47,6 +47,8 @@ import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
+import android.view.SurfaceView;
 import android.widget.Toast;
 
 import net.voxcorp.R;
@@ -71,16 +73,17 @@ import net.voxcorp.service.receiver.DynamicReceiver5;
 import net.voxcorp.ui.incall.InCallMediaControl;
 import net.voxcorp.utils.Compatibility;
 import net.voxcorp.utils.CustomDistribution;
+import net.voxcorp.utils.ExtraPlugins;
+import net.voxcorp.utils.ExtraPlugins.DynActivityPlugin;
 import net.voxcorp.utils.Log;
 import net.voxcorp.utils.PreferencesProviderWrapper;
 import net.voxcorp.utils.PreferencesWrapper;
-
-import org.pjsip.pjsua.pjsua;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -425,7 +428,7 @@ public class SipService extends Service {
 		@Override
 		public SipCallSession getCallInfo(final int callId) throws RemoteException {
 			SipService.this.enforceCallingOrSelfPermission(SipManager.PERMISSION_USE_SIP, null);
-			return pjService.getCallInfo(callId);
+			return new SipCallSession(pjService.getCallInfo(callId));
 		}
 
         /**
@@ -478,7 +481,12 @@ public class SipService extends Service {
 		public SipCallSession[] getCalls() throws RemoteException {
 			SipService.this.enforceCallingOrSelfPermission(SipManager.PERMISSION_USE_SIP, null);
 			if(pjService != null) {
-				return pjService.getCalls();
+				SipCallSession[] listOfCallsImpl = pjService.getCalls();
+				SipCallSession[] result = new SipCallSession[listOfCallsImpl.length];
+				for(int sessIdx = 0; sessIdx < listOfCallsImpl.length; sessIdx++) {
+				    result[sessIdx] = new SipCallSession(listOfCallsImpl[sessIdx]);
+				}
+				return result;
 			}
 			return new SipCallSession[0];
 		}
@@ -765,7 +773,7 @@ public class SipService extends Service {
 				
 				@Override
 				protected void doRun() throws SameThreadException {
-					pjsua.conf_connect(0, 0);
+				    pjService.startLoopbackTest();
 				}
 			};
 			
@@ -785,7 +793,7 @@ public class SipService extends Service {
 				
 				@Override
 				protected void doRun() throws SameThreadException {
-					pjsua.conf_disconnect(0, 0);
+				    pjService.stopLoopbackTest();
 				}
 			};
 			
@@ -816,6 +824,9 @@ public class SipService extends Service {
             OutgoingCall.ignoreNext = number;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public void updateCallOptions(final int callId, final Bundle options) throws RemoteException {
             getExecutor().execute(new SipRunnable() {
@@ -824,6 +835,21 @@ public class SipService extends Service {
                     pjService.updateCallOptions(callId, options);
                 }
             });
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String getLocalNatType() throws RemoteException {
+            ReturnRunnable action = new ReturnRunnable() {
+                @Override
+                protected Object runWithReturn() throws SameThreadException {
+                    return (String) pjService.getDetectedNatType();
+                }
+            };
+            getExecutor().execute(action);
+            return (String) action.getResult();
         }
 
 
@@ -1940,9 +1966,41 @@ public class SipService extends Service {
     	}
     }
     
+    private static String UI_CALL_PACKAGE = null;
+    public static Intent buildCallUiIntent(Context ctxt, SipCallSession callInfo) {
+        // Resolve the package to handle call.
+        if(UI_CALL_PACKAGE == null) {
+            UI_CALL_PACKAGE = ctxt.getPackageName();
+            try {
+                Map<String, DynActivityPlugin> callsUis = ExtraPlugins.getDynActivityPlugins(ctxt, SipManager.ACTION_SIP_CALL_UI);
+                String preferredPackage  = SipConfigManager.getPreferenceStringValue(ctxt, SipConfigManager.CALL_UI_PACKAGE, UI_CALL_PACKAGE);
+                String packageName = null;
+                boolean foundPref = false;
+                for(String activity : callsUis.keySet()) {
+                    packageName = activity.split("/")[0];
+                    if(preferredPackage.equalsIgnoreCase(packageName)) {
+                        UI_CALL_PACKAGE = packageName;
+                        foundPref = true;
+                        break;
+                    }
+                }
+                if(!foundPref && !TextUtils.isEmpty(packageName)) {
+                    UI_CALL_PACKAGE = packageName;
+                }
+            }catch(Exception e) {
+                Log.e(THIS_FILE, "Error while resolving package", e);
+            }
+        }
+        SipCallSession toSendInfo = new SipCallSession(callInfo);
+        Intent intent = new Intent(SipManager.ACTION_SIP_CALL_UI);
+        intent.putExtra(SipManager.EXTRA_CALL_INFO, toSendInfo);
+        intent.setPackage(UI_CALL_PACKAGE);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return intent;
+    }
     
     
-    public static void setVideoWindow(int callId, Object window, boolean local) {
+    public static void setVideoWindow(int callId, SurfaceView window, boolean local) {
         if(singleton != null) {
             if(local) {
                 singleton.setCaptureVideoWindow(window);
@@ -1952,19 +2010,19 @@ public class SipService extends Service {
         }
     }
 
-    private void setRenderVideoWindow(final int callId, final Object window) {
+    private void setRenderVideoWindow(final int callId, final SurfaceView window) {
         getExecutor().execute(new SipRunnable() {
             @Override
             protected void doRun() throws SameThreadException {
-                pjsua.vid_set_android_renderer(callId, window);
+                pjService.setVideoAndroidRenderer(callId, window);
             }
         });
     }
-    private void setCaptureVideoWindow(final Object window) {
+    private void setCaptureVideoWindow(final SurfaceView window) {
         getExecutor().execute(new SipRunnable() {
             @Override
             protected void doRun() throws SameThreadException {
-                pjsua.vid_set_android_capturer(window);
+                pjService.setVideoAndroidCapturer(window);
             }
         });
     }

@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
   <string name="take_call">Antwoorden</string>
-  <string name="decline_call">Negeren</string>
+  <string name="ignore_call">Negeren</string>
+  <string name="reject_call">Afwijzen</string>
   <string name="clear_call">Beëindigen</string>
   <string name="touch_lock">Tik dubbel om te ontgrendelen</string>
   <string name="dialpad">Kiezer</string>
@@ -25,4 +26,8 @@
   <string name="resume_call">Hervatten</string>
   <string name="transfer_to_call">Overbrengen naar bellen</string>
   <string name="send_dtmf">Stuur DTMF</string>
+  <string name="zrtp_trust_remote">Vertrouw ZRTP gesprekspartner</string>
+  <string name="zrtp_revoke_trusted_remote">ZRTP vertrouwen gesprekspartner intrekken</string>
+  <string name="transport_secure_to_server">TLS transport wordt gebruikt voor de  directe hop</string>
+  <string name="transport_secure_full">Eindpunt-tot-eindpunt signalering wordt als veilig gezien</string>
 </resources>

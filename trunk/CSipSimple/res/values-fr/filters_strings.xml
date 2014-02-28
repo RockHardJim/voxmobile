@@ -9,7 +9,6 @@
   <string name="starts_with">Commence avec</string>
   <string name="ends_with">Fini par</string>
   <string name="contains">Contient</string>
-  <string name="all">Tous</string>
   <string name="has_exactly_n_digits">A exactement N chiffre(s)</string>
   <string name="has_more_than_n_digits">A plus de N chiffre(s)</string>
   <string name="is_exactly">Est exactement</string>
@@ -18,4 +17,5 @@
   <string name="suffix_with">Suffixer avec</string>
   <string name="replace_match_by">Remplacer la correspondance par</string>
   <string name="replace_all_by">Tout remplacer par</string>
+  <string name="call_info_header">A le \"Call-Info\" pour l\'auto-décrochage</string>
 </resources>

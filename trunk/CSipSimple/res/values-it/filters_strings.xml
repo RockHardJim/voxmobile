@@ -9,7 +9,6 @@
   <string name="starts_with">Inizia con</string>
   <string name="ends_with">Finisce con</string>
   <string name="contains">Contiene</string>
-  <string name="all">Tutto</string>
   <string name="has_exactly_n_digits">Ha esattamente N cifre</string>
   <string name="has_more_than_n_digits">Ha più di N cifre</string>
   <string name="is_exactly">E\' esattamente</string>
@@ -18,4 +17,5 @@
   <string name="suffix_with">Suffisso con</string>
   <string name="replace_match_by">Rimpiazza corrispondenza con</string>
   <string name="replace_all_by">Rimpiazza tutto con</string>
+  <string name="call_info_header">Ha Call-Info per risposta immediata</string>
 </resources>

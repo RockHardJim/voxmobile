@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -42,11 +43,11 @@ import net.voxcorp.ui.prefs.GenericPrefs;
 import net.voxcorp.utils.Log;
 import net.voxcorp.utils.PreferencesWrapper;
 import net.voxcorp.voxmobile.utils.SimpleCrypto;
-import net.voxcorp.voxmobile.utils.VoXMobileUtils;
 import net.voxcorp.wizards.WizardUtils.WizardInfo;
 import net.voxcorp.wizards.impl.VoXMobile;
 
 import java.util.List;
+import java.util.UUID;
 
 public class BasePrefsWizard extends GenericPrefs {
 	
@@ -177,9 +178,9 @@ public class BasePrefsWizard extends GenericPrefs {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		menu.add(Menu.NONE, SAVE_MENU, Menu.NONE, R.string.save).setIcon(android.R.drawable.ic_menu_save);
 		if (account.id != SipProfile.INVALID_ID) {
-            if (!VoXMobile.isVoXMobile(account.proxies)) {
-    			menu.add(Menu.NONE, TRANSFORM_MENU, Menu.NONE, R.string.choose_wizard).setIcon(android.R.drawable.ic_menu_edit);
-            }
+			if (!VoXMobile.isVoXMobile(account.proxies)) {
+				menu.add(Menu.NONE, TRANSFORM_MENU, Menu.NONE, R.string.choose_wizard).setIcon(android.R.drawable.ic_menu_edit);
+			}
 			menu.add(Menu.NONE, FILTERS_MENU, Menu.NONE, R.string.filters).setIcon(R.drawable.ic_menu_filter);
 			menu.add(Menu.NONE, DELETE_MENU, Menu.NONE, R.string.delete_account).setIcon(android.R.drawable.ic_menu_delete);
 		}
@@ -294,6 +295,7 @@ public class BasePrefsWizard extends GenericPrefs {
 		    prefs.startEditing();
 			wizard.setDefaultParams(prefs);
 			prefs.endEditing();
+			applyNewAccountDefault(account);
 			Uri uri = getContentResolver().insert(SipProfile.ACCOUNT_URI, account.getDbContentValues());
 			
 			// After insert, add filters for this wizard 
@@ -315,12 +317,12 @@ public class BasePrefsWizard extends GenericPrefs {
             prefs.startEditing();
 			wizard.setDefaultParams(prefs);
             prefs.endEditing();
-
+            
             /*
              * VoX Mobile :: encrypt password when modifying the account
              */
             if (VoXMobile.isVoXMobile(account.proxies)) {
-            	account.data = SimpleCrypto.encrypt(account.data);
+             account.data = SimpleCrypto.encrypt(account.data);
             }
 
 			getContentResolver().update(ContentUris.withAppendedId(SipProfile.ACCOUNT_ID_URI_BASE, account.id), account.getDbContentValues(), null, null);
@@ -333,7 +335,20 @@ public class BasePrefsWizard extends GenericPrefs {
 		}
 	}
 
-	@Override
+	/**
+	 * Apply default settings for a new account to check very basic coherence of settings and auto-modify settings missing
+     * @param account
+     */
+    private void applyNewAccountDefault(SipProfile account) {
+        if(account.use_rfc5626) {
+            if(TextUtils.isEmpty(account.rfc5626_instance_id)) {
+                String autoInstanceId = (UUID.randomUUID()).toString();
+                account.rfc5626_instance_id = "<urn:uuid:"+autoInstanceId+">";
+            }
+        }
+    }
+
+    @Override
 	protected int getXmlPreferences() {
 		return wizard.getBasePreferenceResource();
 	}

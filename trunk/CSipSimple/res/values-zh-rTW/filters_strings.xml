@@ -8,7 +8,6 @@
   <string name="starts_with">起始為</string>
   <string name="ends_with">結束為</string>
   <string name="contains">包含</string>
-  <string name="all">全部</string>
   <string name="has_exactly_n_digits">有N個數字</string>
   <string name="has_more_than_n_digits">大於N個數字</string>
   <string name="is_exactly">全等於</string>

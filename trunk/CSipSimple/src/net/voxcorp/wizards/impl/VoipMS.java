@@ -21,13 +21,13 @@
 
 package net.voxcorp.wizards.impl;
 
-import java.util.SortedMap;
-import java.util.TreeMap;
-
 import android.preference.ListPreference;
 
 import net.voxcorp.R;
 import net.voxcorp.api.SipProfile;
+
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 
 public class VoipMS extends SimpleImplementation {
@@ -43,17 +43,35 @@ public class VoipMS extends SimpleImplementation {
 		private static final long serialVersionUID = -2561302247222706262L;
 	{
 		put("Atlanta, GA", "atlanta.voip.ms");
+        put("Atlanta 2, GA", "atlanta2.voip.ms");
 		put("Chicago, IL", "chicago.voip.ms");
+        put("Chicago 2, IL", "chicago2.voip.ms");
+        put("Chicago 3, IL", "chicago3.voip.ms");
+        put("Chicago 4, IL", "chicago4.voip.ms");
 		put("Dallas, TX", "dallas.voip.ms");
+        put("Denver, Colorado", "denver.voip.ms");
+        put("Denver 2, Colorado", "denver2.voip.ms");
 		put("Houston, TX", "houston.voip.ms");
 		put("Los Angeles, CA", "losangeles.voip.ms");
+        put("Los Angeles 2, CA", "losangeles2.voip.ms");
 		put("New York, NY", "newyork.voip.ms");
+        put("New York 2, NY", "newyork2.voip.ms");
+        put("New York 3, NY", "newyork3.voip.ms");
+        put("New York 4, NY", "newyork4.voip.ms");
 		put("Seattle, WA", "seattle.voip.ms");
+        put("Seattle 2, WA", "seattle2.voip.ms");
+        put("Seattle 3, WA", "seattle3.voip.ms");
 		put("Tampa, FL", "tampa.voip.ms");
+        put("Montreal,QC", "montreal.voip.ms");
 		put("Montreal 2,QC", "montreal2.voip.ms");
+        put("Montreal 3,QC", "montreal3.voip.ms");
+        put("Montreal 4,QC", "montreal4.voip.ms");
+        put("Toronto, ON", "toronto.voip.ms");
 		put("Toronto 2, ON", "toronto2.voip.ms");
-		put("Montreal,QC", "montreal.voip.ms");
-		put("Toronto, ON", "toronto.voip.ms");
+        put("Toronto 3, ON", "toronto3.voip.ms");
+        put("Toronto 4, ON", "toronto4.voip.ms");
+        put("Washington, DC", "washington.voip.ms");
+        put("Washington 2, DC", "washington2.voip.ms");
 		put("London, UK", "london.voip.ms");
 	}
 	};
@@ -129,5 +147,15 @@ public class VoipMS extends SimpleImplementation {
 		}
 		
 		return super.getDefaultFieldSummary(fieldName);
+	}
+	
+	/* (non-Javadoc)
+	 * @see net.voxcorp.wizards.impl.SimpleImplementation#buildAccount(net.voxcorp.api.SipProfile)
+	 */
+	@Override
+	public SipProfile buildAccount(SipProfile account) {
+	    SipProfile acc = super.buildAccount(account);
+	    acc.vm_nbr = "*97";
+	    return acc;
 	}
 }

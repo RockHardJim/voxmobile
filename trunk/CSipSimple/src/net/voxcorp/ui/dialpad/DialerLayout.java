@@ -51,6 +51,9 @@ public class DialerLayout extends LinearLayout {
     	onAutoCompleteListVisibilityChangedListener = listener;
     }
 
+    /**
+     * Interface for notifying listeners when the value of canShowList changes
+     */
     public interface OnAutoCompleteListVisibilityChangedListener {
         public void onAutoCompleteListVisibiltyChanged();
     }    
@@ -106,13 +109,13 @@ public class DialerLayout extends LinearLayout {
             dialerCallBar.setLayoutParams(lp);
         }
         
-        boolean currentState = canShowList;
-
+        // remember the current state of canShowList
+        boolean previousState = canShowList;
+        
         // If we detect that height is enough to show the list
         if(!forceNoList && 
                 height > (LIST_BTNS_HEIGHT + LIST_DIALPAD_HEIGHT + LIST_DIGITS_HEIGHT + LIST_MIN_HEIGHT)* density ) {
             Log.d(THIS_FILE, "We force height to show list");
-
             canShowList = true;
             for(int i = 0; i < getChildCount(); i++) {
                 View v = getChildAt(i);
@@ -139,7 +142,9 @@ public class DialerLayout extends LinearLayout {
         }else {
             canShowList = false;
         }
-        if (currentState != canShowList && onAutoCompleteListVisibilityChangedListener != null) {
+
+        // if the state of canShowList has changed and we have a listener then notify it
+        if (previousState != canShowList && onAutoCompleteListVisibilityChangedListener != null) {
         	onAutoCompleteListVisibilityChangedListener.onAutoCompleteListVisibiltyChanged();
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);

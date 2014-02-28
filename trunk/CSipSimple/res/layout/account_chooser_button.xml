@@ -21,15 +21,10 @@
 -->
 
 <merge xmlns:android="http://schemas.android.com/apk/res/android" >
-	<LinearLayout
-		android:layout_width="wrap_content" 
-		android:layout_height="wrap_content"
-		android:layout_margin="5dip" 
-		android:orientation="vertical">
 
     <ImageView
         android:id="@+id/quickaction_icon"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="fill_parent"
         android:layout_weight="1"
         android:antialias="true"
@@ -44,7 +39,6 @@
         android:layout_marginTop="2dp"
         android:layout_weight="0"
         android:textColor="#ffeeeeee"
-        android:textSize="12sp" />
-	</LinearLayout>
+        android:textSize="12dp" />
 
 </merge>

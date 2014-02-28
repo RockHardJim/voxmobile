@@ -43,6 +43,7 @@ import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.text.style.TextAppearanceSpan;
 import android.util.SparseArray;
 import android.view.KeyEvent;
@@ -57,6 +58,7 @@ import net.voxcorp.R;
 import net.voxcorp.api.ISipService;
 import net.voxcorp.api.MediaState;
 import net.voxcorp.api.SipCallSession;
+import net.voxcorp.api.SipCallSession.StatusCode;
 import net.voxcorp.api.SipConfigManager;
 import net.voxcorp.api.SipManager;
 import net.voxcorp.api.SipProfile;
@@ -64,14 +66,15 @@ import net.voxcorp.service.SipService;
 import net.voxcorp.ui.PickupSipUri;
 import net.voxcorp.ui.incall.CallProximityManager.ProximityDirector;
 import net.voxcorp.ui.incall.DtmfDialogFragment.OnDtmfListener;
+import net.voxcorp.ui.incall.locker.IOnLeftRightChoice;
+import net.voxcorp.ui.incall.locker.InCallAnswerControls;
+import net.voxcorp.ui.incall.locker.ScreenLocker;
 import net.voxcorp.utils.CallsUtils;
 import net.voxcorp.utils.DialingFeedback;
 import net.voxcorp.utils.Log;
 import net.voxcorp.utils.PreferencesProviderWrapper;
 import net.voxcorp.utils.Theme;
 import net.voxcorp.utils.keyguard.KeyguardWrapper;
-import net.voxcorp.widgets.IOnLeftRightChoice;
-import net.voxcorp.widgets.ScreenLocker;
 
 import org.webrtc.videoengine.ViERenderer;
 
@@ -117,7 +120,6 @@ public class InCallActivity extends SherlockFragmentActivity implements IOnCallA
     //private Rect endCallTargetRect, holdTargetRect, answerTargetRect, xferTargetRect;
     
 
-    private final int CAMERA_PREVIEW_SIZE = 128;
     private SurfaceView cameraPreview;
     private CallProximityManager proximityManager;
     private KeyguardWrapper keyguardManager;
@@ -322,7 +324,8 @@ public class InCallActivity extends SherlockFragmentActivity implements IOnCallA
             if(cameraPreview == null) {
                 Log.d(THIS_FILE, "Create Local Renderer");
                 cameraPreview = ViERenderer.CreateLocalRenderer(this);
-                RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(CAMERA_PREVIEW_SIZE, CAMERA_PREVIEW_SIZE);
+                /* VoX Mobile :: change preview size */
+                RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(128, 128);
                 //lp.leftMargin = 2;
                 //lp.topMargin= 4;
                 lp.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
@@ -664,18 +667,18 @@ public class InCallActivity extends SherlockFragmentActivity implements IOnCallA
         DtmfDialogFragment newFragment = DtmfDialogFragment.newInstance(callId);
         newFragment.show(getSupportFragmentManager(), "dialog");
     }
-
+    
     /*
      * VoX Mobile :: toggle preview window
      */
     private void toggleVoXMobilePreview() {
-    	if (cameraPreview != null && cameraPreview.getVisibility() == View.VISIBLE) {
+       if (cameraPreview != null && cameraPreview.getVisibility() == View.VISIBLE) {
             RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(
-            		cameraPreview.getWidth() == 0 ? CAMERA_PREVIEW_SIZE : 0,
-               		cameraPreview.getHeight() == 0 ? CAMERA_PREVIEW_SIZE : 0
+                       cameraPreview.getWidth() == 0 ? 128 : 0,
+                               cameraPreview.getHeight() == 0 ? 128 : 0
             );
             cameraPreview.setLayoutParams(lp);
-    	};
+       };
     }
     
 
@@ -837,8 +840,8 @@ public class InCallActivity extends SherlockFragmentActivity implements IOnCallA
     public void onTrigger(int whichAction, final SipCallSession call) {
 
         // Sanity check for actions requiring valid call id
-        if (whichAction == TAKE_CALL || whichAction == DECLINE_CALL ||
-            whichAction == CLEAR_CALL || whichAction == DETAILED_DISPLAY || 
+        if (whichAction == TAKE_CALL || whichAction == REJECT_CALL || whichAction == DONT_TAKE_CALL ||
+            whichAction == TERMINATE_CALL || whichAction == DETAILED_DISPLAY || 
             whichAction == TOGGLE_HOLD || whichAction == START_RECORDING ||
             whichAction == STOP_RECORDING || whichAction == DTMF_DISPLAY ||
             whichAction == XFER_CALL || whichAction == TRANSFER_CALL ||
@@ -890,8 +893,14 @@ public class InCallActivity extends SherlockFragmentActivity implements IOnCallA
                     }
                     break;
                 }
-                case DECLINE_CALL:
-                case CLEAR_CALL: {
+                case DONT_TAKE_CALL: {
+                    if (service != null) {
+                        service.hangup(call.getCallId(), StatusCode.BUSY_HERE);
+                    }
+                    break;
+                }
+                case REJECT_CALL:
+                case TERMINATE_CALL: {
                     if (service != null) {
                         service.hangup(call.getCallId(), 0);
                     }
@@ -934,11 +943,15 @@ public class InCallActivity extends SherlockFragmentActivity implements IOnCallA
                             infoDialog.dismiss();
                         }
                         String infos = service.showCallInfosDialog(call.getCallId());
-                        
+                        String natType = service.getLocalNatType();
                         SpannableStringBuilder buf = new SpannableStringBuilder();
                         Builder builder = new AlertDialog.Builder(this);
 
                         buf.append(infos);
+                        if(!TextUtils.isEmpty(natType)) {
+                            buf.append("\r\nLocal NAT type detected : ");
+                            buf.append(natType);
+                        }
                         TextAppearanceSpan textSmallSpan = new TextAppearanceSpan(this,
                                 android.R.style.TextAppearance_Small);
                         buf.setSpan(textSmallSpan, 0, buf.length(),
@@ -1076,7 +1089,7 @@ public class InCallActivity extends SherlockFragmentActivity implements IOnCallA
                 break;
             case RIGHT_HANDLE:
                 Log.d(THIS_FILE, "We clear the call");
-                onTrigger(IOnCallActionTrigger.CLEAR_CALL, getActiveCallInfo());
+                onTrigger(IOnCallActionTrigger.TERMINATE_CALL, getActiveCallInfo());
                 proximityManager.release(0);
             default:
                 break;

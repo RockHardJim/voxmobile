@@ -59,6 +59,7 @@ import net.voxcorp.api.ISipService;
 import net.voxcorp.api.SipMessage;
 import net.voxcorp.api.SipProfile;
 import net.voxcorp.api.SipUri;
+import net.voxcorp.models.CallerInfo;
 import net.voxcorp.service.SipNotifications;
 import net.voxcorp.service.SipService;
 import net.voxcorp.ui.PickupSipUri;
@@ -182,7 +183,7 @@ public class MessageFragment extends SherlockListFragment implements LoaderManag
     
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d(THIS_FILE, "On activity result");
+        Log.d(THIS_FILE, "On activity result " + requestCode);
         if (requestCode == PICKUP_SIP_URI) {
             if (resultCode == Activity.RESULT_OK) {
                 String from = data.getStringExtra(Intent.EXTRA_PHONE_NUMBER);
@@ -242,11 +243,17 @@ public class MessageFragment extends SherlockListFragment implements LoaderManag
     
 
     private void setupFrom(String from, String fullFrom) {
+        Log.d(THIS_FILE, "Setup from " + from);
         if (from != null) {
             if (remoteFrom != from) {
                 remoteFrom = from;
                 fromText.setText(remoteFrom);
-                fullFromText.setText(SipUri.getDisplayedSimpleContact(fullFrom));
+                CallerInfo callerInfo = CallerInfo.getCallerInfoFromSipUri(getActivity(), fullFrom);
+                if (callerInfo != null && callerInfo.contactExists) {
+                	fullFromText.setText(callerInfo.name);
+                } else {
+                	fullFromText.setText(SipUri.getDisplayedSimpleContact(fullFrom));
+                }
                 loadMessageContent();
                 notifications.setViewingMessageFrom(remoteFrom);
             }
@@ -287,7 +294,7 @@ public class MessageFragment extends SherlockListFragment implements LoaderManag
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Builder toLoadUriBuilder = SipMessage.THREAD_ID_URI_BASE.buildUpon().appendEncodedPath(remoteFrom);
+        Builder toLoadUriBuilder = SipMessage.THREAD_ID_URI_BASE.buildUpon().appendEncodedPath(remoteFrom.replaceAll("/", "%2F"));
         return new CursorLoader(getActivity(), toLoadUriBuilder.build(), null, null, null,
                 SipMessage.FIELD_DATE + " ASC");
     }

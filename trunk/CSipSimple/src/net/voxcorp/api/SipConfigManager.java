@@ -170,7 +170,14 @@ public class SipConfigManager {
      * @see #setPreferenceBooleanValue(Context, String, boolean)
      */
     public static final String HAS_IO_QUEUE = "has_io_queue";
+    /**
+     * Media thread count
+     */
+    public static final String MEDIA_THREAD_COUNT = "media_thread_count";
 
+    /**
+     * Sip stack thread count
+     */
     public static final String THREAD_COUNT = "thread_count";
     /**
      * Backend for echo cancellation. <br/>
@@ -432,6 +439,15 @@ public class SipConfigManager {
      */
     public static final String THEME = "selected_theme";
     /**
+     * Package to manage calls UI.<br/>
+     * The package that will handle calls user interface.
+     * Might be moved as per account later.
+     * If invalid or empty the self application package will be used.
+     * 
+     * @see #setPreferenceStringValue(Context, String, String)
+     */
+    public static final String CALL_UI_PACKAGE = "call_ui_package";
+    /**
      * Display the icon status bar when registered? <br/>
      * Warning, disabling that will unflag the application as important in
      * backgroud. And android may decide to kill it more frequently
@@ -546,13 +562,17 @@ public class SipConfigManager {
      * @see #setPreferenceStringValue(Context, String, String)
      */
     public static final String RINGTONE = "ringtone";
+    
     /**
-     * Should the application present buttons instead of slider?<br/>
-     * By default the application will use this mode for tablets
+     * Type of locker the app will use for in call view<br/>
+     * 0 : let app decide
+     * 1 : sliding tab
+     * 2: buttons
+     * 3 : glow pad
      * 
-     * @see #setPreferenceBooleanValue(Context, String, boolean)
+     * @see #setPreferenceIntegerValue(Context, String, boolean)
      */
-    public static final String USE_ALTERNATE_UNLOCKER = "use_alternate_unlocker";
+    public static final String UNLOCKER_TYPE = "unlocker_type";
     /**
      * Start application dialer UI with text dialer instead of digit dialer.
      * By default false.
@@ -692,7 +712,7 @@ public class SipConfigManager {
      */
     public static final String ENABLE_QOS = "enable_qos";
     /**
-     * DSCP value.<br/>
+     * DSCP value for SIP packets.<br/>
      * <a target="_blank" href=
      * "http://www.pjsip.org/pjlib/docs/html/structpj__qos__params.htm#afa7a796d83d188894d207ebba951e425"
      * >Pjsip documentation</a><br/>
@@ -700,6 +720,15 @@ public class SipConfigManager {
      * @see #setPreferenceIntegerValue(Context, String, Integer)
      */
     public static final String DSCP_VAL = "dscp_val";
+    /**
+     * DSCP value for RTP packets.<br/>
+     * <a target="_blank" href=
+     * "http://www.pjsip.org/pjlib/docs/html/structpj__qos__params.htm#afa7a796d83d188894d207ebba951e425"
+     * >Pjsip documentation</a><br/>
+     * 
+     * @see #setPreferenceIntegerValue(Context, String, Integer)
+     */
+    public static final String DSCP_RTP_VAL = "dscp_rtp_val";
     /**
      * Send UDP socket keep alive when connected using wifi, in seconds.
      * 

@@ -55,6 +55,8 @@ import com.actionbarsherlock.internal.nineoldandroids.animation.ValueAnimator;
 import com.actionbarsherlock.internal.utils.UtilityWrapper;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.google.analytics.tracking.android.GoogleAnalytics;
+
 import net.voxcorp.R;
 import net.voxcorp.api.SipConfigManager;
 import net.voxcorp.api.SipManager;
@@ -77,6 +79,8 @@ import net.voxcorp.utils.PreferencesProviderWrapper;
 import net.voxcorp.utils.PreferencesWrapper;
 import net.voxcorp.utils.Theme;
 import net.voxcorp.utils.UriUtils;
+import net.voxcorp.utils.backup.BackupWrapper;
+import net.voxcorp.voxmobile.utils.VoXMobileSettings;
 import net.voxcorp.voxmobile.utils.VoXMobileSipHomeHelper;
 import net.voxcorp.voxmobile.utils.VoXMobileSipHomeHelper.VoXMobileSipHomeHandler;
 import net.voxcorp.wizards.BasePrefsWizard;
@@ -84,6 +88,8 @@ import net.voxcorp.wizards.WizardUtils.WizardInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class SipHome extends SherlockFragmentActivity implements OnWarningChanged {
     public static final int ACCOUNTS_MENU = Menu.FIRST + 1;
@@ -125,8 +131,24 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
     public VoXMobileSipHomeHandler getVoXMobileSipHomeHandler() {
     	return mVoXMobileHandler;
     }
-    public ProgressDialog getVoXMobileProgressDialog() {
-    	return mVoXMobileProgress;
+    public void showVoXMobileProgressDialog() {
+    	if (mVoXMobileSipHomeHelper == null) {
+    		return;
+    	}
+    	mVoXMobileSipHomeHelper.setProgressActive(true);
+    	if (mVoXMobileProgress == null) {
+    		mVoXMobileProgress = ProgressDialog.show(this, "", this.getString(R.string.voxmobile_please_wait), true, false);
+    	}
+    }
+    public void dismissVoXMobileProgressDialog() {
+    	if (mVoXMobileSipHomeHelper == null) {
+    		return;
+    	}
+    	mVoXMobileSipHomeHelper.setProgressActive(false);
+    	if (mVoXMobileProgress != null) {
+    		mVoXMobileProgress.dismiss();
+    		mVoXMobileProgress = null;
+    	}
     }
     public void setVoXMobileProgressDialog(ProgressDialog progress) {
     	mVoXMobileProgress = progress;
@@ -141,7 +163,23 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
     	startSipService();
     }
     
-    /**
+    @Override
+	protected void onSaveInstanceState(Bundle outState) {
+    	if (mVoXMobileSipHomeHelper != null) {
+    		mVoXMobileSipHomeHelper.saveState(outState);
+    	}
+		super.onSaveInstanceState(outState);
+	}
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    	if (mVoXMobileSipHomeHelper != null) {
+    		mVoXMobileSipHomeHelper.restoreState(savedInstanceState);
+    		hasTriedOnceActivateAcc = mVoXMobileSipHomeHelper.getSipHomeHasTriedOnceActivateAcc();
+    	}
+		super.onRestoreInstanceState(savedInstanceState);
+	}
+
+	/**
      * Listener interface for Fragments accommodated in {@link ViewPager}
      * enabling them to know when it becomes visible or invisible inside the
      * ViewPager.
@@ -157,6 +195,9 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
         prefProviderWrapper = new PreferencesProviderWrapper(this);
 
         super.onCreate(savedInstanceState);
+        
+        // VoX Mobile :: Google Analytics v3
+        GoogleAnalytics.getInstance(this).getTracker(VoXMobileSettings.getGoogleAnalyticsAccount());
 
         setContentView(R.layout.sip_home);
 
@@ -225,7 +266,18 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
                 asyncSanityCheck();
             };
         };
-        asyncSanityChecker.start();
+        
+        /*
+         * VoX Mobile :: delay the start of the sanity checker until everything has time
+         *               to fully initialize, otherwise we always end up having the "NO STUN"
+         *               warning tab even though we default to enabling STUN.
+         */
+        new Timer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				asyncSanityChecker.start();
+			}
+        }, 5000);
         
     }
 
@@ -355,7 +407,7 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
                     if (mNextPosition >= 0) {
                         sendFragmentVisibilityChange(mNextPosition, true);
                     }
-                    invalidateOptionsMenu();
+                    supportInvalidateOptionsMenu();
 
                     mCurrentPosition = mNextPosition;
                     break;
@@ -522,6 +574,8 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
         Thread t = new Thread("StartSip") {
             public void run() {
                 Intent serviceIntent = new Intent(SipManager.INTENT_SIP_SERVICE);
+                // Optional, but here we bundle so just ensure we are using csipsimple package
+                serviceIntent.setPackage(SipHome.this.getPackageName());
                 serviceIntent.putExtra(SipManager.EXTRA_OUTGOING_ACTIVITY, new ComponentName(SipHome.this, SipHome.class));
                 startService(serviceIntent);
                 postStartSipService();
@@ -565,12 +619,14 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
             	}
             }
 
+            if (mVoXMobileSipHomeHelper == null) {
+            	return;
+            }
             if (mVoXMobileSipHomeHelper.getVersionCheck() == null) {
             	mVoXMobileSipHomeHelper.doVoXMobileVersionCheck(false);
             	return;
-            } else if (
-            	(mVoXMobileSipHomeHelper.getVersionCheck() != null) &&
-            	!mVoXMobileSipHomeHelper.getVersionCheck().isSupported()) {
+            }
+            if (!mVoXMobileSipHomeHelper.getVersionCheck().isSupported()) {
             	return;
             }
             
@@ -593,11 +649,16 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
                 }
             }
             hasTriedOnceActivateAcc = true;
+            
+            /*
+             *   VoX Mobile :: keep track of activate flag on orientation change
+             */
+            mVoXMobileSipHomeHelper.setSipHomeHasTriedOnceActivateAcc(hasTriedOnceActivateAcc);
         }
     }
 
     private boolean onForeground = false;
-
+    
     @Override
     protected void onPause() {
         Log.d(THIS_FILE, "On Pause SIPHOME");
@@ -781,7 +842,7 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
                     ab.selectTab(toSelectTab);
                     initTabId = toSelectId;
                 }else {
-                    initTabId = null;
+                    initTabId = 0;
                 }
                 
             }
@@ -928,6 +989,7 @@ public class SipHome extends SherlockFragmentActivity implements OnWarningChange
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == CHANGE_PREFS) {
             sendBroadcast(new Intent(SipManager.ACTION_SIP_REQUEST_RESTART));
+            BackupWrapper.getInstance(this).dataChanged();
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
